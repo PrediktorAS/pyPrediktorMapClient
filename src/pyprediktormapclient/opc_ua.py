@@ -1,4 +1,4 @@
-from ast import str
+from ast import Str
 import requests
 import json
 import pandas as pd
