@@ -85,7 +85,7 @@ class OPC_UA:
         }
         return read_value_id_dict
 
-    def get_values_dataframe(self, server_url: str, data_frame : pd.DataFrame) -> pd.DataFrame:
+    def get_live_values_dataframe(self, server_url: str, data_frame : pd.DataFrame) -> pd.DataFrame:
         """Make a dataframe of the live values from the server 
 
         Args:
@@ -95,14 +95,11 @@ class OPC_UA:
         Returns:
             pd.DataFrame: Dataframe of the requested live values
         """
-        # Make a new column of live values 
-        data_frame['LiveValue'] = self.get_live_values(server_url, data_frame['VariableId'].to_list())[0]['Values']
-        # Expand live values and make three columns
-        data_frame[['Value','SourceTimestamp','ServerTimestamp']] = data_frame['LiveValue'].apply(pd.Series)
-        # Further expand Value column
-        data_frame[['Type','Body']] = data_frame['Value'].apply(pd.Series)
-        data_frame = data_frame.drop(columns=['LiveValue','Value'])
-        return data_frame
+        # JSON normalization of the live values
+        df = pd.json_normalize(self.get_live_values(server_url, data_frame['VariableId'].to_list())[0]['Values'])
+        # Concating both the dataframes
+        final_df = pd.concat([df,data_frame], axis=1)
+        return final_df
 
 
     def get_agg_hist_values(self, s_url: str, start_time: str, end_time: str, pro_interval: int, agg_name: str, node_ids: List[str]):
@@ -131,7 +128,7 @@ class OPC_UA:
         headers = {'Content-Type': 'application/json'}
         return self.request('POST', 'values/historicalaggregated', body, headers)
 
-    def get_aggHist_values_dataframe(self, server_url: str, start_time: str, end_time: str, p_interval: int, agg_name: str, data_frame : pd.DataFrame) -> pd.DataFrame:
+    def get_agg_hist_values_dataframe(self, server_url: str, start_time: str, end_time: str, p_interval: int, agg_name: str, data_frame : pd.DataFrame) -> pd.DataFrame:
         """Make a dataframe of aggregated historical value data
 
         Args:
@@ -145,17 +142,15 @@ class OPC_UA:
         Returns:
             pd.DataFrame: Dataframe of the requested historical values
         """
-        # Make a new column of aggregate historical values
-        data_frame['AggHistValue'] = self.get_agg_hist_values(server_url, start_time, end_time, p_interval, agg_name, data_frame['VariableId'].to_list())['HistoryReadResults']
-        # Expand values and make three columns
-        data_frame[['NodeId', 'StatusCode', 'DataValues']] = data_frame['AggHistValue'].apply(pd.Series)
-        # Explode DataValues
-        data_frame = data_frame.drop(columns=["AggHistValue", 'NodeId', 'StatusCode']).explode('DataValues').reset_index(drop=True)
-        data_frame[['Value', 'StatusCode', 'SourceTimestamp']] = data_frame['DataValues'].apply(pd.Series)
-        # Further expand Value and StatusCode columns
-        data_frame[['Type','Body']] = data_frame['Value'].apply(pd.Series)
-        data_frame[['Code', 'Quality']] = data_frame['StatusCode'].apply(pd.Series)
-        data_frame = data_frame.drop(columns=['DataValues','Value', 'StatusCode'])
-        return data_frame
-
+        # JSON normalization of aggregate historical values
+        df = pd.json_normalize(self.get_agg_hist_values(server_url, start_time, end_time, p_interval, agg_name, data_frame['VariableId'].to_list())['HistoryReadResults'])
+        # Concating aggregated historical values to dataframe
+        data_frame1 = pd.concat([data_frame,df], axis=1).drop(columns=['NodeId.IdType', 'NodeId.Id', 'NodeId.Namespace', 'StatusCode.Code', 'StatusCode.Symbol']) 
+        # Exploding DataValues column
+        df1 = data_frame1.explode('DataValues').reset_index(drop=True)
+        # JSON normalization of DataValues
+        df2 = pd.json_normalize(df1['DataValues'])
+        # Concatenating dataframes
+        data_frame2 = pd.concat([df1,df2], axis=1).drop(columns=["DataValues"])
+        return data_frame2
     
