@@ -6,6 +6,16 @@ import numpy as np
 from typing import List
 import concurrent.futures
 import itertools
+
+
+import asyncio
+import time
+from typing import Dict, Any, List, Tuple
+from itertools import repeat
+from aiohttp import ClientSession
+import calendar
+  
+
 class OPC_UA:
     """Value data from the opc ua api server 
 
@@ -164,6 +174,78 @@ class OPC_UA:
         #     resp = []
         #     print("Error while requesting historical aggregated data")
         return resp
+
+    ###############New Functions
+    async def http_get_with_aiohttp(self,session: ClientSession, endpoint: str,data, timeout: int = 10):
+        headers = {'Content-Type': 'application/json'}
+        response = await session.post(url=self.url + endpoint,data=data, headers=headers,timeout=timeout)
+
+        response_json = None
+        try:
+            response_json = await response.json()
+        except json.decoder.JSONDecodeError as e:
+            pass
+
+        # # ts stores timestamp
+        # ts = calendar.timegm(time.gmtime())
+        # with open('data/data_chunk_'+str(ts)+'.json', 'w') as f:
+        #     json.dump(response_json, f)
+        return response_json
+
+
+    async def get_agg_hist_value_chunks_new(self,session: ClientSession, server_url: str, start_time: str, end_time: str, pro_interval: int, agg_name: str, node_ids: List[str], chunk_size=100000,batch_size=1000,max_workers=10,timeout: int = 10):
+        """Function to get historical aggregated time value data for the selected site
+
+        Args:
+            server_url (str): server connection url
+            start_time (str): start time of requested data
+            end_time (str): end time of the requested data
+            pro_interval (int): interval time of processing in milliseconds
+            node_ids (List[Dict]): node id(s)
+            agg_name (str): Name of aggregation
+            chunk_size (int): size of each chunk, default : 100000
+            batch_size (int): size of each Id chunck, default : 1000
+            max_workers (int): maximum number of workers(CPU), default : 2
+        """
+        read_value_ids = [self.create_readvalueids_dict(x,agg_name) for x in node_ids]
+        # Lenght of time series
+        n_datapoints = (pd.to_datetime(end_time) - pd.to_datetime(start_time)).total_seconds()*1000/pro_interval
+        # Number of required splits 
+        n_time_splits = int(np.ceil(n_datapoints/chunk_size))
+        # Ids chunks
+        id_chunk_list = list(self.chunk_ids(read_value_ids, batch_size))
+        # Get datetime chunks
+        start_end_list = self.chunk_datetimes(start_time,end_time, n_time_splits)
+        body_elements = list(itertools.product(start_end_list,id_chunk_list))
+        # Create body chunks
+        body_list = []
+        for x in body_elements:
+            start_time_new = x[0][0]
+            end_time_new = x[0][1]
+            ids = x[1]
+            body = json.dumps({
+                    "Connection": {
+                        "Url": server_url,
+                        "AuthenticationType": 1
+                    },
+                    "StartTime": start_time_new,
+                    "EndTime": end_time_new,
+                    "ProcessingInterval": pro_interval, 
+                    "ReadValueIds": ids
+                
+                })
+            body_list.append(body)
+        #
+        endpoint = 'values/historicalaggregated'
+        # Chunk body
+        one_time_body_count = max_workers
+        body_chunks_list = list(self.chunk_ids(body_list, one_time_body_count))
+        for j,body_chunks in enumerate(body_chunks_list):
+        # Request chunkwise data
+            results = await asyncio.gather(*[self.http_get_with_aiohttp(session, endpoint,body,timeout) for body in body_chunks])
+            print("Success: "+str(j))
+            with open('data/data_chunk_'+str(j)+'.json', 'w') as f:
+                json.dump(results, f)
 
     def get_agg_hist_value_chunks(self, server_url: str, start_time: str, end_time: str, pro_interval: int, agg_name: str, node_ids: List[str], chunk_size=100000,batch_size=1000, max_workers=2):
         """Function to get historical aggregated time value data for the selected site
