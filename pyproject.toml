@@ -1,9 +1,22 @@
-[build-system]
-# AVOID CHANGING REQUIRES: IT WILL BE UPDATED BY PYSCAFFOLD!
-requires = ["setuptools>=46.1.0", "setuptools_scm[toml]>=5"]
-build-backend = "setuptools.build_meta"
+[tool.poetry]
+name = "pyprediktormapclient"
+version = "0.1.0"
+description = ""
+authors = ["MeenaBana <meenabana@outlook.com>"]
 
-[tool.setuptools_scm]
-# For smarter version schemes and other configuration options,
-# check out https://github.com/pypa/setuptools_scm
-version_scheme = "no-guess-dev"
+[tool.poetry.dependencies]
+python = "^3.8"
+ipykernel = "^6.15.1"
+pandas = "^1.4.3"
+urllib3 = "^1.26.10"
+requests = "^2.28.1"
+aiohttp = "^3.8.1"
+pyarrow = "^9.0.0"
+dask = {extras = ["diagnostics"], version = "^2022.8.0"}
+Jinja2 = "^3.1.2"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
