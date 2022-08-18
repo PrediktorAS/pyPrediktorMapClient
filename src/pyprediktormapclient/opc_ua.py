@@ -6,7 +6,7 @@ import numpy as np
 from typing import List
 import concurrent.futures
 import itertools
-
+from pathlib import Path
 
 import asyncio
 import time
@@ -55,18 +55,19 @@ class OPC_UA:
         }
         return node_id_dict
 
-    def get_live_values(self, s_url: str, node_ids: List[str]):
+    def get_live_values(self, server_url: str, include_variables: List, node_ids: List[str]):
         """Request to get real time data values of the requested data for a site
 
         Args:
-            s_url (str): server connection url
+            server_url (str): server connection url
             node_ids (List[Dict]): node id(s) of the required data node(s)
         """
-        node_ids_dicts = [self.split_node_id(x) for x in node_ids]
+        var_node_ids = [x for x in node_ids if (x.split(".")[-1]) in include_variables]
+        node_ids_dicts = [self.split_node_id(x) for x in var_node_ids]
         body = json.dumps([
             {
                 "Connection": {
-                    "Url": s_url,
+                    "Url": server_url,
                     "AuthenticationType": 1
                 },
                 "NodeIds": node_ids_dicts
@@ -75,6 +76,23 @@ class OPC_UA:
         headers = {'Content-Type': 'application/json'}
         return self.request('POST', 'values/get', body,headers)
 
+    def get_live_values_dataframe(self, server_url: str, include_variables: List, data_frame : pd.DataFrame) -> pd.DataFrame:
+        """Make a dataframe of the live values from the server 
+
+        Args:
+            server_url (str): server connection url
+            data_frame (pd.DataFrame): Pandas data frame with required columns
+
+        Returns:
+            pd.DataFrame: Dataframe of the requested live values
+        """
+        # JSON normalization of the live values
+        df = pd.json_normalize(self.get_live_values(server_url, include_variables, data_frame['VariableId'].to_list())[0]['Values'])
+        # Filtering dataframe for the variables
+        data_frame1 = data_frame[data_frame['Variable'].isin(include_variables)].reset_index(drop=True)
+        # Concating both the dataframes
+        final_df = pd.concat([data_frame1,df], axis=1)
+        return final_df
 
     def create_readvalueids_dict(self, node_id: str, agg_name: str):
         """A function to get ReadValueIds
@@ -96,49 +114,6 @@ class OPC_UA:
         "AggregateName": agg_name
         }
         return read_value_id_dict
-
-    def get_live_values_dataframe(self, server_url: str, data_frame : pd.DataFrame) -> pd.DataFrame:
-        """Make a dataframe of the live values from the server 
-
-        Args:
-            server_url (str): server connection url
-            data_frame (pd.DataFrame): Pandas data frame with required columns
-
-        Returns:
-            pd.DataFrame: Dataframe of the requested live values
-        """
-        # JSON normalization of the live values
-        df = pd.json_normalize(self.get_live_values(server_url, data_frame['VariableId'].to_list())[0]['Values'])
-        # Concating both the dataframes
-        final_df = pd.concat([df,data_frame], axis=1)
-        return final_df
-
-
-    def get_agg_hist_values(self, server_url: str, start_time: str, end_time: str, pro_interval: int, agg_name: str, node_ids: List[str]):
-        """Function to get historical aggregated time value json data for the selected site
-
-        Args:
-            server_url (str): server connection url
-            start_time (str): start time of requested data
-            end_time (str): end time of the requested data
-            pro_interval (int): interval time of processing in milliseconds
-            node_ids (List[Dict]): node id(s)
-            agg_name (str): Name of aggregation
-        """
-        read_value_id_dict = [self.create_readvalueids_dict(x,agg_name) for x in node_ids]
-        body = json.dumps({
-                "Connection": {
-                    "Url": server_url,
-                    "AuthenticationType": 1
-                },
-                "StartTime": start_time,
-                "EndTime": end_time,
-                "ProcessingInterval": pro_interval, 
-                "ReadValueIds": read_value_id_dict
-            
-            })
-        headers = {'Content-Type': 'application/json'}
-        return self.request('POST', 'values/historicalaggregated', body, headers)
 
     def chunk_datetimes(self,start_time, end_time, n_time_splits):
         """Function to get chunked datetimes for the selected time periods(dates)
@@ -166,17 +141,19 @@ class OPC_UA:
         for i in range(0, len(ids_list), n):
             yield ids_list[i:i + n]
 
-    def request_historical_data(self,body):
-        headers = {'Content-Type': 'application/json'}
-        #try:
-        resp = self.request('POST', 'values/historicalaggregated', body, headers)
-        # except:
-        #     resp = []
-        #     print("Error while requesting historical aggregated data")
-        return resp
-
     ###############New Functions
     async def http_get_with_aiohttp(self,session: ClientSession, endpoint: str,data, timeout: int = 10):
+        """Request function for aiohttp based API request
+
+        Args:
+            session (ClientSession): ClientSession of a period of time for the reqested data
+            endpoint (str): Endpoint of requested API reqest
+            data (_type_): Body data
+            timeout (int, optional): Time of one session. Defaults to 10.
+
+        Returns:
+            _type_: _description_
+        """
         headers = {'Content-Type': 'application/json'}
         response = await session.post(url=self.url + endpoint,data=data, headers=headers,timeout=timeout)
 
@@ -190,24 +167,50 @@ class OPC_UA:
         # ts = calendar.timegm(time.gmtime())
         # with open('data/data_chunk_'+str(ts)+'.json', 'w') as f:
         #     json.dump(response_json, f)
+        filtered_response_json = self.filter_json_response(response_json)
+        return filtered_response_json
+
+    def filter_json_response(self,response_json):
+        response_json.pop("ServerNamespaces", None)
+        response_json.pop("Success", None)
+        response_json['HistoryReadResults'] = [self.filter_read_results(x) for x in response_json['HistoryReadResults']]
         return response_json
 
+    def filter_read_results(self,x):
+        y = {}
+        y['NodeId'] = x['NodeId']['Id']
+        xvalues = x['DataValues']
+        for v in xvalues:
+            v['Value'] = v['Value']['Body']
+        y['DataValues'] = xvalues
+        return y
 
-    async def get_agg_hist_value_chunks_new(self,session: ClientSession, server_url: str, start_time: str, end_time: str, pro_interval: int, agg_name: str, node_ids: List[str], chunk_size=100000,batch_size=1000,max_workers=10,timeout: int = 10):
-        """Function to get historical aggregated time value data for the selected site
+    def json_data_into_dataframe(self, df_result: pd.DataFrame):
+        df_result['Variable'] = df_result['NodeId'].str.split('.').str[-1]
+        df_result1 = df_result.explode('DataValues').reset_index(drop=True)
+        df_result1[['Value', 'StatusCode', 'SourceTimestamp']] = df_result1['DataValues'].apply(pd.Series)
+        df_result1[['Code', 'Status']] = df_result1['StatusCode'].apply(pd.Series)
+        df = df_result1.drop(columns=['DataValues','StatusCode'])
+        return df
+
+    async def get_agg_hist_value_chunks_parallel(self,session: ClientSession, server_url: str, start_time: str, end_time: str, pro_interval: int, agg_name: str, node_ids: List[str], include_variables: List, chunk_size=100000,batch_size=1000,max_workers=4,timeout: int = 10E15):
+        """Function to make aiohttp based multithreaded API request to get aggregated historical data from OPC UA API
 
         Args:
+            session (ClientSession): Session of one request
             server_url (str): server connection url
             start_time (str): start time of requested data
-            end_time (str): end time of the requested data
+            end_time (str): end time of requested data
             pro_interval (int): interval time of processing in milliseconds
-            node_ids (List[Dict]): node id(s)
             agg_name (str): Name of aggregation
-            chunk_size (int): size of each chunk, default : 100000
-            batch_size (int): size of each Id chunck, default : 1000
-            max_workers (int): maximum number of workers(CPU), default : 2
+            node_ids (List[str]): node id(s)
+            chunk_size (int, optional): Time chunk size. Defaults to 100000.
+            batch_size (int, optional): size of each Id chunck. Defaults to 1000.
+            max_workers (int, optional): maximum number of workers(CPU). Defaults to 10.
+            timeout (int, optional): Timeout time of one session. Defaults to 10.
         """
-        read_value_ids = [self.create_readvalueids_dict(x,agg_name) for x in node_ids]
+        var_node_ids = [x for x in node_ids if (x.split(".")[-1]) in include_variables]
+        read_value_ids = [self.create_readvalueids_dict(x,agg_name) for x in var_node_ids]
         # Lenght of time series
         n_datapoints = (pd.to_datetime(end_time) - pd.to_datetime(start_time)).total_seconds()*1000/pro_interval
         # Number of required splits 
@@ -240,95 +243,21 @@ class OPC_UA:
         # Chunk body
         one_time_body_count = max_workers
         body_chunks_list = list(self.chunk_ids(body_list, one_time_body_count))
+        # Folder to save the data
+        Path("data/").mkdir(exist_ok=True)
         for j,body_chunks in enumerate(body_chunks_list):
         # Request chunkwise data
             results = await asyncio.gather(*[self.http_get_with_aiohttp(session, endpoint,body,timeout) for body in body_chunks])
             print("Success: "+str(j))
-            with open('data/data_chunk_'+str(j)+'.json', 'w') as f:
-                json.dump(results, f)
-
-    def get_agg_hist_value_chunks(self, server_url: str, start_time: str, end_time: str, pro_interval: int, agg_name: str, node_ids: List[str], chunk_size=100000,batch_size=1000, max_workers=2):
-        """Function to get historical aggregated time value data for the selected site
-
-        Args:
-            server_url (str): server connection url
-            start_time (str): start time of requested data
-            end_time (str): end time of the requested data
-            pro_interval (int): interval time of processing in milliseconds
-            node_ids (List[Dict]): node id(s)
-            agg_name (str): Name of aggregation
-            chunk_size (int): size of each chunk, default : 100000
-            batch_size (int): size of each Id chunck, default : 1000
-            max_workers (int): maximum number of workers(CPU), default : 2
-        """
-        read_value_ids = [self.create_readvalueids_dict(x,agg_name) for x in node_ids]
-        # Lenght of time series
-        n_datapoints = (pd.to_datetime(end_time) - pd.to_datetime(start_time)).total_seconds()*1000/pro_interval
-        # Number of required splits 
-        n_time_splits = int(np.ceil(n_datapoints/chunk_size))
-        # Ids chunks
-        id_chunk_list = list(self.chunk_ids(read_value_ids, batch_size))
-        # Get datetime chunks
-        start_end_list = self.chunk_datetimes(start_time,end_time, n_time_splits)
-        body_elements = list(itertools.product(start_end_list,id_chunk_list))
-        # Create body chunks
-        body_list = []
-        for x in body_elements:
-            start_time_new = x[0][0]
-            end_time_new = x[0][1]
-            ids = x[1]
-            body = json.dumps({
-                    "Connection": {
-                        "Url": server_url,
-                        "AuthenticationType": 1
-                    },
-                    "StartTime": start_time_new,
-                    "EndTime": end_time_new,
-                    "ProcessingInterval": pro_interval, 
-                    "ReadValueIds": ids
-                
-                })
-            body_list.append(body)
-        # Chunk body
-        one_time_body_count = max_workers * 4
-        body_chunks_list = list(self.chunk_ids(body_list, one_time_body_count))
-        for j,body_chunks in enumerate(body_chunks_list):
-        # Request chunkwise data
-        #data_list = []
-            with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-                future_data_map = {executor.submit(self.request_historical_data, chunk):i for i,chunk in enumerate(body_chunks)}
-                for i,future_data in enumerate(concurrent.futures.as_completed(future_data_map)):
-                    print("Success: "+str(j)+"_"+str(i))
-                    recieved_frame = future_data.result()
-                    with open('data/data_chunk_'+str(j)+"_"+str(i)+'.json', 'w') as f:
-                        json.dump(recieved_frame, f)
-                    #data_list+=recieved_frame['HistoryReadResults']
-            #return data_list
-
-
-    def get_agg_hist_values_dataframe(self, server_url: str, start_time: str, end_time: str, pro_interval: int, agg_name: str, data_frame : pd.DataFrame) -> pd.DataFrame:
-        """Make a dataframe of aggregated historical value data
-
-        Args:
-            server_url (str): server connection url
-            start_time (str): start time of requested data
-            end_time (str): end time of the requested data
-            pro_interval (int): interval time of processing in milliseconds
-            agg_name (str): Name of aggregation
-            data_frame (pd.DataFrame): Pandas data frame with required columns such as node_ids
-
-        Returns:
-            pd.DataFrame: Dataframe of the requested historical values
-        """
-        # JSON normalization of aggregate historical values
-        df = pd.json_normalize(self.get_agg_hist_value_chunks(server_url, start_time, end_time, pro_interval, agg_name, data_frame['VariableId']))
-        # Concating aggregated historical values to dataframe
-        data_frame1 = pd.concat([data_frame,df], axis=1).drop(columns=['NodeId.IdType', 'NodeId.Id', 'NodeId.Namespace', 'StatusCode.Code', 'StatusCode.Symbol']) 
-        # Exploding DataValues column
-        df1 = data_frame1.explode('DataValues').reset_index(drop=True)
-        # JSON normalization of DataValues
-        df2 = pd.json_normalize(df1['DataValues'])
-        # Concatenating dataframes
-        data_frame2 = pd.concat([df1,df2], axis=1).drop(columns=["DataValues"])
-        return data_frame2
+            #with open('data/data_chunk_'+str(j)+'.json', 'w') as f:
+            #    json.dump(results, f)
+            # Create a dataframe and save as parquet
+            results_list = []
+            for res in results:
+                for x in res['HistoryReadResults']:
+                    results_list.append(x)
+        # return pd.json_normalize(results_list)
+            df_results = pd.DataFrame(results_list)
+            # df = self.json_data_into_dataframe(df_results)
+            df_results.to_parquet('data/data_chunk_'+str(j)+'.parquet')
     

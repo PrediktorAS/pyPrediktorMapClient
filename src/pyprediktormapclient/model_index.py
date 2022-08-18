@@ -125,4 +125,3 @@ class ModelIndex:
         # Merge props and vars dataframes
         json_df_merged = json_df_vars.merge(json_df_props,on=non_vars_props_columns)
         return json_df_merged
-

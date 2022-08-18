@@ -54,4 +54,6 @@ MANIFEST
 .python-version
 
 # data folders
-data*/
+*data*/
+*json
+*parquet
