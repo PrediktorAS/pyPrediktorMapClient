@@ -3,6 +3,11 @@ import json
 import pandas as pd
 from typing import List, Dict
 
+import logging
+
+logger = logging.getLogger()
+
+
 class ModelIndex:
     """Data structure from the model index API server
     """
@@ -23,7 +28,7 @@ class ModelIndex:
             return None
 
     def get_namespace_array(self):
-        return self.request('GET', 'query/namespace-array')
+        return pd.DataFrame(self.request('GET', 'query/namespace-array'))
 
     def get_object_types(self):
         return self.request('GET', 'query/object-types')
@@ -39,89 +44,90 @@ class ModelIndex:
         return object_type_id
 
     def get_objects_of_type(self, type_name: str):
+        """Function to get all the types of an object
+
+        Args:
+            type_name (str): type name 
+        """
         object_type_id = self.get_object_typeid(type_name)
         body = json.dumps({"typeId": object_type_id})
-        return self.request('POST', 'query/objects-of-type', body)
+        return pd.DataFrame(self.request('POST', 'query/objects-of-type', body))
 
-    def get_object_descendants(self, type_name: str, object_Ids: str, domain: str):
+    def get_object_descendants(self, type_name: str, obj_dataframe: pd.DataFrame, domain: str) -> pd.DataFrame:
         """A function to get object descendants
 
         Args:
             type_name (str): type_name of a descendant
-            object_Ids (List[str]): object id(s) of parent
+            obj_dataframe (pd.DataFrame): dataframe of object ids
             domain (str): PV_Assets or PV_Serves
 
         Returns:
-            json data: descendats data of selected object id(s)
+            pd.DataFrame: descendats data of selected object
         """
         object_type_id = self.get_object_typeid(type_name)
+        id_column = [x for x in obj_dataframe if x in ['Id','DescendantId', 'AncestorId']][0]
+        object_Ids = obj_dataframe[id_column].to_list()
         body = json.dumps({
             "typeId": object_type_id,
             "objectIds": object_Ids,
             "domain": domain
             })
-        return self.request('POST', 'query/object-descendants', body)
- 
-    def get_object_ancestors(self, type_name: str, object_Ids: List[str], domain: str):
+        return pd.DataFrame(self.request('POST', 'query/object-descendants', body))
+
+    def get_object_ancestors(self, type_name: str, obj_dataframe: pd.DataFrame, domain: str) -> pd.DataFrame:
         """Function to get object ancestors
 
         Args:
-            type_id (str): typeId of a parent type
-            object_ids (List[str]): object id(s) of the descendants
+            type_name (str): type_name of a parent type
+            obj_dataframe (pd.DataFrame): dataframe of object ids
             domain (str): Either PV_Assets or PV_Serves
 
         Returns:
-            json data: ancestors data of selected object id(s)
+            pd.DataFrame: ancestors data of selected object
         """
         object_type_id = self.get_object_typeid(type_name)
+        id_column = [x for x in obj_dataframe if x in ['Id','AncestorId', 'DescendantId']][0]
+        object_Ids = obj_dataframe[id_column].to_list()
         body = json.dumps({
             "typeId": object_type_id,
             "objectIds": object_Ids,
             "domain": domain
             })
-        return self.request('POST', 'query/object-ancestors', body)
+        return pd.DataFrame(self.request('POST', 'query/object-ancestors', body))
 
-    def get_vars_node_ids(self, objects_list: List[Dict]):
-        """Variables node ids of the objects 
+    def get_vars_node_ids(self, obj_dataframe: pd.DataFrame) -> List:
+        """Function to get variables node ids of the objects
 
         Args:
-            objects_list (List[Dict]): json object data from above functions calls  
-
+            obj_dataframe (pd.DataFrame): object dataframe
         Returns:
-            String: Node ids
-        """        
-        objects_vars = [x["Vars"] for x in objects_list]
+            List: list of variables' node ids
+        """                
+        objects_vars = obj_dataframe["Vars"]
         # Flatten the list
         vars_list = [x for xs in objects_vars for x in xs]
         vars_node_ids = [x["Id"] for x in vars_list]
         return vars_node_ids
 
-    def expand_props_vars(self, json_data : List[Dict]) -> pd.DataFrame():
-        """Convert json data into dataframe by expanding and merging back Vars and Props columns
+    def expand_props_vars(self, json_df: pd.DataFrame):
+        """Get a dataframe with required columns by expanding and merging back Vars and Props columns
 
         Args:
-            json_data (List[Dict]): JSON response of API request 
-
+            json_df (pd.DataFrame): json dataframe of API request
         Returns:
-            dataframe: Pandas dataframe 
+            dataframe: Pandas dataframe
         """
-        # Convert json data to dataframe
-        json_df = pd.DataFrame(json_data)
-        # Make list of column names (in dataframe) except vars and props 
+        # Make list of column names except vars and props 
         non_vars_props_columns = [x for x in json_df.columns if x not in ['Vars','Props']]
-        # New dataframe with exploded Props column and without Vars column
-        json_df1 = json_df.drop(columns=['Vars']).explode('Props').reset_index(drop=True)
-        # Make two new columns from expanded Props column
+        json_df1 = json_df.explode('Props').reset_index(drop=True)
         json_df1[['Parameter','Value']] = json_df1['Props'].apply(pd.Series)
-        json_df1 = json_df1.drop(columns=["Props"])
+        json_df1 = json_df1.drop(columns=['Props','Vars'])
         # Create Pivot to convert parameter column into dataframe's columns
         json_df_props = json_df1.pivot(index=non_vars_props_columns,columns='Parameter',values='Value').reset_index()
         json_df_props.columns.name = None
-        # Explode Vars and drop Props 
-        json_df_vars = json_df.drop(columns=['Props']).explode('Vars').reset_index(drop=True)
-        # Two new columns from expanded Vars column
+        json_df_vars = json_df.explode('Vars').reset_index(drop=True)
         json_df_vars[['Variable','VariableId']] = json_df_vars['Vars'].apply(pd.Series)
-        json_df_vars = json_df_vars.drop(columns=["Vars"])
+        json_df_vars = json_df_vars.drop(columns=['Vars', 'Props'])
         # Merge props and vars dataframes
         json_df_merged = json_df_vars.merge(json_df_props,on=non_vars_props_columns)
         return json_df_merged
