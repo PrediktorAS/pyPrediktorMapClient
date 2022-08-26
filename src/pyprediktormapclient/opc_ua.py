@@ -82,7 +82,10 @@ class OPC_UA:
         headers = {'Content-Type': 'application/json'}
         response = pd.DataFrame(self.request('POST', 'values/get', body,headers))
         result = pd.json_normalize(response['Values'][0])
-        result1 = result.drop(columns=['Value.Type','ServerTimestamp']).set_axis(['Timestamp', 'Value'], axis=1)
+        if len(result.columns) == 6:
+            result1 = result.drop(columns=['Value.Type','ServerTimestamp']).set_axis(['Timestamp', 'Value','Code','Quality'], axis=1)
+        elif len(result.columns) == 4:
+            result1 = result.drop(columns=['Value.Type','ServerTimestamp']).set_axis(['Timestamp', 'Value'], axis=1)
         df = mdx.expand_props_vars(obj_dataframe)
         name_column = [x for x in df if x in ['DisplayName','DescendantName', 'AncestorName']][0]
         df1 = df[['VariableId', name_column, 'Variable']].set_axis(['Id', 'Name', 'Variable'], axis=1)
@@ -268,8 +271,9 @@ class OPC_UA:
             # Create a dataframe and save as parquet
             results_list = []
             for res in results:
-                for x in res['HistoryReadResults']:
-                    results_list.append(x)
+                if res is not None:
+                    for x in res['HistoryReadResults']:
+                        results_list.append(x)
             df_results = pd.DataFrame(results_list)
             df = self.process_response_dataframe(df_results)
             df.to_parquet('Data/data_chunk_'+str(j)+'.parquet')
