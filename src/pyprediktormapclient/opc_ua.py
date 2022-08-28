@@ -3,18 +3,23 @@ import requests
 import json
 import pandas as pd
 import numpy as np
-from typing import List
-import concurrent.futures
 import itertools
 from pathlib import Path
+from model_index import ModelIndex
 
 import asyncio
 import time
 from typing import Dict, Any, List, Tuple
 from itertools import repeat
 from aiohttp import ClientSession
-import calendar
-  
+import logging
+
+
+logger = logging.getLogger()
+
+# Connection to the servers
+model_index_url = "http://10.241.68.86:7001/v1/"
+mdx = ModelIndex(url=model_index_url)
 
 class OPC_UA:
     """Value data from the opc ua api server 
@@ -39,11 +44,10 @@ class OPC_UA:
  
 
     def split_node_id(self, node_id: str):
-        """Functions to get node id with namespace index and data format of the node  
+        """Functions to get node id(s) with namespace index and data format of the node  
 
         Args:
-            id_string (str): node id of a node
-
+            node_id (str): node id of a node
         Returns:
             Dict: dictionary with three elements
         """
@@ -55,13 +59,15 @@ class OPC_UA:
         }
         return node_id_dict
 
-    def get_live_values(self, server_url: str, include_variables: List, node_ids: List[str]):
-        """Request to get real time data values of the requested data for a site
+    def get_live_values_data(self, server_url: str, include_variables: List, obj_dataframe: pd.DataFrame):
+        """Request to get real time data values of the variables for the requested node(s)
 
         Args:
             server_url (str): server connection url
-            node_ids (List[Dict]): node id(s) of the required data node(s)
+            include_variables (List): list of variables 
+            obj_dataframe (pd.DataFrame): dataframe of object ids
         """
+        node_ids = mdx.get_vars_node_ids(obj_dataframe)
         var_node_ids = [x for x in node_ids if (x.split(".")[-1]) in include_variables]
         node_ids_dicts = [self.split_node_id(x) for x in var_node_ids]
         body = json.dumps([
@@ -74,35 +80,28 @@ class OPC_UA:
             }
         ])
         headers = {'Content-Type': 'application/json'}
-        return self.request('POST', 'values/get', body,headers)
-
-    def get_live_values_dataframe(self, server_url: str, include_variables: List, data_frame : pd.DataFrame) -> pd.DataFrame:
-        """Make a dataframe of the live values from the server 
-
-        Args:
-            server_url (str): server connection url
-            data_frame (pd.DataFrame): Pandas data frame with required columns
-
-        Returns:
-            pd.DataFrame: Dataframe of the requested live values
-        """
-        # JSON normalization of the live values
-        df = pd.json_normalize(self.get_live_values(server_url, include_variables, data_frame['VariableId'].to_list())[0]['Values'])
+        response = pd.DataFrame(self.request('POST', 'values/get', body,headers))
+        result = pd.json_normalize(response['Values'][0])
+        if len(result.columns) == 6:
+            result1 = result.drop(columns=['Value.Type','ServerTimestamp']).set_axis(['Timestamp', 'Value','Code','Quality'], axis=1)
+        elif len(result.columns) == 4:
+            result1 = result.drop(columns=['Value.Type','ServerTimestamp']).set_axis(['Timestamp', 'Value'], axis=1)
+        df = mdx.expand_props_vars(obj_dataframe)
+        name_column = [x for x in df if x in ['DisplayName','DescendantName', 'AncestorName']][0]
+        df1 = df[['VariableId', name_column, 'Variable']].set_axis(['Id', 'Name', 'Variable'], axis=1)
         # Filtering dataframe for the variables
-        data_frame1 = data_frame[data_frame['Variable'].isin(include_variables)].reset_index(drop=True)
-        # Concating both the dataframes
-        final_df = pd.concat([data_frame1,df], axis=1)
+        obj_dataframe1 = df1[df1['Variable'].isin(include_variables)].reset_index(drop=True)
+        final_df = pd.concat([obj_dataframe1,result1], axis=1)
         return final_df
 
-    def create_readvalueids_dict(self, node_id: str, agg_name: str):
+    def create_readvalueids_dict(self, node_id: str, agg_name: str)-> Dict:
         """A function to get ReadValueIds
 
         Args:
-            id_string (str): node id of a node 
-            agg_name (str): Name of aggregation
-
+            node_id (str): node id of a node
+            agg_name (str): name of aggregation
         Returns:
-            Dict: node id(s) with aggregation type name
+            Dict: dict. of node id with aggregation
         """
         id_split = node_id.split(":")
         read_value_id_dict = {
@@ -119,12 +118,11 @@ class OPC_UA:
         """Function to get chunked datetimes for the selected time periods(dates)
 
         Args:
-            start_time (_type_): Time from (start date)
-            end_time (_type_): Time to (end date)
-            n_time_splits (_type_): Number of splits
-
+            start_time (_type_): time from 
+            end_time (_type_): time to 
+            n_time_splits (_type_): number of splits
         Returns:
-            List: List of datetimes tuples
+            List: list of datetimes tuples
         """        
         start_time = pd.to_datetime(start_time)
         end_time = pd.to_datetime(end_time)
@@ -141,42 +139,55 @@ class OPC_UA:
         for i in range(0, len(ids_list), n):
             yield ids_list[i:i + n]
 
-    ###############New Functions
-    async def http_get_with_aiohttp(self,session: ClientSession, endpoint: str,data, timeout: int = 10):
+    ############### Functions for multithreading API calls for aggregated historical data
+    async def http_get_with_aiohttp(self,session: ClientSession, endpoint: str, data, timeout: int = 10E25):
         """Request function for aiohttp based API request
 
         Args:
-            session (ClientSession): ClientSession of a period of time for the reqested data
-            endpoint (str): Endpoint of requested API reqest
-            data (_type_): Body data
-            timeout (int, optional): Time of one session. Defaults to 10.
-
-        Returns:
-            _type_: _description_
+            session (ClientSession): clientSession of a period of time for the reqested data
+            endpoint (str): endpoint of requested API call
+            data (_type_): body data
+            timeout (int, optional): time of one session. Defaults to 10E25.
         """
         headers = {'Content-Type': 'application/json'}
-        response = await session.post(url=self.url + endpoint,data=data, headers=headers,timeout=timeout)
+        try:
+            response = await session.post(url=self.url + endpoint,data=data, headers=headers,timeout=timeout)
+        except:
+            logger.error("Request Failed for this data :",json.dumps(data))
 
-        response_json = None
+        filtered_response_json = None
         try:
             response_json = await response.json()
+            filtered_response_json = self.filter_json_response(response_json)
         except json.decoder.JSONDecodeError as e:
-            pass
+            logger.exception("JSON Decoding Error")
 
-        # # ts stores timestamp
-        # ts = calendar.timegm(time.gmtime())
-        # with open('data/data_chunk_'+str(ts)+'.json', 'w') as f:
-        #     json.dump(response_json, f)
-        filtered_response_json = self.filter_json_response(response_json)
         return filtered_response_json
 
-    def filter_json_response(self,response_json):
+    def filter_json_response(self,response_json: json):
+        """Function to filter json data after requesting to opc ua server 
+
+        Args:
+            response_json (json): api call response
+        Returns:
+            filtered json response
+        """
+        # Removing ServerNamespaces and Success from response_json
         response_json.pop("ServerNamespaces", None)
         response_json.pop("Success", None)
-        response_json['HistoryReadResults'] = [self.filter_read_results(x) for x in response_json['HistoryReadResults']]
+        # Selecting only HistoryReadResults
+        history_read_results = response_json.get('HistoryReadResults',[])
+        response_json['HistoryReadResults'] = [self.filter_read_results(x) for x in history_read_results]
         return response_json
 
-    def filter_read_results(self,x):
+    def filter_read_results(self,x: Dict) -> Dict:
+        """Function to filter HistoryReadResults' list of dictionaries
+
+        Args:
+            x (Dict): dict of json response 
+        Returns:
+            Dict: filtered dict
+        """
         y = {}
         y['NodeId'] = x['NodeId']['Id']
         xvalues = x['DataValues']
@@ -185,37 +196,45 @@ class OPC_UA:
         y['DataValues'] = xvalues
         return y
 
-    def json_data_into_dataframe(self, df_result: pd.DataFrame):
-        df_result['Variable'] = df_result['NodeId'].str.split('.').str[-1]
-        df_result1 = df_result.explode('DataValues').reset_index(drop=True)
-        df_result1[['Value', 'StatusCode', 'SourceTimestamp']] = df_result1['DataValues'].apply(pd.Series)
-        df_result1[['Code', 'Status']] = df_result1['StatusCode'].apply(pd.Series)
-        df = df_result1.drop(columns=['DataValues','StatusCode'])
-        return df
-
-    async def get_agg_hist_value_chunks_parallel(self,session: ClientSession, server_url: str, start_time: str, end_time: str, pro_interval: int, agg_name: str, node_ids: List[str], include_variables: List, chunk_size=100000,batch_size=1000,max_workers=4,timeout: int = 10E15):
-        """Function to make aiohttp based multithreaded API request to get aggregated historical data from OPC UA API
+    def process_response_dataframe(self, df_result: pd.DataFrame):
+        """This is a function to get historical aggregated data into require dataframe format
 
         Args:
-            session (ClientSession): Session of one request
+            df_result (pd.DataFrame): api call's response for agg historical data request
+        """
+        df_result['Variable'] = df_result['NodeId'].str.split('.').str[-1]
+        df_result1 = df_result.explode('DataValues').reset_index(drop=True)
+        df_result2 = pd.json_normalize(df_result1.DataValues)
+        df_merge = pd.concat([df_result1,df_result2], axis=1)
+        df = df_merge.drop(columns=['DataValues']).set_axis(['Id','Variable', 'Value','Timestamp','Code','Quality'], axis=1)
+        return df
+
+    async def get_agg_hist_value_data(self,session: ClientSession, server_url: str, start_time: str, end_time: str, pro_interval: int, agg_name: str, obj_dataframe: pd.DataFrame, include_variables: List, chunk_size=100000,batch_size=1000,max_workers=50,timeout: int = 10E25):
+        """Function to make aiohttp based multithreaded api requests to get aggregated historical data from opc ua api server and write the data in 'Data' folder in parquet files.
+
+        Args:
+            session (ClientSession): session of one request
             server_url (str): server connection url
             start_time (str): start time of requested data
             end_time (str): end time of requested data
             pro_interval (int): interval time of processing in milliseconds
-            agg_name (str): Name of aggregation
-            node_ids (List[str]): node id(s)
-            chunk_size (int, optional): Time chunk size. Defaults to 100000.
+            agg_name (str): name of aggregation
+            obj_dataframe (pd.DataFrame): dataframe of object ids
+            include_variables (List): list of variables to include
+            chunk_size (int, optional): time chunk size. Defaults to 100000.
             batch_size (int, optional): size of each Id chunck. Defaults to 1000.
-            max_workers (int, optional): maximum number of workers(CPU). Defaults to 10.
-            timeout (int, optional): Timeout time of one session. Defaults to 10.
+            max_workers (int, optional): maximum number of workers(CPU). Defaults to 50.
+            timeout (int, optional): timeout time of one session. Defaults to 10E25.
         """
+        node_ids = mdx.get_vars_node_ids(obj_dataframe)
         var_node_ids = [x for x in node_ids if (x.split(".")[-1]) in include_variables]
         read_value_ids = [self.create_readvalueids_dict(x,agg_name) for x in var_node_ids]
         # Lenght of time series
         n_datapoints = (pd.to_datetime(end_time) - pd.to_datetime(start_time)).total_seconds()*1000/pro_interval
+        one_batch_datapoints = n_datapoints*batch_size
         # Number of required splits 
-        n_time_splits = int(np.ceil(n_datapoints/chunk_size))
-        # Ids chunks
+        n_time_splits = int(np.ceil(one_batch_datapoints/chunk_size))
+        # Node ids chunks
         id_chunk_list = list(self.chunk_ids(read_value_ids, batch_size))
         # Get datetime chunks
         start_end_list = self.chunk_datetimes(start_time,end_time, n_time_splits)
@@ -238,26 +257,25 @@ class OPC_UA:
                 
                 })
             body_list.append(body)
-        #
         endpoint = 'values/historicalaggregated'
         # Chunk body
         one_time_body_count = max_workers
         body_chunks_list = list(self.chunk_ids(body_list, one_time_body_count))
-        # Folder to save the data
-        Path("data/").mkdir(exist_ok=True)
+        # Folder to save the downloaded data
+        Path("Data/").mkdir(exist_ok=True)
+        logger.info("No. of Body Chunks : "+str(len(body_chunks_list)))
         for j,body_chunks in enumerate(body_chunks_list):
-        # Request chunkwise data
+            logger.info("Requesting data for body chunk no. : "+str(j))
+            # Request chunkwise data
             results = await asyncio.gather(*[self.http_get_with_aiohttp(session, endpoint,body,timeout) for body in body_chunks])
-            print("Success: "+str(j))
-            #with open('data/data_chunk_'+str(j)+'.json', 'w') as f:
-            #    json.dump(results, f)
             # Create a dataframe and save as parquet
             results_list = []
             for res in results:
-                for x in res['HistoryReadResults']:
-                    results_list.append(x)
-        # return pd.json_normalize(results_list)
+                if res is not None:
+                    for x in res['HistoryReadResults']:
+                        results_list.append(x)
             df_results = pd.DataFrame(results_list)
-            # df = self.json_data_into_dataframe(df_results)
-            df_results.to_parquet('data/data_chunk_'+str(j)+'.parquet')
+            df = self.process_response_dataframe(df_results)
+            df.to_parquet('Data/data_chunk_'+str(j)+'.parquet')
+        logger.info(" Data donwload is complete ")
     
