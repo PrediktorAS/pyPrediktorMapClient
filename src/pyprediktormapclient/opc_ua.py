@@ -5,11 +5,10 @@ import numpy as np
 import itertools
 from pathlib import Path
 
-from .common import get_vars_node_ids
+from .common import get_vars_node_ids, expand_props_vars
 
 import asyncio
 from typing import Dict, List
-from itertools import repeat
 from aiohttp import ClientSession
 import logging
 
@@ -89,7 +88,7 @@ class OPC_UA:
             result1 = result.drop(columns=['Value.Type','ServerTimestamp']).set_axis(['Timestamp', 'Value','Code','Quality'], axis=1)
         elif len(result.columns) == 4:
             result1 = result.drop(columns=['Value.Type','ServerTimestamp']).set_axis(['Timestamp', 'Value'], axis=1)
-        df = self.model_index.expand_props_vars(obj_dataframe)
+        df = expand_props_vars(obj_dataframe)
         name_column = [x for x in df if x in ['DisplayName','DescendantName', 'AncestorName']][0]
         df1 = df[['VariableId', name_column, 'Variable']].set_axis(['Id', 'Name', 'Variable'], axis=1)
         # Filtering dataframe for the variables
