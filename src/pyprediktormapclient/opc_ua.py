@@ -1,15 +1,13 @@
-from ast import Str
 import requests
 import json
 import pandas as pd
 import numpy as np
 import itertools
 from pathlib import Path
-from model_index import ModelIndex
+from .model_index import ModelIndex
 
 import asyncio
-import time
-from typing import Dict, Any, List, Tuple
+from typing import Dict, List
 from itertools import repeat
 from aiohttp import ClientSession
 import logging
