@@ -5,6 +5,8 @@ import numpy as np
 import itertools
 from pathlib import Path
 
+from .common import get_vars_node_ids
+
 import asyncio
 from typing import Dict, List
 from itertools import repeat
@@ -61,14 +63,14 @@ class OPC_UA:
         }
         return node_id_dict
 
-    def get_live_values_data(self, model_index: object, include_variables: List, obj_dataframe: pd.DataFrame):
+    def get_live_values_data(self, include_variables: List, obj_dataframe: pd.DataFrame):
         """Request to get real time data values of the variables for the requested node(s)
 
         Args:
             include_variables (List): list of variables 
             obj_dataframe (pd.DataFrame): dataframe of object ids
         """
-        node_ids = model_index.get_vars_node_ids(obj_dataframe)
+        node_ids = get_vars_node_ids(obj_dataframe)
         var_node_ids = [x for x in node_ids if (x.split(".")[-1]) in include_variables]
         node_ids_dicts = [self.split_node_id(x) for x in var_node_ids]
         body = json.dumps([
@@ -87,7 +89,7 @@ class OPC_UA:
             result1 = result.drop(columns=['Value.Type','ServerTimestamp']).set_axis(['Timestamp', 'Value','Code','Quality'], axis=1)
         elif len(result.columns) == 4:
             result1 = result.drop(columns=['Value.Type','ServerTimestamp']).set_axis(['Timestamp', 'Value'], axis=1)
-        df = mdx.expand_props_vars(obj_dataframe)
+        df = self.model_index.expand_props_vars(obj_dataframe)
         name_column = [x for x in df if x in ['DisplayName','DescendantName', 'AncestorName']][0]
         df1 = df[['VariableId', name_column, 'Variable']].set_axis(['Id', 'Name', 'Variable'], axis=1)
         # Filtering dataframe for the variables
@@ -226,7 +228,7 @@ class OPC_UA:
             max_workers (int, optional): maximum number of workers(CPU). Defaults to 50.
             timeout (int, optional): timeout time of one session. Defaults to 10E25.
         """
-        node_ids = mdx.get_vars_node_ids(obj_dataframe)
+        node_ids = get_vars_node_ids(obj_dataframe)
         var_node_ids = [x for x in node_ids if (x.split(".")[-1]) in include_variables]
         read_value_ids = [self.create_readvalueids_dict(x,agg_name) for x in var_node_ids]
         # Lenght of time series
