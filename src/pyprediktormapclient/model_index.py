@@ -1,7 +1,6 @@
 import requests
 import json
 import pandas as pd
-from typing import List
 
 import logging
 
@@ -94,20 +93,6 @@ class ModelIndex:
             "domain": domain
             })
         return pd.DataFrame(self.request('POST', 'query/object-ancestors', body))
-
-    def get_vars_node_ids(self, obj_dataframe: pd.DataFrame) -> List:
-        """Function to get variables node ids of the objects
-
-        Args:
-            obj_dataframe (pd.DataFrame): object dataframe
-        Returns:
-            List: list of variables' node ids
-        """                
-        objects_vars = obj_dataframe["Vars"]
-        # Flatten the list
-        vars_list = [x for xs in objects_vars for x in xs]
-        vars_node_ids = [x["Id"] for x in vars_list]
-        return vars_node_ids
 
     def expand_props_vars(self, json_df: pd.DataFrame):
         """Get a dataframe with required columns by expanding and merging back Vars and Props columns
