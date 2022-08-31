@@ -20,14 +20,23 @@ class OPC_UA:
     Returns:
         live and aggregated historical value data
     """
-    def __init__(self, url: str):
-        self.url = url
+    def __init__(self, rest_url: str, opcua_url: str):
+        """Class initializer  
+
+        Args:
+            rest_url (str): The complete url of the OPC UA Values REST API. E.g. "http://127.0.0.1:13371/"
+            opcua_url (str): The complete url of the OPC UA Server that is passed on to the REST server. E.g. "opc.tcp://127.0.0.1:4872"
+        Returns:
+            Object: The initialized class object
+        """
+        self.rest_url = rest_url
+        self.opcua_url = opcua_url
 
     def request(self, method: str, endpoint: str, data=None,headers=None):       
         if method == 'GET':
-            result = requests.get(self.url + endpoint)
+            result = requests.get(self.rest_url + endpoint)
         elif method == 'POST':
-            result = requests.post(self.url + endpoint, data=data,headers=headers)
+            result = requests.post(self.rest_url + endpoint, data=data,headers=headers)
         else:
             raise Exception('Method not supported')
         if result.status_code == 200:
@@ -52,11 +61,10 @@ class OPC_UA:
         }
         return node_id_dict
 
-    def get_live_values_data(self, model_index: object, server_url: str, include_variables: List, obj_dataframe: pd.DataFrame):
+    def get_live_values_data(self, model_index: object, include_variables: List, obj_dataframe: pd.DataFrame):
         """Request to get real time data values of the variables for the requested node(s)
 
         Args:
-            server_url (str): server connection url
             include_variables (List): list of variables 
             obj_dataframe (pd.DataFrame): dataframe of object ids
         """
@@ -66,7 +74,7 @@ class OPC_UA:
         body = json.dumps([
             {
                 "Connection": {
-                    "Url": server_url,
+                    "Url": self.opcua_url,
                     "AuthenticationType": 1
                 },
                 "NodeIds": node_ids_dicts
@@ -144,7 +152,7 @@ class OPC_UA:
         """
         headers = {'Content-Type': 'application/json'}
         try:
-            response = await session.post(url=self.url + endpoint,data=data, headers=headers,timeout=timeout)
+            response = await session.post(url=self.rest_url + endpoint,data=data, headers=headers,timeout=timeout)
         except:
             logger.error("Request Failed for this data :",json.dumps(data))
 
@@ -202,12 +210,11 @@ class OPC_UA:
         df = df_merge.drop(columns=['DataValues']).set_axis(['Id','Variable', 'Value','Timestamp','Code','Quality'], axis=1)
         return df
 
-    async def get_agg_hist_value_data(self,session: ClientSession, server_url: str, start_time: str, end_time: str, pro_interval: int, agg_name: str, obj_dataframe: pd.DataFrame, include_variables: List, chunk_size=100000,batch_size=1000,max_workers=50,timeout: int = 10E25):
+    async def get_agg_hist_value_data(self,session: ClientSession, start_time: str, end_time: str, pro_interval: int, agg_name: str, obj_dataframe: pd.DataFrame, include_variables: List, chunk_size=100000,batch_size=1000,max_workers=50,timeout: int = 10E25):
         """Function to make aiohttp based multithreaded api requests to get aggregated historical data from opc ua api server and write the data in 'Data' folder in parquet files.
 
         Args:
             session (ClientSession): session of one request
-            server_url (str): server connection url
             start_time (str): start time of requested data
             end_time (str): end time of requested data
             pro_interval (int): interval time of processing in milliseconds
@@ -240,7 +247,7 @@ class OPC_UA:
             ids = x[1]
             body = json.dumps({
                     "Connection": {
-                        "Url": server_url,
+                        "Url": self.opcua_url,
                         "AuthenticationType": 1
                     },
                     "StartTime": start_time_new,
