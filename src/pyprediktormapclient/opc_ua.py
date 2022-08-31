@@ -4,7 +4,6 @@ import pandas as pd
 import numpy as np
 import itertools
 from pathlib import Path
-from .model_index import ModelIndex
 
 import asyncio
 from typing import Dict, List
@@ -14,10 +13,6 @@ import logging
 
 
 logger = logging.getLogger()
-
-# Connection to the servers
-model_index_url = "http://10.241.68.86:7001/v1/"
-mdx = ModelIndex(url=model_index_url)
 
 class OPC_UA:
     """Value data from the opc ua api server 
@@ -57,7 +52,7 @@ class OPC_UA:
         }
         return node_id_dict
 
-    def get_live_values_data(self, server_url: str, include_variables: List, obj_dataframe: pd.DataFrame):
+    def get_live_values_data(self, model_index: object, server_url: str, include_variables: List, obj_dataframe: pd.DataFrame):
         """Request to get real time data values of the variables for the requested node(s)
 
         Args:
@@ -65,7 +60,7 @@ class OPC_UA:
             include_variables (List): list of variables 
             obj_dataframe (pd.DataFrame): dataframe of object ids
         """
-        node_ids = mdx.get_vars_node_ids(obj_dataframe)
+        node_ids = model_index.get_vars_node_ids(obj_dataframe)
         var_node_ids = [x for x in node_ids if (x.split(".")[-1]) in include_variables]
         node_ids_dicts = [self.split_node_id(x) for x in var_node_ids]
         body = json.dumps([
