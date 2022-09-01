@@ -1,20 +1,28 @@
 import requests
 import json
 import pandas as pd
-
+from pydantic import BaseModel, HttpUrl, AnyUrl
 import logging
 
 logger = logging.getLogger()
 
+class RESTUrls(BaseModel):
+    rest_url: HttpUrl
 
 class ModelIndex:
     """Data structure from the model index API server
     """
     def __init__(self, url: str):
+        RESTUrls(rest_url=url)
         self.url = url
-        self.object_types = self.get_object_types()
+        self.object_types = self.get_object_types(return_format="json")
 
-    def request(self, method: str, endpoint: str, data=None):       
+    def as_dataframe(self, content) -> pd.DataFrame:
+        if content is None:
+            return None
+        return pd.DataFrame(content)
+
+    def request(self, method: str, endpoint: str, data=None) -> json:       
         if method == 'GET':
             result = requests.get(self.url + endpoint)
         elif method == 'POST':
@@ -26,11 +34,17 @@ class ModelIndex:
         else:
             return None
 
-    def get_namespace_array(self):
-        return pd.DataFrame(self.request('GET', 'query/namespace-array'))
+    def get_namespace_array(self, return_format="dataframe") -> json:
+        content = self.request('GET', 'query/namespace-array')
+        if return_format == "dataframe":
+            return self.as_dataframe(content)
+        return content
 
-    def get_object_types(self):
-        return self.request('GET', 'query/object-types')
+    def get_object_types(self, return_format="dataframe") -> json:
+        content = self.request('GET', 'query/object-types')
+        if return_format == "dataframe":
+            return self.as_dataframe(content)
+        return content
 
     def get_object_type_id_from_name(self, type_name: str) -> str:
         """Function to get object type id from type name
@@ -42,7 +56,7 @@ class ModelIndex:
         object_type_id = obj_type.get("Id")
         return object_type_id
 
-    def get_objects_of_type(self, type_name: str):
+    def get_objects_of_type(self, type_name: str, return_format="dataframe"):
         """Function to get all the types of an object
 
         Args:
@@ -50,9 +64,12 @@ class ModelIndex:
         """
         object_type_id = self.get_object_type_id_from_name(type_name)
         body = json.dumps({"typeId": object_type_id})
-        return pd.DataFrame(self.request('POST', 'query/objects-of-type', body))
+        content = self.request('POST', 'query/objects-of-type', body)
+        if return_format == "dataframe":
+            return self.as_dataframe(content)
+        return content
 
-    def get_object_descendants(self, type_name: str, obj_dataframe: pd.DataFrame, domain: str) -> pd.DataFrame:
+    def get_object_descendants(self, type_name: str, obj_dataframe: pd.DataFrame, domain: str, return_format="dataframe") -> json:
         """A function to get object descendants
 
         Args:
@@ -71,9 +88,12 @@ class ModelIndex:
             "objectIds": object_Ids,
             "domain": domain
             })
-        return pd.DataFrame(self.request('POST', 'query/object-descendants', body))
+        content = self.request('POST', 'query/object-descendants', body)
+        if return_format == "dataframe":
+            return self.as_dataframe(content)
+        return content
 
-    def get_object_ancestors(self, type_name: str, obj_dataframe: pd.DataFrame, domain: str) -> pd.DataFrame:
+    def get_object_ancestors(self, type_name: str, obj_dataframe: pd.DataFrame, domain: str, return_format="dataframe") -> json:
         """Function to get object ancestors
 
         Args:
@@ -92,4 +112,8 @@ class ModelIndex:
             "objectIds": object_Ids,
             "domain": domain
             })
-        return pd.DataFrame(self.request('POST', 'query/object-ancestors', body))
+        content = self.request('POST', 'query/object-ancestors', body)
+        if return_format == "dataframe":
+            return self.as_dataframe(content)
+        return content
+

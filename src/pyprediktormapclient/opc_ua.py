@@ -8,9 +8,15 @@ import asyncio
 from typing import Dict, List
 from aiohttp import ClientSession
 import logging
+from pydantic import BaseModel, HttpUrl, AnyUrl
 
 
 logger = logging.getLogger()
+
+class OPCUrls(BaseModel):
+    rest_url: HttpUrl
+    opcua_url: AnyUrl
+
 
 class OPC_UA:
     """Value data from the opc ua api server 
@@ -27,6 +33,7 @@ class OPC_UA:
         Returns:
             Object: The initialized class object
         """
+        OPCUrls(rest_url=rest_url, opcua_url=opcua_url)
         self.rest_url = rest_url
         self.opcua_url = opcua_url
 
