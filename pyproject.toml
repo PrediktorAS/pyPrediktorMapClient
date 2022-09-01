@@ -8,7 +8,6 @@ authors = ["MeenaBana <meenabana@outlook.com>"]
 python = "^3.8"
 ipykernel = "^6.15.1"
 pandas = "^1.4.3"
-urllib3 = "^1.26.10"
 requests = "^2.28.1"
 aiohttp = "^3.8.1"
 pyarrow = "^9.0.0"
@@ -17,6 +16,7 @@ Jinja2 = "^3.1.2"
 ipython-autotime = "^0.3.1"
 
 [tool.poetry.dev-dependencies]
+notebook = "^6.4.12"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

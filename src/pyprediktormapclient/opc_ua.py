@@ -4,9 +4,6 @@ import pandas as pd
 import numpy as np
 import itertools
 from pathlib import Path
-
-from .common import get_vars_node_ids, expand_props_vars
-
 import asyncio
 from typing import Dict, List
 from aiohttp import ClientSession
@@ -44,7 +41,43 @@ class OPC_UA:
             return result.json()
         else:
             return None
- 
+
+    def get_vars_node_ids(self, obj_dataframe: pd.DataFrame) -> List:
+        """Function to get variables node ids of the objects
+
+        Args:
+            obj_dataframe (pd.DataFrame): object dataframe
+        Returns:
+            List: list of variables' node ids
+        """                
+        objects_vars = obj_dataframe["Vars"]
+        # Flatten the list
+        vars_list = [x for xs in objects_vars for x in xs]
+        vars_node_ids = [x["Id"] for x in vars_list]
+        return vars_node_ids
+
+    def expand_props_vars(self, json_df: pd.DataFrame):
+        """Get a dataframe with required columns by expanding and merging back Vars and Props columns
+
+        Args:
+            json_df (pd.DataFrame): json dataframe of API request
+        Returns:
+            dataframe: Pandas dataframe
+        """
+        # Make list of column names except vars and props 
+        non_vars_props_columns = [x for x in json_df.columns if x not in ['Vars','Props']]
+        json_df1 = json_df.explode('Props').reset_index(drop=True)
+        json_df1[['Parameter','Value']] = json_df1['Props'].apply(pd.Series)
+        json_df1 = json_df1.drop(columns=['Props','Vars'])
+        # Create Pivot to convert parameter column into dataframe's columns
+        json_df_props = json_df1.pivot(index=non_vars_props_columns,columns='Parameter',values='Value').reset_index()
+        json_df_props.columns.name = None
+        json_df_vars = json_df.explode('Vars').reset_index(drop=True)
+        json_df_vars[['Variable','VariableId']] = json_df_vars['Vars'].apply(pd.Series)
+        json_df_vars = json_df_vars.drop(columns=['Vars', 'Props'])
+        # Merge props and vars dataframes
+        json_df_merged = json_df_vars.merge(json_df_props,on=non_vars_props_columns)
+        return json_df_merged
 
     def split_node_id(self, node_id: str):
         """Functions to get node id(s) with namespace index and data format of the node  
@@ -69,7 +102,7 @@ class OPC_UA:
             include_variables (List): list of variables 
             obj_dataframe (pd.DataFrame): dataframe of object ids
         """
-        node_ids = get_vars_node_ids(obj_dataframe)
+        node_ids = self.get_vars_node_ids(obj_dataframe)
         var_node_ids = [x for x in node_ids if (x.split(".")[-1]) in include_variables]
         node_ids_dicts = [self.split_node_id(x) for x in var_node_ids]
         body = json.dumps([
@@ -88,7 +121,7 @@ class OPC_UA:
             result1 = result.drop(columns=['Value.Type','ServerTimestamp']).set_axis(['Timestamp', 'Value','Code','Quality'], axis=1)
         elif len(result.columns) == 4:
             result1 = result.drop(columns=['Value.Type','ServerTimestamp']).set_axis(['Timestamp', 'Value'], axis=1)
-        df = expand_props_vars(obj_dataframe)
+        df = self.expand_props_vars(obj_dataframe)
         name_column = [x for x in df if x in ['DisplayName','DescendantName', 'AncestorName']][0]
         df1 = df[['VariableId', name_column, 'Variable']].set_axis(['Id', 'Name', 'Variable'], axis=1)
         # Filtering dataframe for the variables
@@ -142,7 +175,7 @@ class OPC_UA:
             yield ids_list[i:i + n]
 
     ############### Functions for multithreading API calls for aggregated historical data
-    async def http_get_with_aiohttp(self,session: ClientSession, endpoint: str, data, timeout: int = 10E25):
+    async def http_get_with_aiohttp(self, session: ClientSession, endpoint: str, data, timeout: int = 10E25):
         """Request function for aiohttp based API request
 
         Args:
@@ -211,11 +244,20 @@ class OPC_UA:
         df = df_merge.drop(columns=['DataValues']).set_axis(['Id','Variable', 'Value','Timestamp','Code','Quality'], axis=1)
         return df
 
-    async def get_agg_hist_value_data(self,session: ClientSession, start_time: str, end_time: str, pro_interval: int, agg_name: str, obj_dataframe: pd.DataFrame, include_variables: List, chunk_size=100000,batch_size=1000,max_workers=50,timeout: int = 10E25):
+    async def get_agg_hist_value_data(self, 
+        start_time: str,
+        end_time: str,
+        pro_interval: int,
+        agg_name: str,
+        obj_dataframe: pd.DataFrame,
+        include_variables: List,
+        chunk_size: int = 100000,
+        batch_size: int = 1000, 
+        max_workers: int = 50,
+        timeout: int = 10E25):
         """Function to make aiohttp based multithreaded api requests to get aggregated historical data from opc ua api server and write the data in 'Data' folder in parquet files.
 
         Args:
-            session (ClientSession): session of one request
             start_time (str): start time of requested data
             end_time (str): end time of requested data
             pro_interval (int): interval time of processing in milliseconds
@@ -226,8 +268,9 @@ class OPC_UA:
             batch_size (int, optional): size of each Id chunck. Defaults to 1000.
             max_workers (int, optional): maximum number of workers(CPU). Defaults to 50.
             timeout (int, optional): timeout time of one session. Defaults to 10E25.
+            session (ClientSession, optional): session of one request. Default to None and is automatically created
         """
-        node_ids = get_vars_node_ids(obj_dataframe)
+        node_ids = self.get_vars_node_ids(obj_dataframe)
         var_node_ids = [x for x in node_ids if (x.split(".")[-1]) in include_variables]
         read_value_ids = [self.create_readvalueids_dict(x,agg_name) for x in var_node_ids]
         # Lenght of time series
@@ -268,15 +311,16 @@ class OPC_UA:
         for j,body_chunks in enumerate(body_chunks_list):
             logger.info("Requesting data for body chunk no. : "+str(j))
             # Request chunkwise data
-            results = await asyncio.gather(*[self.http_get_with_aiohttp(session, endpoint,body,timeout) for body in body_chunks])
-            # Create a dataframe and save as parquet
-            results_list = []
-            for res in results:
-                if res is not None:
-                    for x in res['HistoryReadResults']:
-                        results_list.append(x)
-            df_results = pd.DataFrame(results_list)
-            df = self.process_response_dataframe(df_results)
-            df.to_parquet('Data/data_chunk_'+str(j)+'.parquet')
-        logger.info(" Data donwload is complete ")
+            async with ClientSession() as session:
+                results = await asyncio.gather(*[self.http_get_with_aiohttp(session, endpoint, body, timeout) for body in body_chunks])
+                # Create a dataframe and save as parquet
+                results_list = []
+                for res in results:
+                    if res is not None:
+                        for x in res['HistoryReadResults']:
+                            results_list.append(x)
+                df_results = pd.DataFrame(results_list)
+                df = self.process_response_dataframe(df_results)
+                df.to_parquet('Data/data_chunk_'+str(j)+'.parquet')
+        logger.info(" Data download is complete ")
     
