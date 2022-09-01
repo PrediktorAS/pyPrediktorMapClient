@@ -1,5 +1,4 @@
 import sys
-from .common import *
 from .model_index import *
 from .opc_ua import *
 
