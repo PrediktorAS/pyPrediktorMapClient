@@ -9,8 +9,12 @@ Using model index script, required structure data can be downloaded and further 
 ```
 git clone git@github.com:PrediktorAS/pyPrediktorMapClient.git
 ```
-2. Install dependencies
-As this is a python package, dependencies are in setyp.py (actually in setup.cfg, as this is a pyScaffold project)
+2. Create a virtual environment and activate it
+```
+python3 -m venv .venv
+source .venv/bin/activate
+```
+3. Install dependencies
 ```
 pip install -e .
 ```
