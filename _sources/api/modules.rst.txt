@@ -1,0 +1,7 @@
+pyprediktormapclient
+====================
+
+.. toctree::
+   :maxdepth: 4
+
+   pyprediktormapclient
