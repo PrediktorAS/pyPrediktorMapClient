@@ -1,8 +1,8 @@
 name: Pages
 on:
   push:
-    branches:
-    - main
+    tags:
+    - '*'
 jobs:
   build:
     runs-on: ubuntu-latest
