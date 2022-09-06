@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pyprediktormapclient.model_index &mdash; pyPrediktorMapClient 0.0.4 documentation</title>
+  <title>pyprediktormapclient.model_index &mdash; pyPrediktorMapClient 0.0.5 documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -28,7 +28,7 @@
             <a href="../../index.html" class="icon icon-home"> pyPrediktorMapClient
           </a>
               <div class="version">
-                0.0.4
+                0.0.5
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -92,11 +92,25 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">object_types</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_object_types</span><span class="p">(</span><span class="n">return_format</span><span class="o">=</span><span class="s2">&quot;json&quot;</span><span class="p">)</span>
 
 <div class="viewcode-block" id="ModelIndex.as_dataframe"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.model_index.ModelIndex.as_dataframe">[docs]</a>    <span class="k">def</span> <span class="nf">as_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Function to convert a json string to Pandas DataFrame</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            content (str): the json string </span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">content</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">content</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="ModelIndex.request"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.model_index.ModelIndex.request">[docs]</a>    <span class="k">def</span> <span class="nf">request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">json</span><span class="p">:</span>       
+<div class="viewcode-block" id="ModelIndex.request"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.model_index.ModelIndex.request">[docs]</a>    <span class="k">def</span> <span class="nf">request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Function to perform the request to the ModelIndex server</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            method (str): &quot;GET&quot; or &quot;POST&quot;</span>
+<span class="sd">            endpoint (str): The last part of the url (without the leading &quot;/&quot;) </span>
+<span class="sd">            data (str): defaults to None but can contain the data to tsend to the endpoint</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            JSON: The result if successfull</span>
+<span class="sd">        &quot;&quot;&quot;</span>      
         <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;GET&#39;</span><span class="p">:</span>
             <span class="n">result</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url</span> <span class="o">+</span> <span class="n">endpoint</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;POST&#39;</span><span class="p">:</span>
@@ -108,13 +122,13 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span></div>
 
-<div class="viewcode-block" id="ModelIndex.get_namespace_array"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.model_index.ModelIndex.get_namespace_array">[docs]</a>    <span class="k">def</span> <span class="nf">get_namespace_array</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">return_format</span><span class="o">=</span><span class="s2">&quot;dataframe&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">json</span><span class="p">:</span>
+<div class="viewcode-block" id="ModelIndex.get_namespace_array"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.model_index.ModelIndex.get_namespace_array">[docs]</a>    <span class="k">def</span> <span class="nf">get_namespace_array</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">return_format</span><span class="o">=</span><span class="s2">&quot;dataframe&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="n">content</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="s1">&#39;query/namespace-array&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">return_format</span> <span class="o">==</span> <span class="s2">&quot;dataframe&quot;</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">as_dataframe</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">content</span></div>
 
-<div class="viewcode-block" id="ModelIndex.get_object_types"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.model_index.ModelIndex.get_object_types">[docs]</a>    <span class="k">def</span> <span class="nf">get_object_types</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">return_format</span><span class="o">=</span><span class="s2">&quot;dataframe&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">json</span><span class="p">:</span>
+<div class="viewcode-block" id="ModelIndex.get_object_types"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.model_index.ModelIndex.get_object_types">[docs]</a>    <span class="k">def</span> <span class="nf">get_object_types</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">return_format</span><span class="o">=</span><span class="s2">&quot;dataframe&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="n">content</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="s1">&#39;query/object-types&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">return_format</span> <span class="o">==</span> <span class="s2">&quot;dataframe&quot;</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">as_dataframe</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
@@ -122,6 +136,12 @@
 
 <div class="viewcode-block" id="ModelIndex.get_object_type_id_from_name"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.model_index.ModelIndex.get_object_type_id_from_name">[docs]</a>    <span class="k">def</span> <span class="nf">get_object_type_id_from_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">type_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Function to get object type id from type name</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            type_name (str): type name</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str: the type id that corresponds with the id</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">obj_type</span> <span class="o">=</span>  <span class="nb">next</span><span class="p">(</span><span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_types</span> <span class="k">if</span> <span class="n">item</span><span class="p">[</span><span class="s2">&quot;BrowseName&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">type_name</span><span class="p">)</span>
@@ -130,11 +150,14 @@
         <span class="n">object_type_id</span> <span class="o">=</span> <span class="n">obj_type</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Id&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">object_type_id</span></div>
 
-<div class="viewcode-block" id="ModelIndex.get_objects_of_type"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.model_index.ModelIndex.get_objects_of_type">[docs]</a>    <span class="k">def</span> <span class="nf">get_objects_of_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">type_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">return_format</span><span class="o">=</span><span class="s2">&quot;dataframe&quot;</span><span class="p">):</span>
+<div class="viewcode-block" id="ModelIndex.get_objects_of_type"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.model_index.ModelIndex.get_objects_of_type">[docs]</a>    <span class="k">def</span> <span class="nf">get_objects_of_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">type_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">return_format</span><span class="o">=</span><span class="s2">&quot;dataframe&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Function to get all the types of an object</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            type_name (str): type name </span>
+<span class="sd">            type_name (str): type name</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pd.DataFrame or JSON: a Dataframe or JSON with the objects</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">object_type_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_object_type_id_from_name</span><span class="p">(</span><span class="n">type_name</span><span class="p">)</span>
         <span class="n">body</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s2">&quot;typeId&quot;</span><span class="p">:</span> <span class="n">object_type_id</span><span class="p">})</span>
@@ -143,7 +166,7 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">as_dataframe</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">content</span></div>
 
-<div class="viewcode-block" id="ModelIndex.get_object_descendants"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.model_index.ModelIndex.get_object_descendants">[docs]</a>    <span class="k">def</span> <span class="nf">get_object_descendants</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">type_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">obj_dataframe</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">domain</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">return_format</span><span class="o">=</span><span class="s2">&quot;dataframe&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">json</span><span class="p">:</span>
+<div class="viewcode-block" id="ModelIndex.get_object_descendants"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.model_index.ModelIndex.get_object_descendants">[docs]</a>    <span class="k">def</span> <span class="nf">get_object_descendants</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">type_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">obj_dataframe</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">domain</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">return_format</span><span class="o">=</span><span class="s2">&quot;dataframe&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;A function to get object descendants</span>
 
 <span class="sd">        Args:</span>
@@ -152,7 +175,7 @@
 <span class="sd">            domain (str): PV_Assets or PV_Serves</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            pd.DataFrame: descendats data of selected object</span>
+<span class="sd">            pd.DataFrame or JSON: descendats data of selected object</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">object_type_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_object_type_id_from_name</span><span class="p">(</span><span class="n">type_name</span><span class="p">)</span>
         <span class="n">id_column</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">obj_dataframe</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;Id&#39;</span><span class="p">,</span><span class="s1">&#39;DescendantId&#39;</span><span class="p">,</span> <span class="s1">&#39;AncestorId&#39;</span><span class="p">]][</span><span class="mi">0</span><span class="p">]</span>
@@ -167,7 +190,7 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">as_dataframe</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">content</span></div>
 
-<div class="viewcode-block" id="ModelIndex.get_object_ancestors"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.model_index.ModelIndex.get_object_ancestors">[docs]</a>    <span class="k">def</span> <span class="nf">get_object_ancestors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">type_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">obj_dataframe</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">domain</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">return_format</span><span class="o">=</span><span class="s2">&quot;dataframe&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">json</span><span class="p">:</span>
+<div class="viewcode-block" id="ModelIndex.get_object_ancestors"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.model_index.ModelIndex.get_object_ancestors">[docs]</a>    <span class="k">def</span> <span class="nf">get_object_ancestors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">type_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">obj_dataframe</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">domain</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">return_format</span><span class="o">=</span><span class="s2">&quot;dataframe&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Function to get object ancestors</span>
 
 <span class="sd">        Args:</span>
@@ -176,7 +199,7 @@
 <span class="sd">            domain (str): Either PV_Assets or PV_Serves</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            pd.DataFrame: ancestors data of selected object</span>
+<span class="sd">            pd.DataFrame or JSON: ancestors data of selected object</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">object_type_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_object_type_id_from_name</span><span class="p">(</span><span class="n">type_name</span><span class="p">)</span>
         <span class="n">id_column</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">obj_dataframe</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;Id&#39;</span><span class="p">,</span><span class="s1">&#39;AncestorId&#39;</span><span class="p">,</span> <span class="s1">&#39;DescendantId&#39;</span><span class="p">]][</span><span class="mi">0</span><span class="p">]</span>
