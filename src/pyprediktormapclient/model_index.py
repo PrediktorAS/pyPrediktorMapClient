@@ -18,11 +18,25 @@ class ModelIndex:
         self.object_types = self.get_object_types(return_format="json")
 
     def as_dataframe(self, content) -> pd.DataFrame:
+        """Function to convert a json string to Pandas DataFrame
+
+        Args:
+            content (str): the json string 
+        """
         if content is None:
             return None
         return pd.DataFrame(content)
 
-    def request(self, method: str, endpoint: str, data=None) -> json:       
+    def request(self, method: str, endpoint: str, data=None) -> str:
+        """Function to perform the request to the ModelIndex server
+
+        Args:
+            method (str): "GET" or "POST"
+            endpoint (str): The last part of the url (without the leading "/") 
+            data (str): defaults to None but can contain the data to tsend to the endpoint
+        Returns:
+            JSON: The result if successfull
+        """      
         if method == 'GET':
             result = requests.get(self.url + endpoint)
         elif method == 'POST':
@@ -34,13 +48,13 @@ class ModelIndex:
         else:
             return None
 
-    def get_namespace_array(self, return_format="dataframe") -> json:
+    def get_namespace_array(self, return_format="dataframe") -> str:
         content = self.request('GET', 'query/namespace-array')
         if return_format == "dataframe":
             return self.as_dataframe(content)
         return content
 
-    def get_object_types(self, return_format="dataframe") -> json:
+    def get_object_types(self, return_format="dataframe") -> str:
         content = self.request('GET', 'query/object-types')
         if return_format == "dataframe":
             return self.as_dataframe(content)
@@ -48,6 +62,12 @@ class ModelIndex:
 
     def get_object_type_id_from_name(self, type_name: str) -> str:
         """Function to get object type id from type name
+
+        Args:
+            type_name (str): type name
+
+        Returns:
+            str: the type id that corresponds with the id
         """
         try:
             obj_type =  next(item for item in self.object_types if item["BrowseName"] == type_name)
@@ -56,11 +76,14 @@ class ModelIndex:
         object_type_id = obj_type.get("Id")
         return object_type_id
 
-    def get_objects_of_type(self, type_name: str, return_format="dataframe"):
+    def get_objects_of_type(self, type_name: str, return_format="dataframe") -> str:
         """Function to get all the types of an object
 
         Args:
-            type_name (str): type name 
+            type_name (str): type name
+
+        Returns:
+            pd.DataFrame or JSON: a Dataframe or JSON with the objects
         """
         object_type_id = self.get_object_type_id_from_name(type_name)
         body = json.dumps({"typeId": object_type_id})
@@ -69,7 +92,7 @@ class ModelIndex:
             return self.as_dataframe(content)
         return content
 
-    def get_object_descendants(self, type_name: str, obj_dataframe: pd.DataFrame, domain: str, return_format="dataframe") -> json:
+    def get_object_descendants(self, type_name: str, obj_dataframe: pd.DataFrame, domain: str, return_format="dataframe") -> str:
         """A function to get object descendants
 
         Args:
@@ -78,7 +101,7 @@ class ModelIndex:
             domain (str): PV_Assets or PV_Serves
 
         Returns:
-            pd.DataFrame: descendats data of selected object
+            pd.DataFrame or JSON: descendats data of selected object
         """
         object_type_id = self.get_object_type_id_from_name(type_name)
         id_column = [x for x in obj_dataframe if x in ['Id','DescendantId', 'AncestorId']][0]
@@ -93,7 +116,7 @@ class ModelIndex:
             return self.as_dataframe(content)
         return content
 
-    def get_object_ancestors(self, type_name: str, obj_dataframe: pd.DataFrame, domain: str, return_format="dataframe") -> json:
+    def get_object_ancestors(self, type_name: str, obj_dataframe: pd.DataFrame, domain: str, return_format="dataframe") -> str:
         """Function to get object ancestors
 
         Args:
@@ -102,7 +125,7 @@ class ModelIndex:
             domain (str): Either PV_Assets or PV_Serves
 
         Returns:
-            pd.DataFrame: ancestors data of selected object
+            pd.DataFrame or JSON: ancestors data of selected object
         """
         object_type_id = self.get_object_type_id_from_name(type_name)
         id_column = [x for x in obj_dataframe if x in ['Id','AncestorId', 'DescendantId']][0]
