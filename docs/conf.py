@@ -90,7 +90,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "pyPrediktorMapClient"
-copyright = "2022, MeenaBana"
+copyright = "2022, Prediktor Support"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -248,7 +248,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-    ("index", "user_guide.tex", "pyPrediktorMapClient Documentation", "MeenaBana", "manual")
+    ("index", "user_guide.tex", "pyPrediktorMapClient Documentation", "Prediktor Support", "manual")
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
