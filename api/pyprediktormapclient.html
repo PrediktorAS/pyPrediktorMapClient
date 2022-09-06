@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>pyprediktormapclient package &#8212; pyPrediktorMapClient unknown documentation</title>
+    <title>pyprediktormapclient package &#8212; pyPrediktorMapClient 0.0.1.post1.dev9+g92b2a6c documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
@@ -38,14 +38,337 @@
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading">¶</a></h2>
 </section>
-<section id="pyprediktormapclient-model-index-module">
-<h2>pyprediktormapclient.model_index module<a class="headerlink" href="#pyprediktormapclient-model-index-module" title="Permalink to this heading">¶</a></h2>
+<section id="module-pyprediktormapclient.model_index">
+<span id="pyprediktormapclient-model-index-module"></span><h2>pyprediktormapclient.model_index module<a class="headerlink" href="#module-pyprediktormapclient.model_index" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="pyprediktormapclient.model_index.ModelIndex">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyprediktormapclient.model_index.</span></span><span class="sig-name descname"><span class="pre">ModelIndex</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyprediktormapclient/model_index.html#ModelIndex"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.model_index.ModelIndex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#object" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Data structure from the model index API server</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pyprediktormapclient.model_index.ModelIndex.as_dataframe">
+<span class="sig-name descname"><span class="pre">as_dataframe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">content</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v1.4.4)"><span class="pre">DataFrame</span></a></span></span><a class="reference internal" href="../_modules/pyprediktormapclient/model_index.html#ModelIndex.as_dataframe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.model_index.ModelIndex.as_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyprediktormapclient.model_index.ModelIndex.get_namespace_array">
+<span class="sig-name descname"><span class="pre">get_namespace_array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">return_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'dataframe'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">&lt;module</span> <span class="pre">'json'</span> <span class="pre">from</span> <span class="pre">'/opt/hostedtoolcache/Python/3.10.6/x64/lib/python3.10/json/__init__.py'&gt;</span></span></span><a class="reference internal" href="../_modules/pyprediktormapclient/model_index.html#ModelIndex.get_namespace_array"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.model_index.ModelIndex.get_namespace_array" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyprediktormapclient.model_index.ModelIndex.get_object_ancestors">
+<span class="sig-name descname"><span class="pre">get_object_ancestors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj_dataframe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v1.4.4)"><span class="pre">DataFrame</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">domain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'dataframe'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">&lt;module</span> <span class="pre">'json'</span> <span class="pre">from</span> <span class="pre">'/opt/hostedtoolcache/Python/3.10.6/x64/lib/python3.10/json/__init__.py'&gt;</span></span></span><a class="reference internal" href="../_modules/pyprediktormapclient/model_index.html#ModelIndex.get_object_ancestors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.model_index.ModelIndex.get_object_ancestors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to get object ancestors</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>type_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – type_name of a parent type</p></li>
+<li><p><strong>obj_dataframe</strong> (<em>pd.DataFrame</em>) – dataframe of object ids</p></li>
+<li><p><strong>domain</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – Either PV_Assets or PV_Serves</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>ancestors data of selected object</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyprediktormapclient.model_index.ModelIndex.get_object_descendants">
+<span class="sig-name descname"><span class="pre">get_object_descendants</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj_dataframe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v1.4.4)"><span class="pre">DataFrame</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">domain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'dataframe'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">&lt;module</span> <span class="pre">'json'</span> <span class="pre">from</span> <span class="pre">'/opt/hostedtoolcache/Python/3.10.6/x64/lib/python3.10/json/__init__.py'&gt;</span></span></span><a class="reference internal" href="../_modules/pyprediktormapclient/model_index.html#ModelIndex.get_object_descendants"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.model_index.ModelIndex.get_object_descendants" title="Permalink to this definition">¶</a></dt>
+<dd><p>A function to get object descendants</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>type_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – type_name of a descendant</p></li>
+<li><p><strong>obj_dataframe</strong> (<em>pd.DataFrame</em>) – dataframe of object ids</p></li>
+<li><p><strong>domain</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – PV_Assets or PV_Serves</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>descendats data of selected object</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyprediktormapclient.model_index.ModelIndex.get_object_type_id_from_name">
+<span class="sig-name descname"><span class="pre">get_object_type_id_from_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></span><a class="reference internal" href="../_modules/pyprediktormapclient/model_index.html#ModelIndex.get_object_type_id_from_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.model_index.ModelIndex.get_object_type_id_from_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to get object type id from type name</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyprediktormapclient.model_index.ModelIndex.get_object_types">
+<span class="sig-name descname"><span class="pre">get_object_types</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">return_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'dataframe'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">&lt;module</span> <span class="pre">'json'</span> <span class="pre">from</span> <span class="pre">'/opt/hostedtoolcache/Python/3.10.6/x64/lib/python3.10/json/__init__.py'&gt;</span></span></span><a class="reference internal" href="../_modules/pyprediktormapclient/model_index.html#ModelIndex.get_object_types"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.model_index.ModelIndex.get_object_types" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyprediktormapclient.model_index.ModelIndex.get_objects_of_type">
+<span class="sig-name descname"><span class="pre">get_objects_of_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'dataframe'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyprediktormapclient/model_index.html#ModelIndex.get_objects_of_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.model_index.ModelIndex.get_objects_of_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to get all the types of an object</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>type_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – type name</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyprediktormapclient.model_index.ModelIndex.request">
+<span class="sig-name descname"><span class="pre">request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">endpoint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">&lt;module</span> <span class="pre">'json'</span> <span class="pre">from</span> <span class="pre">'/opt/hostedtoolcache/Python/3.10.6/x64/lib/python3.10/json/__init__.py'&gt;</span></span></span><a class="reference internal" href="../_modules/pyprediktormapclient/model_index.html#ModelIndex.request"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.model_index.ModelIndex.request" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pyprediktormapclient.model_index.RESTUrls">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyprediktormapclient.model_index.</span></span><span class="sig-name descname"><span class="pre">RESTUrls</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rest_url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">HttpUrl</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyprediktormapclient/model_index.html#RESTUrls"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.model_index.RESTUrls" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyprediktormapclient.model_index.RESTUrls.rest_url">
+<span class="sig-name descname"><span class="pre">rest_url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">HttpUrl</span></em><a class="headerlink" href="#pyprediktormapclient.model_index.RESTUrls.rest_url" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 </section>
-<section id="pyprediktormapclient-opc-ua-module">
-<h2>pyprediktormapclient.opc_ua module<a class="headerlink" href="#pyprediktormapclient-opc-ua-module" title="Permalink to this heading">¶</a></h2>
+<section id="module-pyprediktormapclient.opc_ua">
+<span id="pyprediktormapclient-opc-ua-module"></span><h2>pyprediktormapclient.opc_ua module<a class="headerlink" href="#module-pyprediktormapclient.opc_ua" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="pyprediktormapclient.opc_ua.OPCUrls">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyprediktormapclient.opc_ua.</span></span><span class="sig-name descname"><span class="pre">OPCUrls</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rest_url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">HttpUrl</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opcua_url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">AnyUrl</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyprediktormapclient/opc_ua.html#OPCUrls"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.opc_ua.OPCUrls" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyprediktormapclient.opc_ua.OPCUrls.opcua_url">
+<span class="sig-name descname"><span class="pre">opcua_url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">AnyUrl</span></em><a class="headerlink" href="#pyprediktormapclient.opc_ua.OPCUrls.opcua_url" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyprediktormapclient.opc_ua.OPCUrls.rest_url">
+<span class="sig-name descname"><span class="pre">rest_url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">HttpUrl</span></em><a class="headerlink" href="#pyprediktormapclient.opc_ua.OPCUrls.rest_url" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pyprediktormapclient.opc_ua.OPC_UA">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyprediktormapclient.opc_ua.</span></span><span class="sig-name descname"><span class="pre">OPC_UA</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rest_url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">opcua_url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyprediktormapclient/opc_ua.html#OPC_UA"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.opc_ua.OPC_UA" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#object" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Value data from the opc ua api server</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>live and aggregated historical value data</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="pyprediktormapclient.opc_ua.OPC_UA.chunk_datetimes">
+<span class="sig-name descname"><span class="pre">chunk_datetimes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_time_splits</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyprediktormapclient/opc_ua.html#OPC_UA.chunk_datetimes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.opc_ua.OPC_UA.chunk_datetimes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to get chunked datetimes for the selected time periods(dates)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>start_time</strong> (<em>_type_</em>) – time from</p></li>
+<li><p><strong>end_time</strong> (<em>_type_</em>) – time to</p></li>
+<li><p><strong>n_time_splits</strong> (<em>_type_</em>) – number of splits</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>list of datetimes tuples</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyprediktormapclient.opc_ua.OPC_UA.chunk_ids">
+<span class="sig-name descname"><span class="pre">chunk_ids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ids_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyprediktormapclient/opc_ua.html#OPC_UA.chunk_ids"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.opc_ua.OPC_UA.chunk_ids" title="Permalink to this definition">¶</a></dt>
+<dd><p>Yield successive n-sized chunks from ids_list.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyprediktormapclient.opc_ua.OPC_UA.create_readvalueids_dict">
+<span class="sig-name descname"><span class="pre">create_readvalueids_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">agg_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3.10/library/typing.html#typing.Dict" title="(in Python v3.10)"><span class="pre">Dict</span></a></span></span><a class="reference internal" href="../_modules/pyprediktormapclient/opc_ua.html#OPC_UA.create_readvalueids_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.opc_ua.OPC_UA.create_readvalueids_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>A function to get ReadValueIds</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>node_id</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – node id of a node</p></li>
+<li><p><strong>agg_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – name of aggregation</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict. of node id with aggregation</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyprediktormapclient.opc_ua.OPC_UA.expand_props_vars">
+<span class="sig-name descname"><span class="pre">expand_props_vars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">json_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v1.4.4)"><span class="pre">DataFrame</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyprediktormapclient/opc_ua.html#OPC_UA.expand_props_vars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.opc_ua.OPC_UA.expand_props_vars" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a dataframe with required columns by expanding and merging back Vars and Props columns</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>json_df</strong> (<em>pd.DataFrame</em>) – json dataframe of API request</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Pandas dataframe</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dataframe</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyprediktormapclient.opc_ua.OPC_UA.filter_json_response">
+<span class="sig-name descname"><span class="pre">filter_json_response</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">response_json:</span> <span class="pre">&lt;module</span> <span class="pre">'json'</span> <span class="pre">from</span> <span class="pre">'/opt/hostedtoolcache/Python/3.10.6/x64/lib/python3.10/json/__init__.py'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyprediktormapclient/opc_ua.html#OPC_UA.filter_json_response"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.opc_ua.OPC_UA.filter_json_response" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to filter json data after requesting to opc ua server</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>response_json</strong> (<em>json</em>) – api call response</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>filtered json response</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyprediktormapclient.opc_ua.OPC_UA.filter_read_results">
+<span class="sig-name descname"><span class="pre">filter_read_results</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.10/library/typing.html#typing.Dict" title="(in Python v3.10)"><span class="pre">Dict</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3.10/library/typing.html#typing.Dict" title="(in Python v3.10)"><span class="pre">Dict</span></a></span></span><a class="reference internal" href="../_modules/pyprediktormapclient/opc_ua.html#OPC_UA.filter_read_results"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.opc_ua.OPC_UA.filter_read_results" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to filter HistoryReadResults’ list of dictionaries</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>Dict</em>) – dict of json response</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>filtered dict</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyprediktormapclient.opc_ua.OPC_UA.get_agg_hist_value_data">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_agg_hist_value_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">pro_interval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">agg_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj_dataframe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v1.4.4)"><span class="pre">DataFrame</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_variables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.10/library/typing.html#typing.List" title="(in Python v3.10)"><span class="pre">List</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">chunk_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_workers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e+26</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyprediktormapclient/opc_ua.html#OPC_UA.get_agg_hist_value_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.opc_ua.OPC_UA.get_agg_hist_value_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to make aiohttp based multithreaded api requests to get aggregated historical data from opc ua api server and write the data in ‘Data’ folder in parquet files.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>start_time</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – start time of requested data</p></li>
+<li><p><strong>end_time</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – end time of requested data</p></li>
+<li><p><strong>pro_interval</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – interval time of processing in milliseconds</p></li>
+<li><p><strong>agg_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – name of aggregation</p></li>
+<li><p><strong>obj_dataframe</strong> (<em>pd.DataFrame</em>) – dataframe of object ids</p></li>
+<li><p><strong>include_variables</strong> (<em>List</em>) – list of variables to include</p></li>
+<li><p><strong>chunk_size</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – time chunk size. Defaults to 100000.</p></li>
+<li><p><strong>batch_size</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – size of each Id chunck. Defaults to 1000.</p></li>
+<li><p><strong>max_workers</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – maximum number of workers(CPU). Defaults to 50.</p></li>
+<li><p><strong>timeout</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – timeout time of one session. Defaults to 10E25.</p></li>
+<li><p><strong>session</strong> (<em>ClientSession</em><em>, </em><em>optional</em>) – session of one request. Default to None and is automatically created</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyprediktormapclient.opc_ua.OPC_UA.get_live_values_data">
+<span class="sig-name descname"><span class="pre">get_live_values_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">include_variables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.10/library/typing.html#typing.List" title="(in Python v3.10)"><span class="pre">List</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj_dataframe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v1.4.4)"><span class="pre">DataFrame</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyprediktormapclient/opc_ua.html#OPC_UA.get_live_values_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.opc_ua.OPC_UA.get_live_values_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Request to get real time data values of the variables for the requested node(s)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>include_variables</strong> (<em>List</em>) – list of variables</p></li>
+<li><p><strong>obj_dataframe</strong> (<em>pd.DataFrame</em>) – dataframe of object ids</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyprediktormapclient.opc_ua.OPC_UA.get_vars_node_ids">
+<span class="sig-name descname"><span class="pre">get_vars_node_ids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj_dataframe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v1.4.4)"><span class="pre">DataFrame</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3.10/library/typing.html#typing.List" title="(in Python v3.10)"><span class="pre">List</span></a></span></span><a class="reference internal" href="../_modules/pyprediktormapclient/opc_ua.html#OPC_UA.get_vars_node_ids"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.opc_ua.OPC_UA.get_vars_node_ids" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to get variables node ids of the objects</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>obj_dataframe</strong> (<em>pd.DataFrame</em>) – object dataframe</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>list of variables’ node ids</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyprediktormapclient.opc_ua.OPC_UA.http_get_with_aiohttp">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">http_get_with_aiohttp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">session</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ClientSession</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endpoint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e+26</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyprediktormapclient/opc_ua.html#OPC_UA.http_get_with_aiohttp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.opc_ua.OPC_UA.http_get_with_aiohttp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Request function for aiohttp based API request</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>session</strong> (<em>ClientSession</em>) – clientSession of a period of time for the reqested data</p></li>
+<li><p><strong>endpoint</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – endpoint of requested API call</p></li>
+<li><p><strong>data</strong> (<em>_type_</em>) – body data</p></li>
+<li><p><strong>timeout</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – time of one session. Defaults to 10E25.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyprediktormapclient.opc_ua.OPC_UA.process_response_dataframe">
+<span class="sig-name descname"><span class="pre">process_response_dataframe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_result</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v1.4.4)"><span class="pre">DataFrame</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyprediktormapclient/opc_ua.html#OPC_UA.process_response_dataframe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.opc_ua.OPC_UA.process_response_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is a function to get historical aggregated data into require dataframe format</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>df_result</strong> (<em>pd.DataFrame</em>) – api call’s response for agg historical data request</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyprediktormapclient.opc_ua.OPC_UA.request">
+<span class="sig-name descname"><span class="pre">request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">endpoint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">headers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyprediktormapclient/opc_ua.html#OPC_UA.request"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.opc_ua.OPC_UA.request" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyprediktormapclient.opc_ua.OPC_UA.split_node_id">
+<span class="sig-name descname"><span class="pre">split_node_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyprediktormapclient/opc_ua.html#OPC_UA.split_node_id"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.opc_ua.OPC_UA.split_node_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Functions to get node id(s) with namespace index and data format of the node</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>node_id</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – node id of a node</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>dictionary with three elements</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </section>
-<section id="module-contents">
-<h2>Module contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
+<section id="module-pyprediktormapclient">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-pyprediktormapclient" title="Permalink to this heading">¶</a></h2>
 </section>
 </section>
 
