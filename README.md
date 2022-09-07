@@ -1,8 +1,17 @@
-# pyPrediktorMapClient Library
+# pyPrediktorMapClient
 
-This library contains two python scripts to make direct APIS requests to download data. These two scripts define the functions that make API call in exact same way it is happening on web servers such as on Swagger for OPC UA. 
 
-Using model index script, required structure data can be downloaded and further that can be used to make OPC UA API requests. 
+    Helper functions for Prediktor Map Services
+
+
+Helper functions for communicating with Prediktors OPC UA ModelIndex REST-API and OPC UA
+Values REST-API. Typically used for data anlytics purposes, you'll find Jypiter Notebooks
+with examples in the notebooks folder.
+
+Install is primarily done through PyPi with `pip install pyPrediktorMapClient`. If you want to contribute or need
+run the Jupyter Notebooks in the `notebooks` folder locally, please clone this repository.
+
+Further information, documentation and module reference on [the documentation site](https://prediktoras.github.io/pyPrediktorMapClient).
 
 ## Setup to Install
 1. First clone the repository and navigate to the main folder of repository.
