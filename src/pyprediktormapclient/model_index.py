@@ -45,10 +45,6 @@ class ModelIndex:
         else:
             raise Exception('Method not supported')
         result.raise_for_status()
-        if result.status_code != 200:
-            logger.error("Request Failed/empty result:", result.status_code)
-            return None
-
         return result.json()
 
     def get_namespace_array(self, return_format="dataframe") -> str:

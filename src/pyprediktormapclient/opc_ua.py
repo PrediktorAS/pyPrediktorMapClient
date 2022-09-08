@@ -57,10 +57,6 @@ class OPC_UA:
         else:
             raise Exception('Method not supported')
         result.raise_for_status()
-        if result.status_code != 200:
-            logger.error("Request Failed/empty result:", result.status_code)
-            return None
-
         return result.json()
 
     def get_vars_node_ids(self, obj_dataframe: pd.DataFrame) -> List:
