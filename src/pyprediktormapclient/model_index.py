@@ -27,26 +27,25 @@ class ModelIndex:
             return None
         return pd.DataFrame(content)
 
-    def request(self, method: str, endpoint: str, data=None) -> str:
+    def request(self, method: str, endpoint: str, data=None, headers=None) -> str:
         """Function to perform the request to the ModelIndex server
 
         Args:
             method (str): "GET" or "POST"
             endpoint (str): The last part of the url (without the leading "/") 
-            data (str): defaults to None but can contain the data to tsend to the endpoint
+            data (str): defaults to None but can contain the data to send to the endpoint
+            headers (str): default to None but can contain the headers og the request
         Returns:
             JSON: The result if successfull
-        """      
+        """
         if method == 'GET':
-            result = requests.get(self.url + endpoint)
+            result = requests.get(self.rest_url + endpoint, timeout=(3, 27))
         elif method == 'POST':
-            result = requests.post(self.url + endpoint, data=data)
+            result = requests.post(self.rest_url + endpoint, data=data, headers=headers, timeout=(3, 27))
         else:
             raise Exception('Method not supported')
-        if result.status_code == 200:
-            return result.json()
-        else:
-            return None
+        result.raise_for_status()
+        return result.json()
 
     def get_namespace_array(self, return_format="dataframe") -> str:
         content = self.request('GET', 'query/namespace-array')

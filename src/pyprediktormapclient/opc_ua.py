@@ -37,17 +37,27 @@ class OPC_UA:
         self.rest_url = rest_url
         self.opcua_url = opcua_url
 
-    def request(self, method: str, endpoint: str, data=None,headers=None):       
+        self.headers = {'Content-Type': 'application/json'}
+
+    def request(self, method: str, endpoint: str, data=None, headers=None):
+        """Function to perform the request to the ModelIndex server
+
+        Args:
+            method (str): "GET" or "POST"
+            endpoint (str): The last part of the url (without the leading "/") 
+            data (str): defaults to None but can contain the data to send to the endpoint
+            headers (str): default to None but can contain the headers og the request
+        Returns:
+            JSON: The result if successfull
+        """
         if method == 'GET':
-            result = requests.get(self.rest_url + endpoint)
+            result = requests.get(self.rest_url + endpoint, timeout=(3, 27))
         elif method == 'POST':
-            result = requests.post(self.rest_url + endpoint, data=data,headers=headers)
+            result = requests.post(self.rest_url + endpoint, data=data, headers=headers, timeout=(3, 27))
         else:
             raise Exception('Method not supported')
-        if result.status_code == 200:
-            return result.json()
-        else:
-            return None
+        result.raise_for_status()
+        return result.json()
 
     def get_vars_node_ids(self, obj_dataframe: pd.DataFrame) -> List:
         """Function to get variables node ids of the objects
@@ -121,19 +131,22 @@ class OPC_UA:
                 "NodeIds": node_ids_dicts
             }
         ])
-        headers = {'Content-Type': 'application/json'}
-        response = pd.DataFrame(self.request('POST', 'values/get', body,headers))
-        result = pd.json_normalize(response['Values'][0])
+        response = self.request('POST', 'values/get', body, self.headers)
+        if response is None:
+            return None
+
+        response_as_pd = pd.DataFrame(response)
+        result = pd.json_normalize(response_as_pd['Values'][0])
         if len(result.columns) == 6:
-            result1 = result.drop(columns=['Value.Type','ServerTimestamp']).set_axis(['Timestamp', 'Value','Code','Quality'], axis=1)
+            result_filtered = result.drop(columns=['Value.Type','ServerTimestamp']).set_axis(['Timestamp', 'Value','Code','Quality'], axis=1)
         elif len(result.columns) == 4:
-            result1 = result.drop(columns=['Value.Type','ServerTimestamp']).set_axis(['Timestamp', 'Value'], axis=1)
+            result_filtered = result.drop(columns=['Value.Type','ServerTimestamp']).set_axis(['Timestamp', 'Value'], axis=1)
         df = self.expand_props_vars(obj_dataframe)
-        name_column = [x for x in df if x in ['DisplayName','DescendantName', 'AncestorName']][0]
+        name_column = [x for x in df if x in ['DisplayName', 'DescendantName', 'AncestorName']][0]
         df1 = df[['VariableId', name_column, 'Variable']].set_axis(['Id', 'Name', 'Variable'], axis=1)
         # Filtering dataframe for the variables
         obj_dataframe1 = df1[df1['Variable'].isin(include_variables)].reset_index(drop=True)
-        final_df = pd.concat([obj_dataframe1,result1], axis=1)
+        final_df = pd.concat([obj_dataframe1,result_filtered], axis=1)
         return final_df
 
     def create_readvalueids_dict(self, node_id: str, agg_name: str)-> Dict:
@@ -191,9 +204,8 @@ class OPC_UA:
             data (_type_): body data
             timeout (int, optional): time of one session. Defaults to 10E25.
         """
-        headers = {'Content-Type': 'application/json'}
         try:
-            response = await session.post(url=self.rest_url + endpoint,data=data, headers=headers,timeout=timeout)
+            response = await session.post(url=self.rest_url + endpoint,data=data, headers=self.headers, timeout=timeout)
         except:
             logger.error("Request Failed for this data :",json.dumps(data))
 
