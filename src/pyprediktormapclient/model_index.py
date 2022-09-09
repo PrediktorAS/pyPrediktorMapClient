@@ -1,10 +1,7 @@
 import requests
 import json
 import pandas as pd
-from pydantic import BaseModel, HttpUrl, AnyUrl
-import logging
-
-logger = logging.getLogger()
+from pydantic import BaseModel, HttpUrl
 
 class RESTUrls(BaseModel):
     rest_url: HttpUrl

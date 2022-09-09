@@ -7,11 +7,7 @@ from pathlib import Path
 import asyncio
 from typing import Dict, List
 from aiohttp import ClientSession
-import logging
 from pydantic import BaseModel, HttpUrl, AnyUrl
-
-
-logger = logging.getLogger()
 
 class OPCUrls(BaseModel):
     rest_url: HttpUrl
@@ -204,17 +200,10 @@ class OPC_UA:
             data (_type_): body data
             timeout (int, optional): time of one session. Defaults to 10E25.
         """
-        try:
-            response = await session.post(url=self.rest_url + endpoint,data=data, headers=self.headers, timeout=timeout)
-        except:
-            logger.error("Request Failed for this data :",json.dumps(data))
-
+        response = await session.post(url=self.rest_url + endpoint,data=data, headers=self.headers, timeout=timeout)
         filtered_response_json = None
-        try:
-            response_json = await response.json()
-            filtered_response_json = self.filter_json_response(response_json)
-        except json.decoder.JSONDecodeError as e:
-            logger.exception("JSON Decoding Error")
+        response_json = await response.json()
+        filtered_response_json = self.filter_json_response(response_json)
 
         return filtered_response_json
 
@@ -326,9 +315,7 @@ class OPC_UA:
         body_chunks_list = list(self.chunk_ids(body_list, one_time_body_count))
         # Folder to save the downloaded data
         Path("Data/").mkdir(exist_ok=True)
-        logger.info("No. of Body Chunks : "+str(len(body_chunks_list)))
         for j,body_chunks in enumerate(body_chunks_list):
-            logger.info("Requesting data for body chunk no. : "+str(j))
             # Request chunkwise data
             async with ClientSession() as session:
                 results = await asyncio.gather(*[self.http_get_with_aiohttp(session, endpoint, body, timeout) for body in body_chunks])
@@ -341,5 +328,3 @@ class OPC_UA:
                 df_results = pd.DataFrame(results_list)
                 df = self.process_response_dataframe(df_results)
                 df.to_parquet('Data/data_chunk_'+str(j)+'.parquet')
-        logger.info(" Data download is complete ")
-    
