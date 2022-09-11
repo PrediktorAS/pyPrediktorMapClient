@@ -1,4 +1,3 @@
-import requests
 import json
 import pandas as pd
 import numpy as np
@@ -8,6 +7,7 @@ import asyncio
 from typing import Dict, List
 from aiohttp import ClientSession
 from pydantic import BaseModel, HttpUrl, AnyUrl
+from pyprediktormapclient_shared import request_from_api
 
 class OPCUrls(BaseModel):
     rest_url: HttpUrl
@@ -34,26 +34,6 @@ class OPC_UA:
         self.opcua_url = opcua_url
 
         self.headers = {'Content-Type': 'application/json'}
-
-    def request(self, method: str, endpoint: str, data=None, headers=None):
-        """Function to perform the request to the ModelIndex server
-
-        Args:
-            method (str): "GET" or "POST"
-            endpoint (str): The last part of the url (without the leading "/") 
-            data (str): defaults to None but can contain the data to send to the endpoint
-            headers (str): default to None but can contain the headers og the request
-        Returns:
-            JSON: The result if successfull
-        """
-        if method == 'GET':
-            result = requests.get(self.rest_url + endpoint, timeout=(3, 27))
-        elif method == 'POST':
-            result = requests.post(self.rest_url + endpoint, data=data, headers=headers, timeout=(3, 27))
-        else:
-            raise Exception('Method not supported')
-        result.raise_for_status()
-        return result.json()
 
     def get_vars_node_ids(self, obj_dataframe: pd.DataFrame) -> List:
         """Function to get variables node ids of the objects
@@ -127,7 +107,7 @@ class OPC_UA:
                 "NodeIds": node_ids_dicts
             }
         ])
-        response = self.request('POST', 'values/get', body, self.headers)
+        response = request_from_api(self.rest_url, 'POST', 'values/get', body, self.headers)
         if response is None:
             return None
 
