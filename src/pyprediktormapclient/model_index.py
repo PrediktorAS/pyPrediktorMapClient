@@ -1,7 +1,7 @@
-import requests
 import json
 import pandas as pd
 from pydantic import BaseModel, HttpUrl, AnyUrl
+from pyprediktormapclient_shared import request_from_api
 import logging
 
 logger = logging.getLogger()
@@ -27,34 +27,14 @@ class ModelIndex:
             return None
         return pd.DataFrame(content)
 
-    def request(self, method: str, endpoint: str, data=None, headers=None) -> str:
-        """Function to perform the request to the ModelIndex server
-
-        Args:
-            method (str): "GET" or "POST"
-            endpoint (str): The last part of the url (without the leading "/") 
-            data (str): defaults to None but can contain the data to send to the endpoint
-            headers (str): default to None but can contain the headers og the request
-        Returns:
-            JSON: The result if successfull
-        """
-        if method == 'GET':
-            result = requests.get(self.rest_url + endpoint, timeout=(3, 27))
-        elif method == 'POST':
-            result = requests.post(self.rest_url + endpoint, data=data, headers=headers, timeout=(3, 27))
-        else:
-            raise Exception('Method not supported')
-        result.raise_for_status()
-        return result.json()
-
     def get_namespace_array(self, return_format="dataframe") -> str:
-        content = self.request('GET', 'query/namespace-array')
+        content = request_from_api(self.url, 'GET', 'query/namespace-array')
         if return_format == "dataframe":
             return self.as_dataframe(content)
         return content
 
     def get_object_types(self, return_format="dataframe") -> str:
-        content = self.request('GET', 'query/object-types')
+        content = request_from_api(self.url, 'GET', 'query/object-types')
         if return_format == "dataframe":
             return self.as_dataframe(content)
         return content
@@ -86,7 +66,7 @@ class ModelIndex:
         """
         object_type_id = self.get_object_type_id_from_name(type_name)
         body = json.dumps({"typeId": object_type_id})
-        content = self.request('POST', 'query/objects-of-type', body)
+        content = request_from_api(self.url, 'POST', 'query/objects-of-type', body)
         if return_format == "dataframe":
             return self.as_dataframe(content)
         return content
@@ -110,7 +90,7 @@ class ModelIndex:
             "objectIds": object_Ids,
             "domain": domain
             })
-        content = self.request('POST', 'query/object-descendants', body)
+        content = request_from_api(self.url, 'POST', 'query/object-descendants', body)
         if return_format == "dataframe":
             return self.as_dataframe(content)
         return content
@@ -134,7 +114,7 @@ class ModelIndex:
             "objectIds": object_Ids,
             "domain": domain
             })
-        content = self.request('POST', 'query/object-ancestors', body)
+        content = request_from_api(self.url, 'POST', 'query/object-ancestors', body)
         if return_format == "dataframe":
             return self.as_dataframe(content)
         return content
