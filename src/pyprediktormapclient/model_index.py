@@ -52,6 +52,24 @@ class ModelIndex:
         object_type_id = obj_type.get("Id")
         return object_type_id
 
+    def get_object_ids_from_dataframe(self, obj_dataframe: pd.DataFrame) -> list:
+        """Extracts data from one of the three columns in the supplied
+        Pandas DataFrame as list: "Id", "DescendantId", "AncestorId".
+
+        Args:
+            obj_dataframe (pd.DataFrame): DataFrame with a column called "Id", "DescendantId" or "AncestorId" 
+
+        Returns:
+            list: a list with ids (empty if None)
+        """
+        try:
+            id_column = [x for x in obj_dataframe if x in ['Id','DescendantId', 'AncestorId']][0]
+        except IndexError:
+            return []
+
+        return obj_dataframe[id_column].to_list()
+
+
     def get_objects_of_type(self, type_name: str, return_format="dataframe") -> str:
         """Function to get all the types of an object
 
@@ -79,12 +97,9 @@ class ModelIndex:
         Returns:
             pd.DataFrame or JSON: descendats data of selected object
         """
-        object_type_id = self.get_object_type_id_from_name(type_name)
-        id_column = [x for x in obj_dataframe if x in ['Id','DescendantId', 'AncestorId']][0]
-        object_Ids = obj_dataframe[id_column].to_list()
         body = json.dumps({
-            "typeId": object_type_id,
-            "objectIds": object_Ids,
+            "typeId": self.get_object_type_id_from_name(type_name),
+            "objectIds": self.get_object_ids_from_dataframe(obj_dataframe),
             "domain": domain
             })
         content = request_from_api(self.url, 'POST', 'query/object-descendants', body)
@@ -103,12 +118,9 @@ class ModelIndex:
         Returns:
             pd.DataFrame or JSON: ancestors data of selected object
         """
-        object_type_id = self.get_object_type_id_from_name(type_name)
-        id_column = [x for x in obj_dataframe if x in ['Id','AncestorId', 'DescendantId']][0]
-        object_Ids = obj_dataframe[id_column].to_list()
         body = json.dumps({
-            "typeId": object_type_id,
-            "objectIds": object_Ids,
+            "typeId": self.get_object_type_id_from_name(type_name),
+            "objectIds": self.get_object_ids_from_dataframe(obj_dataframe),
             "domain": domain
             })
         content = request_from_api(self.url, 'POST', 'query/object-ancestors', body)
