@@ -20,6 +20,14 @@ pyprediktormapclient.opc\_ua module
    :undoc-members:
    :show-inheritance:
 
+pyprediktormapclient.pyprediktormapclient\_shared module
+--------------------------------------------------------
+
+.. automodule:: pyprediktormapclient.pyprediktormapclient_shared
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Module contents
 ---------------
 
