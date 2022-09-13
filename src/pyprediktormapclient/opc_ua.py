@@ -7,7 +7,7 @@ import asyncio
 from typing import Dict, List
 from aiohttp import ClientSession
 from pydantic import BaseModel, HttpUrl, AnyUrl
-from pyprediktormapclient_shared import request_from_api
+from pyprediktormapclient.shared import request_from_api
 
 class OPCUrls(BaseModel):
     rest_url: HttpUrl

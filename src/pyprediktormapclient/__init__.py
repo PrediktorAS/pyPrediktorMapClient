@@ -1,5 +1,5 @@
 import sys
-from .pyprediktormapclient_shared import *
+from .shared import *
 from .model_index import *
 from .opc_ua import *
 
