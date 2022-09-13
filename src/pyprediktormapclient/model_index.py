@@ -1,7 +1,7 @@
 import json
 import pandas as pd
 from pydantic import BaseModel, HttpUrl
-from pyprediktormapclient_shared import request_from_api
+from pyprediktormapclient.shared import request_from_api
 
 class RESTUrls(BaseModel):
     rest_url: HttpUrl
