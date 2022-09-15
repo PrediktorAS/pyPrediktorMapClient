@@ -2,7 +2,19 @@
 Changelog
 =========
 
-version 0.0.7
+version unreleased
+===========
+
+- Set floating time in Notebook examples
+
+
+version 0.0.8
+===========
+
+- Import improvements of shared functions
+
+
+version 0.0.7 (NON-FUNCTIONAL VERSION)
 ===========
 
 - Better handling of errors when doing reqests against the servers
