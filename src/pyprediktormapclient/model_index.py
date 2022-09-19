@@ -80,6 +80,7 @@ class ModelIndex:
             pd.DataFrame or JSON: a Dataframe or JSON with the objects
         """
         object_type_id = self.get_object_type_id_from_name(type_name)
+        # TODO: Create failure if no type ID
         body = json.dumps({"typeId": object_type_id})
         content = request_from_api(self.url, 'POST', 'query/objects-of-type', body)
         if return_format == "dataframe":
