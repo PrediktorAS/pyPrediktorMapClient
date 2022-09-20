@@ -73,7 +73,7 @@ extensions = [
     "sphinx.ext.ifconfig",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
-    "sphinx_rtd_theme"
+    "sphinx_rtd_theme",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -248,7 +248,13 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-    ("index", "user_guide.tex", "pyPrediktorMapClient Documentation", "Prediktor Support", "manual")
+    (
+        "index",
+        "user_guide.tex",
+        "pyPrediktorMapClient Documentation",
+        "Prediktor Support",
+        "manual",
+    )
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
