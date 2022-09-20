@@ -22,6 +22,7 @@ class ModelIndex:
         """
         if content is None:
             return None
+
         return pd.DataFrame(content)
 
     def get_namespace_array(self, return_format="dataframe") -> str:
@@ -34,6 +35,7 @@ class ModelIndex:
         content = request_from_api(self.url, 'GET', 'query/object-types')
         if return_format == "dataframe":
             return self.as_dataframe(content)
+
         return content
 
     def get_object_type_id_from_name(self, type_name: str) -> str:
@@ -43,13 +45,14 @@ class ModelIndex:
             type_name (str): type name
 
         Returns:
-            str: the type id that corresponds with the id
+            str: the type id that corresponds with the id (None if not found)
         """
         try:
             obj_type =  next(item for item in self.object_types if item["BrowseName"] == type_name)
         except StopIteration:
             obj_type = {}
-        object_type_id = obj_type.get("Id")
+        object_type_id = obj_type.get("Id")  # Returns None if the ID is not present
+
         return object_type_id
 
     def get_object_ids_from_dataframe(self, obj_dataframe: pd.DataFrame) -> list:
@@ -77,14 +80,17 @@ class ModelIndex:
             type_name (str): type name
 
         Returns:
-            pd.DataFrame or JSON: a Dataframe or JSON with the objects
+            pd.DataFrame or JSON: a Dataframe or JSON with the objects (or None if the type is not found)
         """
         object_type_id = self.get_object_type_id_from_name(type_name)
-        # TODO: Create failure if no type ID
+        if object_type_id is None:
+            return None
+
         body = json.dumps({"typeId": object_type_id})
         content = request_from_api(self.url, 'POST', 'query/objects-of-type', body)
         if return_format == "dataframe":
             return self.as_dataframe(content)
+
         return content
 
     def get_object_descendants(self, type_name: str, obj_dataframe: pd.DataFrame, domain: str, return_format="dataframe") -> str:
@@ -96,16 +102,21 @@ class ModelIndex:
             domain (str): PV_Assets or PV_Serves
 
         Returns:
-            pd.DataFrame or JSON: descendats data of selected object
+            pd.DataFrame or JSON: descendats data of selected object (or None if the type is not found)
         """
+        id = self.get_object_type_id_from_name(type_name)
+        if id is None:
+            return None
+
         body = json.dumps({
-            "typeId": self.get_object_type_id_from_name(type_name),
+            "typeId": id,
             "objectIds": self.get_object_ids_from_dataframe(obj_dataframe),
             "domain": domain
             })
         content = request_from_api(self.url, 'POST', 'query/object-descendants', body)
         if return_format == "dataframe":
             return self.as_dataframe(content)
+
         return content
 
     def get_object_ancestors(self, type_name: str, obj_dataframe: pd.DataFrame, domain: str, return_format="dataframe") -> str:
@@ -117,15 +128,19 @@ class ModelIndex:
             domain (str): Either PV_Assets or PV_Serves
 
         Returns:
-            pd.DataFrame or JSON: ancestors data of selected object
+            pd.DataFrame or JSON: ancestors data of selected object (or None if the type is not found)
         """
+        id = self.get_object_type_id_from_name(type_name)
+        if id is None:
+            return None
+
         body = json.dumps({
-            "typeId": self.get_object_type_id_from_name(type_name),
+            "typeId": id,
             "objectIds": self.get_object_ids_from_dataframe(obj_dataframe),
             "domain": domain
             })
         content = request_from_api(self.url, 'POST', 'query/object-ancestors', body)
         if return_format == "dataframe":
             return self.as_dataframe(content)
-        return content
 
+        return content
