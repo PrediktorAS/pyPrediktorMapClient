@@ -35,6 +35,50 @@ objects_of_type = [
     }
 ]
 
+descendants = [
+  {
+    "ObjectId": "string",
+    "DescendantId": "string",
+    "DescendantName": "string",
+    "DescendantType": "string",
+    "ObjectName": "string",
+    "Props": [
+      {
+        "DisplayName": "string",
+        "Value": "string"
+      }
+    ],
+    "Vars": [
+      {
+        "DisplayName": "string",
+        "Id": "string"
+      }
+    ]
+  }
+]
+
+ancestors = [
+  {
+    "ObjectId": "string",
+    "AncestorId": "string",
+    "AncestorName": "string",
+    "AncestorType": "string",
+    "ObjectName": "string",
+    "Props": [
+      {
+        "DisplayName": "string",
+        "Value": "string"
+      }
+    ],
+    "Vars": [
+      {
+        "DisplayName": "string",
+        "Id": "string"
+      }
+    ]
+  }
+]
+
 # This method will be used by the mock to replace requests.get
 def mocked_requests(*args, **kwargs):
     class MockResponse:
@@ -53,6 +97,10 @@ def mocked_requests(*args, **kwargs):
         return MockResponse(namespaces, 200)
     elif args[0] == f"{URL}query/objects-of-type":
         return MockResponse(objects_of_type, 200)
+    elif args[0] == f"{URL}query/object-descendants":
+        return MockResponse(descendants, 200)
+    elif args[0] == f"{URL}query/object-ancestors":
+        return MockResponse(ancestors, 200)
 
     return MockResponse(None, 404)
 
@@ -114,6 +162,74 @@ class ModelIndexTestCase(unittest.TestCase):
                 type_name="IPVBaseCalculate", return_format="dataframe"
             )
             assert_frame_equal(result, normalize_as_dataframe(result_json))
+
+    @mock.patch("requests.get", side_effect=mocked_requests)
+    def test_get_object_descendants_as_json(self, mock_get):
+        model = ModelIndex(url=URL)
+        with mock.patch("requests.post", side_effect=mocked_requests):
+            result = model.get_object_descendants(
+                type_name="IPVBaseCalculate", ids=["Anything"], domain="PV_Assets")
+            assert result == descendants
+
+    @mock.patch("requests.get", side_effect=mocked_requests)
+    def test_get_object_descendants_with_no_id(self, mock_get):
+        model = ModelIndex(url=URL)
+        with mock.patch("requests.post", side_effect=mocked_requests):
+            result = model.get_object_descendants(
+                type_name=None, ids=["Anything"], domain="PV_Assets")
+            assert result == None
+
+    @mock.patch("requests.get", side_effect=mocked_requests)
+    def test_get_object_descendants_with_no_ids(self, mock_get):
+        model = ModelIndex(url=URL)
+        with mock.patch("requests.post", side_effect=mocked_requests):
+            result = model.get_object_descendants(
+                type_name="IPVBaseCalculate", ids=None, domain="PV_Assets")
+            assert result == None
+
+    @mock.patch("requests.get", side_effect=mocked_requests)
+    def test_get_object_descendants_as_dataframe(self, mock_get):
+        model = ModelIndex(url=URL)
+        with mock.patch("requests.post", side_effect=mocked_requests):
+            result_json = model.get_object_descendants(
+                type_name="IPVBaseCalculate", ids=["Anything"], domain="PV_Assets")
+            result_dataframe = model.get_object_descendants(
+                type_name="IPVBaseCalculate", ids=["Anything"], domain="PV_Assets", return_format="dataframe")
+            assert_frame_equal(result_dataframe, normalize_as_dataframe(result_json))
+
+    @mock.patch("requests.get", side_effect=mocked_requests)
+    def test_get_object_ancestors_as_json(self, mock_get):
+        model = ModelIndex(url=URL)
+        with mock.patch("requests.post", side_effect=mocked_requests):
+            result = model.get_object_ancestors(
+                type_name="IPVBaseCalculate", ids=["Anything"], domain="PV_Assets")
+            assert result == ancestors
+
+    @mock.patch("requests.get", side_effect=mocked_requests)
+    def test_get_object_ancestors_with_no_id(self, mock_get):
+        model = ModelIndex(url=URL)
+        with mock.patch("requests.post", side_effect=mocked_requests):
+            result = model.get_object_ancestors(
+                type_name=None, ids=["Anything"], domain="PV_Assets")
+            assert result == None
+
+    @mock.patch("requests.get", side_effect=mocked_requests)
+    def test_get_object_ancestors_with_no_ids(self, mock_get):
+        model = ModelIndex(url=URL)
+        with mock.patch("requests.post", side_effect=mocked_requests):
+            result = model.get_object_ancestors(
+                type_name="IPVBaseCalculate", ids=None, domain="PV_Assets")
+            assert result == None
+
+    @mock.patch("requests.get", side_effect=mocked_requests)
+    def test_get_object_ancestors_as_dataframe(self, mock_get):
+        model = ModelIndex(url=URL)
+        with mock.patch("requests.post", side_effect=mocked_requests):
+            result_json = model.get_object_ancestors(
+                type_name="IPVBaseCalculate", ids=["Anything"], domain="PV_Assets")
+            result_dataframe = model.get_object_ancestors(
+                type_name="IPVBaseCalculate", ids=["Anything"], domain="PV_Assets", return_format="dataframe")
+            assert_frame_equal(result_dataframe, normalize_as_dataframe(result_json))
 
 
 if __name__ == "__main__":
