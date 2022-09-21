@@ -47,7 +47,10 @@ class OPC_UA:
         Returns:
             List: list of variables' node ids
         """
-        objects_vars = obj_dataframe["Vars"]
+        objects_vars = obj_dataframe.get("Vars")
+        if objects_vars is None:
+            return None
+
         # Flatten the list
         vars_list = [x for xs in objects_vars for x in xs]
         vars_node_ids = [x["Id"] for x in vars_list]
