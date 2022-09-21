@@ -16,24 +16,13 @@ class ModelIndex:
         self.url = url
         self.object_types = self.get_object_types(return_format="json")
 
-    def as_dataframe(self, content) -> pd.DataFrame:
-        """Function to convert a json string to Pandas DataFrame
-
-        Args:
-            content (str): the json string
-        """
-        if content is None:
-            return None
-
-        return pd.DataFrame(content)
-
-    def get_namespace_array(self, return_format="dataframe") -> str:
+    def get_namespace_array(self, return_format="json") -> str:
         content = request_from_api(self.url, "GET", "query/namespace-array")
         if return_format == "dataframe":
             return normalize_as_dataframe(content)
         return content
 
-    def get_object_types(self, return_format="dataframe") -> str:
+    def get_object_types(self, return_format="json") -> str:
         content = request_from_api(self.url, "GET", "query/object-types")
         if return_format == "dataframe":
             return normalize_as_dataframe(content)
@@ -59,26 +48,7 @@ class ModelIndex:
 
         return object_type_id
 
-    def get_object_ids_from_dataframe(self, obj_dataframe: pd.DataFrame) -> list:
-        """Extracts data from one of the three columns in the supplied
-        Pandas DataFrame as list: "Id", "DescendantId", "AncestorId".
-
-        Args:
-            obj_dataframe (pd.DataFrame): DataFrame with a column called "Id", "DescendantId" or "AncestorId"
-
-        Returns:
-            list: a list with ids (empty if None)
-        """
-        try:
-            id_column = [
-                x for x in obj_dataframe if x in ["Id", "DescendantId", "AncestorId"]
-            ][0]
-        except IndexError:
-            return []
-
-        return obj_dataframe[id_column].to_list()
-
-    def get_objects_of_type(self, type_name: str, return_format="dataframe") -> str:
+    def get_objects_of_type(self, type_name: str, return_format="json") -> str:
         """Function to get all the types of an object
 
         Args:
@@ -101,15 +71,15 @@ class ModelIndex:
     def get_object_descendants(
         self,
         type_name: str,
-        obj_dataframe: pd.DataFrame,
+        ids: list,
         domain: str,
-        return_format="dataframe",
+        return_format="json",
     ) -> str:
         """A function to get object descendants
 
         Args:
             type_name (str): type_name of a descendant
-            obj_dataframe (pd.DataFrame): dataframe of object ids
+            ids (list): a list of ids you want the descendants for
             domain (str): PV_Assets or PV_Serves
 
         Returns:
@@ -122,7 +92,7 @@ class ModelIndex:
         body = json.dumps(
             {
                 "typeId": id,
-                "objectIds": self.get_object_ids_from_dataframe(obj_dataframe),
+                "objectIds": ids,
                 "domain": domain,
             }
         )
@@ -135,15 +105,15 @@ class ModelIndex:
     def get_object_ancestors(
         self,
         type_name: str,
-        obj_dataframe: pd.DataFrame,
+        ids: list,
         domain: str,
-        return_format="dataframe",
+        return_format="json",
     ) -> str:
         """Function to get object ancestors
 
         Args:
-            type_name (str): type_name of a parent type
-            obj_dataframe (pd.DataFrame): dataframe of object ids
+            type_name (str): the ancestor parent type
+            ids (list): a list of ids you want the ancestors for
             domain (str): Either PV_Assets or PV_Serves
 
         Returns:
@@ -156,7 +126,7 @@ class ModelIndex:
         body = json.dumps(
             {
                 "typeId": id,
-                "objectIds": self.get_object_ids_from_dataframe(obj_dataframe),
+                "objectIds": ids,
                 "domain": domain,
             }
         )
