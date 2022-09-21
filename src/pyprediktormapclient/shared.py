@@ -1,4 +1,5 @@
 import requests
+import pandas as pd
 
 
 def request_from_api(
@@ -25,3 +26,63 @@ def request_from_api(
         raise Exception("Method not supported")
     result.raise_for_status()
     return result.json()
+
+
+def normalize_as_dataframe(content: str):
+    """Normalizes the input JSON and turns it into a Pandas
+    Dataframe with the following colums:
+    - Id
+    - Type
+    - Name
+    - Props
+    - Vars
+
+    Args:
+        content (str): the JSON to convert
+    Returns:
+        pandas.DataFrame: a normalized dataframe
+    """
+    if content is None:
+        return None
+
+    df = pd.DataFrame(content)
+
+    # Remove "Subtype"
+    if "Subtype" in df.columns:
+        df.drop("Subtype", inplace=True, axis=1)
+
+    # Remove "ObjectId"
+    if "ObjectId" in df.columns:
+        df.drop("ObjectId", inplace=True, axis=1)
+
+    # Remove "ObjectId"
+    if "ObjectName" in df.columns:
+        df.drop("ObjectName", inplace=True, axis=1)
+
+    # Check if the content is from get_objects_of_type
+    if "DisplayName" in df.columns:
+        df.rename(columns={"DisplayName": "Name"}, inplace=True)
+
+    # Check if the content is from object-descendants
+    if "DescendantId" in df.columns:
+        df.rename(
+            columns={
+                "DescendantId": "Id",
+                "DescendantName": "Name",
+                "DescendantType": "Type",
+            },
+            inplace=True,
+        )
+
+    # Check if the content is from object-ancestors
+    if "AncestorId" in df.columns:
+        df.rename(
+            columns={
+                "AncestorId": "Id",
+                "AncestorName": "Name",
+                "AncestorType": "Type",
+            },
+            inplace=True,
+        )
+
+    return df
