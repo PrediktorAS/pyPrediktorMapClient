@@ -21,15 +21,11 @@ objects_of_type = [
     }
 ]
 
-correct_df = pd.DataFrame({
-    "Id": ["1","2"],
-    "AnotherColumnName":  [40,34]
-})
+correct_df = pd.DataFrame({"Id": ["1", "2"], "AnotherColumnName": [40, 34]})
 
-incorrect_df = pd.DataFrame({
-    "FirstColumnName": ["1","2"],
-    "AnotherColumnName":  [40,34]
-})
+incorrect_df = pd.DataFrame(
+    {"FirstColumnName": ["1", "2"], "AnotherColumnName": [40, 34]}
+)
 
 
 # Our test case class
@@ -38,7 +34,7 @@ class SharedTestCase(unittest.TestCase):
         result = normalize_as_dataframe(objects_of_type)
         assert "DisplayName" not in result.columns
         assert "Name" in result.columns
-        
+
     def test_get_ids_from_dataframe_success(self):
         result = get_ids_from_dataframe(correct_df)
         assert result == ["1", "2"]

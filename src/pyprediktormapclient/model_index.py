@@ -89,6 +89,9 @@ class ModelIndex:
         if id is None:
             return None
 
+        if ids is None:
+            return None
+
         body = json.dumps(
             {
                 "typeId": id,
@@ -121,6 +124,9 @@ class ModelIndex:
         """
         id = self.get_object_type_id_from_name(type_name)
         if id is None:
+            return None
+
+        if ids is None:
             return None
 
         body = json.dumps(
