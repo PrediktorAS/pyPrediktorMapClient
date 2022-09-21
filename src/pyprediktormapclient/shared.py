@@ -86,3 +86,18 @@ def normalize_as_dataframe(content: str):
         )
 
     return df
+
+def get_ids_from_dataframe(obj_dataframe: pd.DataFrame) -> list:
+    """Extracts data from "Id" column in a DataFrame or an empty list if none.
+
+    Args:
+        obj_dataframe (pd.DataFrame): DataFrame with a column called "Id"
+
+    Returns:
+        list: a list with ids (empty if None)
+    """
+
+    if "Id" in obj_dataframe.columns:
+        return obj_dataframe["Id"].to_list()
+    
+    return []
