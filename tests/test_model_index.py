@@ -1,11 +1,10 @@
 import requests
-import os
-import sys
 import unittest
 from unittest import mock
 from pandas.testing import assert_frame_equal
 
 from pyprediktormapclient.model_index import ModelIndex
+from pyprediktormapclient.shared import normalize_as_dataframe
 
 URL = "http://someserver.somedomain.com/v1/"
 object_types = [
@@ -47,7 +46,7 @@ def mocked_requests(*args, **kwargs):
         def json(self):
             return self.json_data
 
-    print(args)
+
     if args[0] == f"{URL}query/object-types":
         return MockResponse(object_types, 200)
     elif args[0] == f"{URL}query/namespace-array":
@@ -71,7 +70,7 @@ class ModelIndexTestCase(unittest.TestCase):
         model = ModelIndex(url=URL)
         result_json = model.get_object_types(return_format="json")
         result = model.get_object_types(return_format="dataframe")
-        assert_frame_equal(result, model.as_dataframe(result_json))
+        assert_frame_equal(result, normalize_as_dataframe(result_json))
 
     @mock.patch("requests.get", side_effect=mocked_requests)
     def test_get_namespace_array_as_json(self, mock_get):
@@ -84,7 +83,7 @@ class ModelIndexTestCase(unittest.TestCase):
         model = ModelIndex(url=URL)
         result_json = model.get_namespace_array(return_format="json")
         result = model.get_namespace_array(return_format="dataframe")
-        assert_frame_equal(result, model.as_dataframe(result_json))
+        assert_frame_equal(result, normalize_as_dataframe(result_json))
 
     @mock.patch("requests.get", side_effect=mocked_requests)
     def test_get_object_of_type_as_json(self, mock_get):
@@ -114,7 +113,7 @@ class ModelIndexTestCase(unittest.TestCase):
             result = model.get_objects_of_type(
                 type_name="IPVBaseCalculate", return_format="dataframe"
             )
-            assert_frame_equal(result, model.as_dataframe(result_json))
+            assert_frame_equal(result, normalize_as_dataframe(result_json))
 
 
 if __name__ == "__main__":
