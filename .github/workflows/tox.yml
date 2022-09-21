@@ -10,6 +10,9 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.8', '3.9', '3.10']
+    defaults:
+      run:
+        working-directory: /home/runner/work/pyPrediktorMapClient/pyPrediktorMapClient
 
     steps:
     - uses: actions/checkout@v3
@@ -19,11 +22,8 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        cd /home/runner/work/pyPrediktorMapClient/pyPrediktorMapClient
         python -m pip install --upgrade pip
         python -m pip install tox tox-gh-actions
         python -m pip install -e .
     - name: Test with tox
-      run: |
-        cd /home/runner/work/pyPrediktorMapClient/pyPrediktorMapClient
-        tox
+      run: tox
