@@ -1,7 +1,7 @@
 import json
 import pandas as pd
 from pydantic import BaseModel, HttpUrl
-from pyprediktormapclient.shared import request_from_api
+from pyprediktormapclient.shared import request_from_api, normalize_as_dataframe
 
 
 class RESTUrls(BaseModel):
@@ -30,13 +30,13 @@ class ModelIndex:
     def get_namespace_array(self, return_format="dataframe") -> str:
         content = request_from_api(self.url, "GET", "query/namespace-array")
         if return_format == "dataframe":
-            return self.as_dataframe(content)
+            return normalize_as_dataframe(content)
         return content
 
     def get_object_types(self, return_format="dataframe") -> str:
         content = request_from_api(self.url, "GET", "query/object-types")
         if return_format == "dataframe":
-            return self.as_dataframe(content)
+            return normalize_as_dataframe(content)
 
         return content
 
@@ -94,7 +94,7 @@ class ModelIndex:
         body = json.dumps({"typeId": object_type_id})
         content = request_from_api(self.url, "POST", "query/objects-of-type", body)
         if return_format == "dataframe":
-            return self.as_dataframe(content)
+            return normalize_as_dataframe(content)
 
         return content
 
@@ -128,7 +128,7 @@ class ModelIndex:
         )
         content = request_from_api(self.url, "POST", "query/object-descendants", body)
         if return_format == "dataframe":
-            return self.as_dataframe(content)
+            return normalize_as_dataframe(content)
 
         return content
 
@@ -162,6 +162,6 @@ class ModelIndex:
         )
         content = request_from_api(self.url, "POST", "query/object-ancestors", body)
         if return_format == "dataframe":
-            return self.as_dataframe(content)
+            return normalize_as_dataframe(content)
 
         return content
