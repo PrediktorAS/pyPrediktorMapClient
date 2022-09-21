@@ -141,7 +141,9 @@ class OPC_UA:
             )
         df = self.expand_props_vars(obj_dataframe)
         name_column = [
-            x for x in df if x in ["Name", "DisplayName", "DescendantName", "AncestorName"]
+            x
+            for x in df
+            if x in ["Name", "DisplayName", "DescendantName", "AncestorName"]
         ][0]
         df1 = df[["VariableId", name_column, "Variable"]].set_axis(
             ["Id", "Name", "Variable"], axis=1

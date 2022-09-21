@@ -36,47 +36,27 @@ objects_of_type = [
 ]
 
 descendants = [
-  {
-    "ObjectId": "string",
-    "DescendantId": "string",
-    "DescendantName": "string",
-    "DescendantType": "string",
-    "ObjectName": "string",
-    "Props": [
-      {
-        "DisplayName": "string",
-        "Value": "string"
-      }
-    ],
-    "Vars": [
-      {
-        "DisplayName": "string",
-        "Id": "string"
-      }
-    ]
-  }
+    {
+        "ObjectId": "string",
+        "DescendantId": "string",
+        "DescendantName": "string",
+        "DescendantType": "string",
+        "ObjectName": "string",
+        "Props": [{"DisplayName": "string", "Value": "string"}],
+        "Vars": [{"DisplayName": "string", "Id": "string"}],
+    }
 ]
 
 ancestors = [
-  {
-    "ObjectId": "string",
-    "AncestorId": "string",
-    "AncestorName": "string",
-    "AncestorType": "string",
-    "ObjectName": "string",
-    "Props": [
-      {
-        "DisplayName": "string",
-        "Value": "string"
-      }
-    ],
-    "Vars": [
-      {
-        "DisplayName": "string",
-        "Id": "string"
-      }
-    ]
-  }
+    {
+        "ObjectId": "string",
+        "AncestorId": "string",
+        "AncestorName": "string",
+        "AncestorType": "string",
+        "ObjectName": "string",
+        "Props": [{"DisplayName": "string", "Value": "string"}],
+        "Vars": [{"DisplayName": "string", "Id": "string"}],
+    }
 ]
 
 # This method will be used by the mock to replace requests.get
@@ -89,7 +69,6 @@ def mocked_requests(*args, **kwargs):
 
         def json(self):
             return self.json_data
-
 
     if args[0] == f"{URL}query/object-types":
         return MockResponse(object_types, 200)
@@ -168,7 +147,8 @@ class ModelIndexTestCase(unittest.TestCase):
         model = ModelIndex(url=URL)
         with mock.patch("requests.post", side_effect=mocked_requests):
             result = model.get_object_descendants(
-                type_name="IPVBaseCalculate", ids=["Anything"], domain="PV_Assets")
+                type_name="IPVBaseCalculate", ids=["Anything"], domain="PV_Assets"
+            )
             assert result == descendants
 
     @mock.patch("requests.get", side_effect=mocked_requests)
@@ -176,7 +156,8 @@ class ModelIndexTestCase(unittest.TestCase):
         model = ModelIndex(url=URL)
         with mock.patch("requests.post", side_effect=mocked_requests):
             result = model.get_object_descendants(
-                type_name=None, ids=["Anything"], domain="PV_Assets")
+                type_name=None, ids=["Anything"], domain="PV_Assets"
+            )
             assert result == None
 
     @mock.patch("requests.get", side_effect=mocked_requests)
@@ -184,7 +165,8 @@ class ModelIndexTestCase(unittest.TestCase):
         model = ModelIndex(url=URL)
         with mock.patch("requests.post", side_effect=mocked_requests):
             result = model.get_object_descendants(
-                type_name="IPVBaseCalculate", ids=None, domain="PV_Assets")
+                type_name="IPVBaseCalculate", ids=None, domain="PV_Assets"
+            )
             assert result == None
 
     @mock.patch("requests.get", side_effect=mocked_requests)
@@ -192,9 +174,14 @@ class ModelIndexTestCase(unittest.TestCase):
         model = ModelIndex(url=URL)
         with mock.patch("requests.post", side_effect=mocked_requests):
             result_json = model.get_object_descendants(
-                type_name="IPVBaseCalculate", ids=["Anything"], domain="PV_Assets")
+                type_name="IPVBaseCalculate", ids=["Anything"], domain="PV_Assets"
+            )
             result_dataframe = model.get_object_descendants(
-                type_name="IPVBaseCalculate", ids=["Anything"], domain="PV_Assets", return_format="dataframe")
+                type_name="IPVBaseCalculate",
+                ids=["Anything"],
+                domain="PV_Assets",
+                return_format="dataframe",
+            )
             assert_frame_equal(result_dataframe, normalize_as_dataframe(result_json))
 
     @mock.patch("requests.get", side_effect=mocked_requests)
@@ -202,7 +189,8 @@ class ModelIndexTestCase(unittest.TestCase):
         model = ModelIndex(url=URL)
         with mock.patch("requests.post", side_effect=mocked_requests):
             result = model.get_object_ancestors(
-                type_name="IPVBaseCalculate", ids=["Anything"], domain="PV_Assets")
+                type_name="IPVBaseCalculate", ids=["Anything"], domain="PV_Assets"
+            )
             assert result == ancestors
 
     @mock.patch("requests.get", side_effect=mocked_requests)
@@ -210,7 +198,8 @@ class ModelIndexTestCase(unittest.TestCase):
         model = ModelIndex(url=URL)
         with mock.patch("requests.post", side_effect=mocked_requests):
             result = model.get_object_ancestors(
-                type_name=None, ids=["Anything"], domain="PV_Assets")
+                type_name=None, ids=["Anything"], domain="PV_Assets"
+            )
             assert result == None
 
     @mock.patch("requests.get", side_effect=mocked_requests)
@@ -218,7 +207,8 @@ class ModelIndexTestCase(unittest.TestCase):
         model = ModelIndex(url=URL)
         with mock.patch("requests.post", side_effect=mocked_requests):
             result = model.get_object_ancestors(
-                type_name="IPVBaseCalculate", ids=None, domain="PV_Assets")
+                type_name="IPVBaseCalculate", ids=None, domain="PV_Assets"
+            )
             assert result == None
 
     @mock.patch("requests.get", side_effect=mocked_requests)
@@ -226,9 +216,14 @@ class ModelIndexTestCase(unittest.TestCase):
         model = ModelIndex(url=URL)
         with mock.patch("requests.post", side_effect=mocked_requests):
             result_json = model.get_object_ancestors(
-                type_name="IPVBaseCalculate", ids=["Anything"], domain="PV_Assets")
+                type_name="IPVBaseCalculate", ids=["Anything"], domain="PV_Assets"
+            )
             result_dataframe = model.get_object_ancestors(
-                type_name="IPVBaseCalculate", ids=["Anything"], domain="PV_Assets", return_format="dataframe")
+                type_name="IPVBaseCalculate",
+                ids=["Anything"],
+                domain="PV_Assets",
+                return_format="dataframe",
+            )
             assert_frame_equal(result_dataframe, normalize_as_dataframe(result_json))
 
 
