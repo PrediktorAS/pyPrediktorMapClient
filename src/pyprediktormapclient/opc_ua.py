@@ -1,4 +1,3 @@
-import requests
 import json
 import pandas as pd
 import numpy as np
@@ -9,6 +8,7 @@ from typing import Dict, List
 from aiohttp import ClientSession
 import logging
 from pydantic import BaseModel, HttpUrl, AnyUrl
+from pyprediktormapclient.shared import request_from_api
 
 
 logger = logging.getLogger()
@@ -38,18 +38,6 @@ class OPC_UA:
         OPCUrls(rest_url=rest_url, opcua_url=opcua_url)
         self.rest_url = rest_url
         self.opcua_url = opcua_url
-
-    def request(self, method: str, endpoint: str, data=None, headers=None):
-        if method == "GET":
-            result = requests.get(self.rest_url + endpoint)
-        elif method == "POST":
-            result = requests.post(self.rest_url + endpoint, data=data, headers=headers)
-        else:
-            raise Exception("Method not supported")
-        if result.status_code == 200:
-            return result.json()
-        else:
-            return None
 
     def get_vars_node_ids(self, obj_dataframe: pd.DataFrame) -> List:
         """Function to get variables node ids of the objects
@@ -129,7 +117,11 @@ class OPC_UA:
             ]
         )
         headers = {"Content-Type": "application/json"}
-        response = pd.DataFrame(self.request("POST", "values/get", body, headers))
+        from_api = request_from_api(self.rest_url, "POST", "values/get", body, headers)
+        if from_api is None:
+            return None
+
+        response = pd.DataFrame(from_api)
         result = pd.json_normalize(response["Values"][0])
         if len(result.columns) == 6:
             result1 = result.drop(columns=["Value.Type", "ServerTimestamp"]).set_axis(
