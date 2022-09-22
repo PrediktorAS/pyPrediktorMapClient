@@ -2,9 +2,12 @@
 Changelog
 =========
 
-version unreleased
+version 0.0.9
 ===========
 
+- Better error handling
+- First normalizer for DataFrame content
+- Tests for ModelIndex functions complete
 - Set floating time in Notebook examples
 
 
