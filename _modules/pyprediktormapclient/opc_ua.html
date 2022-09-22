@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pyprediktormapclient.opc_ua &mdash; pyPrediktorMapClient 0.8.0 documentation</title>
+  <title>pyprediktormapclient.opc_ua &mdash; pyPrediktorMapClient 0.0.9 documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -28,7 +28,7 @@
             <a href="../../index.html" class="icon icon-home"> pyPrediktorMapClient
           </a>
               <div class="version">
-                0.8.0
+                0.0.9
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -80,8 +80,13 @@
 <span class="kn">import</span> <span class="nn">asyncio</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span>
 <span class="kn">from</span> <span class="nn">aiohttp</span> <span class="kn">import</span> <span class="n">ClientSession</span>
+<span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">HttpUrl</span><span class="p">,</span> <span class="n">AnyUrl</span>
 <span class="kn">from</span> <span class="nn">pyprediktormapclient.shared</span> <span class="kn">import</span> <span class="n">request_from_api</span>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span>
+
 
 <div class="viewcode-block" id="OPCUrls"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPCUrls">[docs]</a><span class="k">class</span> <span class="nc">OPCUrls</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
     <span class="n">rest_url</span><span class="p">:</span> <span class="n">HttpUrl</span>
@@ -89,13 +94,14 @@
 
 
 <div class="viewcode-block" id="OPC_UA"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA">[docs]</a><span class="k">class</span> <span class="nc">OPC_UA</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Value data from the opc ua api server </span>
+    <span class="sd">&quot;&quot;&quot;Value data from the opc ua api server</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        live and aggregated historical value data</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rest_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">opcua_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Class initializer  </span>
+        <span class="sd">&quot;&quot;&quot;Class initializer</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            rest_url (str): The complete url of the OPC UA Values REST API. E.g. &quot;http://127.0.0.1:13371/&quot;</span>
@@ -107,8 +113,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">rest_url</span> <span class="o">=</span> <span class="n">rest_url</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">opcua_url</span> <span class="o">=</span> <span class="n">opcua_url</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">:</span> <span class="s1">&#39;application/json&#39;</span><span class="p">}</span>
-
 <div class="viewcode-block" id="OPC_UA.get_vars_node_ids"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.get_vars_node_ids">[docs]</a>    <span class="k">def</span> <span class="nf">get_vars_node_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj_dataframe</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Function to get variables node ids of the objects</span>
 
@@ -116,8 +120,11 @@
 <span class="sd">            obj_dataframe (pd.DataFrame): object dataframe</span>
 <span class="sd">        Returns:</span>
 <span class="sd">            List: list of variables&#39; node ids</span>
-<span class="sd">        &quot;&quot;&quot;</span>                
-        <span class="n">objects_vars</span> <span class="o">=</span> <span class="n">obj_dataframe</span><span class="p">[</span><span class="s2">&quot;Vars&quot;</span><span class="p">]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">objects_vars</span> <span class="o">=</span> <span class="n">obj_dataframe</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Vars&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">objects_vars</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
         <span class="c1"># Flatten the list</span>
         <span class="n">vars_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">xs</span> <span class="ow">in</span> <span class="n">objects_vars</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">xs</span><span class="p">]</span>
         <span class="n">vars_node_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="s2">&quot;Id&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">vars_list</span><span class="p">]</span>
@@ -131,23 +138,27 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            dataframe: Pandas dataframe</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># Make list of column names except vars and props </span>
-        <span class="n">non_vars_props_columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">json_df</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;Vars&#39;</span><span class="p">,</span><span class="s1">&#39;Props&#39;</span><span class="p">]]</span>
-        <span class="n">json_df1</span> <span class="o">=</span> <span class="n">json_df</span><span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="s1">&#39;Props&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">json_df1</span><span class="p">[[</span><span class="s1">&#39;Parameter&#39;</span><span class="p">,</span><span class="s1">&#39;Value&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">json_df1</span><span class="p">[</span><span class="s1">&#39;Props&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span>
-        <span class="n">json_df1</span> <span class="o">=</span> <span class="n">json_df1</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Props&#39;</span><span class="p">,</span><span class="s1">&#39;Vars&#39;</span><span class="p">])</span>
+        <span class="c1"># Make list of column names except vars and props</span>
+        <span class="n">non_vars_props_columns</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">json_df</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;Vars&quot;</span><span class="p">,</span> <span class="s2">&quot;Props&quot;</span><span class="p">]</span>
+        <span class="p">]</span>
+        <span class="n">json_df1</span> <span class="o">=</span> <span class="n">json_df</span><span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="s2">&quot;Props&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">json_df1</span><span class="p">[[</span><span class="s2">&quot;Parameter&quot;</span><span class="p">,</span> <span class="s2">&quot;Value&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">json_df1</span><span class="p">[</span><span class="s2">&quot;Props&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span>
+        <span class="n">json_df1</span> <span class="o">=</span> <span class="n">json_df1</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Props&quot;</span><span class="p">,</span> <span class="s2">&quot;Vars&quot;</span><span class="p">])</span>
         <span class="c1"># Create Pivot to convert parameter column into dataframe&#39;s columns</span>
-        <span class="n">json_df_props</span> <span class="o">=</span> <span class="n">json_df1</span><span class="o">.</span><span class="n">pivot</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">non_vars_props_columns</span><span class="p">,</span><span class="n">columns</span><span class="o">=</span><span class="s1">&#39;Parameter&#39;</span><span class="p">,</span><span class="n">values</span><span class="o">=</span><span class="s1">&#39;Value&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+        <span class="n">json_df_props</span> <span class="o">=</span> <span class="n">json_df1</span><span class="o">.</span><span class="n">pivot</span><span class="p">(</span>
+            <span class="n">index</span><span class="o">=</span><span class="n">non_vars_props_columns</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="s2">&quot;Parameter&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="s2">&quot;Value&quot;</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
         <span class="n">json_df_props</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="n">json_df_vars</span> <span class="o">=</span> <span class="n">json_df</span><span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="s1">&#39;Vars&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">json_df_vars</span><span class="p">[[</span><span class="s1">&#39;Variable&#39;</span><span class="p">,</span><span class="s1">&#39;VariableId&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">json_df_vars</span><span class="p">[</span><span class="s1">&#39;Vars&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span>
-        <span class="n">json_df_vars</span> <span class="o">=</span> <span class="n">json_df_vars</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Vars&#39;</span><span class="p">,</span> <span class="s1">&#39;Props&#39;</span><span class="p">])</span>
+        <span class="n">json_df_vars</span> <span class="o">=</span> <span class="n">json_df</span><span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="s2">&quot;Vars&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">json_df_vars</span><span class="p">[[</span><span class="s2">&quot;Variable&quot;</span><span class="p">,</span> <span class="s2">&quot;VariableId&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">json_df_vars</span><span class="p">[</span><span class="s2">&quot;Vars&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span>
+        <span class="n">json_df_vars</span> <span class="o">=</span> <span class="n">json_df_vars</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Vars&quot;</span><span class="p">,</span> <span class="s2">&quot;Props&quot;</span><span class="p">])</span>
         <span class="c1"># Merge props and vars dataframes</span>
-        <span class="n">json_df_merged</span> <span class="o">=</span> <span class="n">json_df_vars</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">json_df_props</span><span class="p">,</span><span class="n">on</span><span class="o">=</span><span class="n">non_vars_props_columns</span><span class="p">)</span>
+        <span class="n">json_df_merged</span> <span class="o">=</span> <span class="n">json_df_vars</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">json_df_props</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="n">non_vars_props_columns</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">json_df_merged</span></div>
 
 <div class="viewcode-block" id="OPC_UA.split_node_id"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.split_node_id">[docs]</a>    <span class="k">def</span> <span class="nf">split_node_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Functions to get node id(s) with namespace index and data format of the node  </span>
+        <span class="sd">&quot;&quot;&quot;Functions to get node id(s) with namespace index and data format of the node</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            node_id (str): node id of a node</span>
@@ -158,48 +169,62 @@
         <span class="n">node_id_dict</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;Id&quot;</span><span class="p">:</span> <span class="n">id_split</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
             <span class="s2">&quot;Namespace&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">id_split</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
-            <span class="s2">&quot;IdType&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">id_split</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="s2">&quot;IdType&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">id_split</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
         <span class="p">}</span>
         <span class="k">return</span> <span class="n">node_id_dict</span></div>
 
-<div class="viewcode-block" id="OPC_UA.get_live_values_data"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.get_live_values_data">[docs]</a>    <span class="k">def</span> <span class="nf">get_live_values_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">include_variables</span><span class="p">:</span> <span class="n">List</span><span class="p">,</span> <span class="n">obj_dataframe</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+<div class="viewcode-block" id="OPC_UA.get_live_values_data"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.get_live_values_data">[docs]</a>    <span class="k">def</span> <span class="nf">get_live_values_data</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">include_variables</span><span class="p">:</span> <span class="n">List</span><span class="p">,</span> <span class="n">obj_dataframe</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+    <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Request to get real time data values of the variables for the requested node(s)</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            include_variables (List): list of variables </span>
+<span class="sd">            include_variables (List): list of variables</span>
 <span class="sd">            obj_dataframe (pd.DataFrame): dataframe of object ids</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">node_ids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_vars_node_ids</span><span class="p">(</span><span class="n">obj_dataframe</span><span class="p">)</span>
         <span class="n">var_node_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">node_ids</span> <span class="k">if</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="ow">in</span> <span class="n">include_variables</span><span class="p">]</span>
         <span class="n">node_ids_dicts</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">split_node_id</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">var_node_ids</span><span class="p">]</span>
-        <span class="n">body</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span>
-            <span class="p">{</span>
-                <span class="s2">&quot;Connection&quot;</span><span class="p">:</span> <span class="p">{</span>
-                    <span class="s2">&quot;Url&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">opcua_url</span><span class="p">,</span>
-                    <span class="s2">&quot;AuthenticationType&quot;</span><span class="p">:</span> <span class="mi">1</span>
-                <span class="p">},</span>
-                <span class="s2">&quot;NodeIds&quot;</span><span class="p">:</span> <span class="n">node_ids_dicts</span>
-            <span class="p">}</span>
-        <span class="p">])</span>
-        <span class="n">response</span> <span class="o">=</span> <span class="n">request_from_api</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rest_url</span><span class="p">,</span> <span class="s1">&#39;POST&#39;</span><span class="p">,</span> <span class="s1">&#39;values/get&#39;</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">response</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;Connection&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;Url&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">opcua_url</span><span class="p">,</span> <span class="s2">&quot;AuthenticationType&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
+                    <span class="s2">&quot;NodeIds&quot;</span><span class="p">:</span> <span class="n">node_ids_dicts</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">}</span>
+        <span class="n">from_api</span> <span class="o">=</span> <span class="n">request_from_api</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rest_url</span><span class="p">,</span> <span class="s2">&quot;POST&quot;</span><span class="p">,</span> <span class="s2">&quot;values/get&quot;</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="n">headers</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">from_api</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
 
-        <span class="n">response_as_pd</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">json_normalize</span><span class="p">(</span><span class="n">response_as_pd</span><span class="p">[</span><span class="s1">&#39;Values&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">from_api</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">json_normalize</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="s2">&quot;Values&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">==</span> <span class="mi">6</span><span class="p">:</span>
-            <span class="n">result_filtered</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Value.Type&#39;</span><span class="p">,</span><span class="s1">&#39;ServerTimestamp&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">set_axis</span><span class="p">([</span><span class="s1">&#39;Timestamp&#39;</span><span class="p">,</span> <span class="s1">&#39;Value&#39;</span><span class="p">,</span><span class="s1">&#39;Code&#39;</span><span class="p">,</span><span class="s1">&#39;Quality&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">result1</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Value.Type&quot;</span><span class="p">,</span> <span class="s2">&quot;ServerTimestamp&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">set_axis</span><span class="p">(</span>
+                <span class="p">[</span><span class="s2">&quot;Timestamp&quot;</span><span class="p">,</span> <span class="s2">&quot;Value&quot;</span><span class="p">,</span> <span class="s2">&quot;Code&quot;</span><span class="p">,</span> <span class="s2">&quot;Quality&quot;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+            <span class="p">)</span>
         <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
-            <span class="n">result_filtered</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Value.Type&#39;</span><span class="p">,</span><span class="s1">&#39;ServerTimestamp&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">set_axis</span><span class="p">([</span><span class="s1">&#39;Timestamp&#39;</span><span class="p">,</span> <span class="s1">&#39;Value&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">result1</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Value.Type&quot;</span><span class="p">,</span> <span class="s2">&quot;ServerTimestamp&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">set_axis</span><span class="p">(</span>
+                <span class="p">[</span><span class="s2">&quot;Timestamp&quot;</span><span class="p">,</span> <span class="s2">&quot;Value&quot;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+            <span class="p">)</span>
         <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expand_props_vars</span><span class="p">(</span><span class="n">obj_dataframe</span><span class="p">)</span>
-        <span class="n">name_column</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">df</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;DisplayName&#39;</span><span class="p">,</span> <span class="s1">&#39;DescendantName&#39;</span><span class="p">,</span> <span class="s1">&#39;AncestorName&#39;</span><span class="p">]][</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">df1</span> <span class="o">=</span> <span class="n">df</span><span class="p">[[</span><span class="s1">&#39;VariableId&#39;</span><span class="p">,</span> <span class="n">name_column</span><span class="p">,</span> <span class="s1">&#39;Variable&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">set_axis</span><span class="p">([</span><span class="s1">&#39;Id&#39;</span><span class="p">,</span> <span class="s1">&#39;Name&#39;</span><span class="p">,</span> <span class="s1">&#39;Variable&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">name_column</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">x</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">df</span>
+            <span class="k">if</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;Name&quot;</span><span class="p">,</span> <span class="s2">&quot;DisplayName&quot;</span><span class="p">,</span> <span class="s2">&quot;DescendantName&quot;</span><span class="p">,</span> <span class="s2">&quot;AncestorName&quot;</span><span class="p">]</span>
+        <span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">df1</span> <span class="o">=</span> <span class="n">df</span><span class="p">[[</span><span class="s2">&quot;VariableId&quot;</span><span class="p">,</span> <span class="n">name_column</span><span class="p">,</span> <span class="s2">&quot;Variable&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">set_axis</span><span class="p">(</span>
+            <span class="p">[</span><span class="s2">&quot;Id&quot;</span><span class="p">,</span> <span class="s2">&quot;Name&quot;</span><span class="p">,</span> <span class="s2">&quot;Variable&quot;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+        <span class="p">)</span>
         <span class="c1"># Filtering dataframe for the variables</span>
-        <span class="n">obj_dataframe1</span> <span class="o">=</span> <span class="n">df1</span><span class="p">[</span><span class="n">df1</span><span class="p">[</span><span class="s1">&#39;Variable&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">include_variables</span><span class="p">)]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">final_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">obj_dataframe1</span><span class="p">,</span><span class="n">result_filtered</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">obj_dataframe1</span> <span class="o">=</span> <span class="n">df1</span><span class="p">[</span><span class="n">df1</span><span class="p">[</span><span class="s2">&quot;Variable&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">include_variables</span><span class="p">)]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span>
+            <span class="n">drop</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+        <span class="n">final_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">obj_dataframe1</span><span class="p">,</span> <span class="n">result1</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">final_df</span></div>
 
-<div class="viewcode-block" id="OPC_UA.create_readvalueids_dict"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.create_readvalueids_dict">[docs]</a>    <span class="k">def</span> <span class="nf">create_readvalueids_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">agg_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span><span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+<div class="viewcode-block" id="OPC_UA.create_readvalueids_dict"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.create_readvalueids_dict">[docs]</a>    <span class="k">def</span> <span class="nf">create_readvalueids_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">agg_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;A function to get ReadValueIds</span>
 
 <span class="sd">        Args:</span>
@@ -210,42 +235,44 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">id_split</span> <span class="o">=</span> <span class="n">node_id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
         <span class="n">read_value_id_dict</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;NodeId&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;Id&quot;</span><span class="p">:</span> <span class="n">id_split</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
-            <span class="s2">&quot;Namespace&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">id_split</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
-            <span class="s2">&quot;IdType&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">id_split</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-        <span class="p">},</span>
-        <span class="s2">&quot;AggregateName&quot;</span><span class="p">:</span> <span class="n">agg_name</span>
+            <span class="s2">&quot;NodeId&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;Id&quot;</span><span class="p">:</span> <span class="n">id_split</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+                <span class="s2">&quot;Namespace&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">id_split</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                <span class="s2">&quot;IdType&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">id_split</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;AggregateName&quot;</span><span class="p">:</span> <span class="n">agg_name</span><span class="p">,</span>
         <span class="p">}</span>
         <span class="k">return</span> <span class="n">read_value_id_dict</span></div>
 
-<div class="viewcode-block" id="OPC_UA.chunk_datetimes"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.chunk_datetimes">[docs]</a>    <span class="k">def</span> <span class="nf">chunk_datetimes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">n_time_splits</span><span class="p">):</span>
+<div class="viewcode-block" id="OPC_UA.chunk_datetimes"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.chunk_datetimes">[docs]</a>    <span class="k">def</span> <span class="nf">chunk_datetimes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">n_time_splits</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Function to get chunked datetimes for the selected time periods(dates)</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            start_time (_type_): time from </span>
-<span class="sd">            end_time (_type_): time to </span>
+<span class="sd">            start_time (_type_): time from</span>
+<span class="sd">            end_time (_type_): time to</span>
 <span class="sd">            n_time_splits (_type_): number of splits</span>
 <span class="sd">        Returns:</span>
 <span class="sd">            List: list of datetimes tuples</span>
-<span class="sd">        &quot;&quot;&quot;</span>        
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">start_time</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">start_time</span><span class="p">)</span>
         <span class="n">end_time</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">end_time</span><span class="p">)</span>
-        <span class="n">diff</span> <span class="o">=</span> <span class="p">(</span><span class="n">end_time</span>  <span class="o">-</span> <span class="n">start_time</span><span class="p">)</span> <span class="o">/</span> <span class="n">n_time_splits</span>
+        <span class="n">diff</span> <span class="o">=</span> <span class="p">(</span><span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">)</span> <span class="o">/</span> <span class="n">n_time_splits</span>
         <span class="n">date_list</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_time_splits</span><span class="p">):</span>
-            <span class="n">date_list</span><span class="o">+=</span><span class="p">[(</span><span class="n">start_time</span> <span class="o">+</span> <span class="n">diff</span> <span class="o">*</span> <span class="n">idx</span><span class="p">)</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">T%H:%M:%S.</span><span class="si">%f</span><span class="s2">Z&quot;</span><span class="p">)]</span>
-        <span class="n">date_list</span><span class="o">+=</span><span class="p">[</span><span class="n">end_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">T%H:%M:%S.</span><span class="si">%f</span><span class="s2">Z&quot;</span><span class="p">)]</span>
+            <span class="n">date_list</span> <span class="o">+=</span> <span class="p">[(</span><span class="n">start_time</span> <span class="o">+</span> <span class="n">diff</span> <span class="o">*</span> <span class="n">idx</span><span class="p">)</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">T%H:%M:%S.</span><span class="si">%f</span><span class="s2">Z&quot;</span><span class="p">)]</span>
+        <span class="n">date_list</span> <span class="o">+=</span> <span class="p">[</span><span class="n">end_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">T%H:%M:%S.</span><span class="si">%f</span><span class="s2">Z&quot;</span><span class="p">)]</span>
         <span class="n">start_end_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">date_list</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">date_list</span><span class="p">[</span><span class="mi">1</span><span class="p">:]))</span>
         <span class="k">return</span> <span class="n">start_end_list</span></div>
 
 <div class="viewcode-block" id="OPC_UA.chunk_ids"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.chunk_ids">[docs]</a>    <span class="k">def</span> <span class="nf">chunk_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ids_list</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Yield successive n-sized chunks from ids_list.&quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">ids_list</span><span class="p">),</span> <span class="n">n</span><span class="p">):</span>
-            <span class="k">yield</span> <span class="n">ids_list</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span> <span class="o">+</span> <span class="n">n</span><span class="p">]</span></div>
+            <span class="k">yield</span> <span class="n">ids_list</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">n</span><span class="p">]</span></div>
 
     <span class="c1">############### Functions for multithreading API calls for aggregated historical data</span>
-<div class="viewcode-block" id="OPC_UA.http_get_with_aiohttp"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.http_get_with_aiohttp">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">http_get_with_aiohttp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">session</span><span class="p">:</span> <span class="n">ClientSession</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mf">10E25</span><span class="p">):</span>
+<div class="viewcode-block" id="OPC_UA.http_get_with_aiohttp"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.http_get_with_aiohttp">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">http_get_with_aiohttp</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">session</span><span class="p">:</span> <span class="n">ClientSession</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mf">10e25</span>
+    <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Request function for aiohttp based API request</span>
 
 <span class="sd">        Args:</span>
@@ -254,15 +281,28 @@
 <span class="sd">            data (_type_): body data</span>
 <span class="sd">            timeout (int, optional): time of one session. Defaults to 10E25.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="n">session</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rest_url</span> <span class="o">+</span> <span class="n">endpoint</span><span class="p">,</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
+        <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">}</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="n">session</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+                <span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rest_url</span> <span class="o">+</span> <span class="n">endpoint</span><span class="p">,</span>
+                <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+                <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span>
+                <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Request Failed for this data :&quot;</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+
         <span class="n">filtered_response_json</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="n">response_json</span> <span class="o">=</span> <span class="k">await</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
-        <span class="n">filtered_response_json</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter_json_response</span><span class="p">(</span><span class="n">response_json</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">response_json</span> <span class="o">=</span> <span class="k">await</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+            <span class="n">filtered_response_json</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter_json_response</span><span class="p">(</span><span class="n">response_json</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">json</span><span class="o">.</span><span class="n">decoder</span><span class="o">.</span><span class="n">JSONDecodeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;JSON Decoding Error&quot;</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">filtered_response_json</span></div>
 
-<div class="viewcode-block" id="OPC_UA.filter_json_response"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.filter_json_response">[docs]</a>    <span class="k">def</span> <span class="nf">filter_json_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">response_json</span><span class="p">:</span> <span class="n">json</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Function to filter json data after requesting to opc ua server </span>
+<div class="viewcode-block" id="OPC_UA.filter_json_response"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.filter_json_response">[docs]</a>    <span class="k">def</span> <span class="nf">filter_json_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response_json</span><span class="p">:</span> <span class="n">json</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Function to filter json data after requesting to opc ua server</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            response_json (json): api call response</span>
@@ -273,24 +313,26 @@
         <span class="n">response_json</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;ServerNamespaces&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="n">response_json</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;Success&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="c1"># Selecting only HistoryReadResults</span>
-        <span class="n">history_read_results</span> <span class="o">=</span> <span class="n">response_json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;HistoryReadResults&#39;</span><span class="p">,[])</span>
-        <span class="n">response_json</span><span class="p">[</span><span class="s1">&#39;HistoryReadResults&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">filter_read_results</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">history_read_results</span><span class="p">]</span>
+        <span class="n">history_read_results</span> <span class="o">=</span> <span class="n">response_json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;HistoryReadResults&quot;</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="n">response_json</span><span class="p">[</span><span class="s2">&quot;HistoryReadResults&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filter_read_results</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">history_read_results</span>
+        <span class="p">]</span>
         <span class="k">return</span> <span class="n">response_json</span></div>
 
-<div class="viewcode-block" id="OPC_UA.filter_read_results"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.filter_read_results">[docs]</a>    <span class="k">def</span> <span class="nf">filter_read_results</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">x</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+<div class="viewcode-block" id="OPC_UA.filter_read_results"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.filter_read_results">[docs]</a>    <span class="k">def</span> <span class="nf">filter_read_results</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Function to filter HistoryReadResults&#39; list of dictionaries</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            x (Dict): dict of json response </span>
+<span class="sd">            x (Dict): dict of json response</span>
 <span class="sd">        Returns:</span>
 <span class="sd">            Dict: filtered dict</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">y</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">y</span><span class="p">[</span><span class="s1">&#39;NodeId&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="s1">&#39;NodeId&#39;</span><span class="p">][</span><span class="s1">&#39;Id&#39;</span><span class="p">]</span>
-        <span class="n">xvalues</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="s1">&#39;DataValues&#39;</span><span class="p">]</span>
+        <span class="n">y</span><span class="p">[</span><span class="s2">&quot;NodeId&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;NodeId&quot;</span><span class="p">][</span><span class="s2">&quot;Id&quot;</span><span class="p">]</span>
+        <span class="n">xvalues</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;DataValues&quot;</span><span class="p">]</span>
         <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">xvalues</span><span class="p">:</span>
-            <span class="n">v</span><span class="p">[</span><span class="s1">&#39;Value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="s1">&#39;Value&#39;</span><span class="p">][</span><span class="s1">&#39;Body&#39;</span><span class="p">]</span>
-        <span class="n">y</span><span class="p">[</span><span class="s1">&#39;DataValues&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xvalues</span>
+            <span class="n">v</span><span class="p">[</span><span class="s2">&quot;Value&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="s2">&quot;Value&quot;</span><span class="p">][</span><span class="s2">&quot;Body&quot;</span><span class="p">]</span>
+        <span class="n">y</span><span class="p">[</span><span class="s2">&quot;DataValues&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xvalues</span>
         <span class="k">return</span> <span class="n">y</span></div>
 
 <div class="viewcode-block" id="OPC_UA.process_response_dataframe"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.process_response_dataframe">[docs]</a>    <span class="k">def</span> <span class="nf">process_response_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df_result</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
@@ -299,14 +341,17 @@
 <span class="sd">        Args:</span>
 <span class="sd">            df_result (pd.DataFrame): api call&#39;s response for agg historical data request</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">df_result</span><span class="p">[</span><span class="s1">&#39;Variable&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_result</span><span class="p">[</span><span class="s1">&#39;NodeId&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">str</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-        <span class="n">df_result1</span> <span class="o">=</span> <span class="n">df_result</span><span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="s1">&#39;DataValues&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">df_result</span><span class="p">[</span><span class="s2">&quot;Variable&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_result</span><span class="p">[</span><span class="s2">&quot;NodeId&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">str</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">df_result1</span> <span class="o">=</span> <span class="n">df_result</span><span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="s2">&quot;DataValues&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">df_result2</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">json_normalize</span><span class="p">(</span><span class="n">df_result1</span><span class="o">.</span><span class="n">DataValues</span><span class="p">)</span>
-        <span class="n">df_merge</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">df_result1</span><span class="p">,</span><span class="n">df_result2</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">df_merge</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;DataValues&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">set_axis</span><span class="p">([</span><span class="s1">&#39;Id&#39;</span><span class="p">,</span><span class="s1">&#39;Variable&#39;</span><span class="p">,</span> <span class="s1">&#39;Value&#39;</span><span class="p">,</span><span class="s1">&#39;Timestamp&#39;</span><span class="p">,</span><span class="s1">&#39;Code&#39;</span><span class="p">,</span><span class="s1">&#39;Quality&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">df_merge</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">df_result1</span><span class="p">,</span> <span class="n">df_result2</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df_merge</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;DataValues&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">set_axis</span><span class="p">(</span>
+            <span class="p">[</span><span class="s2">&quot;Id&quot;</span><span class="p">,</span> <span class="s2">&quot;Variable&quot;</span><span class="p">,</span> <span class="s2">&quot;Value&quot;</span><span class="p">,</span> <span class="s2">&quot;Timestamp&quot;</span><span class="p">,</span> <span class="s2">&quot;Code&quot;</span><span class="p">,</span> <span class="s2">&quot;Quality&quot;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+        <span class="p">)</span>
         <span class="k">return</span> <span class="n">df</span></div>
 
-<div class="viewcode-block" id="OPC_UA.get_agg_hist_value_data"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.get_agg_hist_value_data">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">get_agg_hist_value_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+<div class="viewcode-block" id="OPC_UA.get_agg_hist_value_data"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.get_agg_hist_value_data">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">get_agg_hist_value_data</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
         <span class="n">start_time</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">end_time</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">pro_interval</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -314,9 +359,10 @@
         <span class="n">obj_dataframe</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
         <span class="n">include_variables</span><span class="p">:</span> <span class="n">List</span><span class="p">,</span>
         <span class="n">chunk_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100000</span><span class="p">,</span>
-        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> 
+        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
         <span class="n">max_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
-        <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mf">10E25</span><span class="p">):</span>
+        <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mf">10e25</span><span class="p">,</span>
+    <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Function to make aiohttp based multithreaded api requests to get aggregated historical data from opc ua api server and write the data in &#39;Data&#39; folder in parquet files.</span>
 
 <span class="sd">        Args:</span>
@@ -334,54 +380,66 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">node_ids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_vars_node_ids</span><span class="p">(</span><span class="n">obj_dataframe</span><span class="p">)</span>
         <span class="n">var_node_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">node_ids</span> <span class="k">if</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="ow">in</span> <span class="n">include_variables</span><span class="p">]</span>
-        <span class="n">read_value_ids</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">create_readvalueids_dict</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">agg_name</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">var_node_ids</span><span class="p">]</span>
+        <span class="n">read_value_ids</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">create_readvalueids_dict</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">agg_name</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">var_node_ids</span>
+        <span class="p">]</span>
         <span class="c1"># Lenght of time series</span>
-        <span class="n">n_datapoints</span> <span class="o">=</span> <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">end_time</span><span class="p">)</span> <span class="o">-</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">start_time</span><span class="p">))</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span><span class="o">*</span><span class="mi">1000</span><span class="o">/</span><span class="n">pro_interval</span>
-        <span class="n">one_batch_datapoints</span> <span class="o">=</span> <span class="n">n_datapoints</span><span class="o">*</span><span class="n">batch_size</span>
-        <span class="c1"># Number of required splits </span>
-        <span class="n">n_time_splits</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">one_batch_datapoints</span><span class="o">/</span><span class="n">chunk_size</span><span class="p">))</span>
+        <span class="n">n_datapoints</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">end_time</span><span class="p">)</span> <span class="o">-</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">start_time</span><span class="p">))</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span>
+            <span class="o">*</span> <span class="mi">1000</span>
+            <span class="o">/</span> <span class="n">pro_interval</span>
+        <span class="p">)</span>
+        <span class="n">one_batch_datapoints</span> <span class="o">=</span> <span class="n">n_datapoints</span> <span class="o">*</span> <span class="n">batch_size</span>
+        <span class="c1"># Number of required splits</span>
+        <span class="n">n_time_splits</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">one_batch_datapoints</span> <span class="o">/</span> <span class="n">chunk_size</span><span class="p">))</span>
         <span class="c1"># Node ids chunks</span>
         <span class="n">id_chunk_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">chunk_ids</span><span class="p">(</span><span class="n">read_value_ids</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">))</span>
         <span class="c1"># Get datetime chunks</span>
-        <span class="n">start_end_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">chunk_datetimes</span><span class="p">(</span><span class="n">start_time</span><span class="p">,</span><span class="n">end_time</span><span class="p">,</span> <span class="n">n_time_splits</span><span class="p">)</span>
-        <span class="n">body_elements</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="n">start_end_list</span><span class="p">,</span><span class="n">id_chunk_list</span><span class="p">))</span>
+        <span class="n">start_end_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">chunk_datetimes</span><span class="p">(</span><span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">n_time_splits</span><span class="p">)</span>
+        <span class="n">body_elements</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="n">start_end_list</span><span class="p">,</span> <span class="n">id_chunk_list</span><span class="p">))</span>
         <span class="c1"># Create body chunks</span>
         <span class="n">body_list</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">body_elements</span><span class="p">:</span>
             <span class="n">start_time_new</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
             <span class="n">end_time_new</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
             <span class="n">ids</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-            <span class="n">body</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span>
-                    <span class="s2">&quot;Connection&quot;</span><span class="p">:</span> <span class="p">{</span>
-                        <span class="s2">&quot;Url&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">opcua_url</span><span class="p">,</span>
-                        <span class="s2">&quot;AuthenticationType&quot;</span><span class="p">:</span> <span class="mi">1</span>
-                    <span class="p">},</span>
+            <span class="n">body</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;Connection&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;Url&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">opcua_url</span><span class="p">,</span> <span class="s2">&quot;AuthenticationType&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
                     <span class="s2">&quot;StartTime&quot;</span><span class="p">:</span> <span class="n">start_time_new</span><span class="p">,</span>
                     <span class="s2">&quot;EndTime&quot;</span><span class="p">:</span> <span class="n">end_time_new</span><span class="p">,</span>
-                    <span class="s2">&quot;ProcessingInterval&quot;</span><span class="p">:</span> <span class="n">pro_interval</span><span class="p">,</span> 
-                    <span class="s2">&quot;ReadValueIds&quot;</span><span class="p">:</span> <span class="n">ids</span>
-                
-                <span class="p">})</span>
+                    <span class="s2">&quot;ProcessingInterval&quot;</span><span class="p">:</span> <span class="n">pro_interval</span><span class="p">,</span>
+                    <span class="s2">&quot;ReadValueIds&quot;</span><span class="p">:</span> <span class="n">ids</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
             <span class="n">body_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
-        <span class="n">endpoint</span> <span class="o">=</span> <span class="s1">&#39;values/historicalaggregated&#39;</span>
+        <span class="n">endpoint</span> <span class="o">=</span> <span class="s2">&quot;values/historicalaggregated&quot;</span>
         <span class="c1"># Chunk body</span>
         <span class="n">one_time_body_count</span> <span class="o">=</span> <span class="n">max_workers</span>
         <span class="n">body_chunks_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">chunk_ids</span><span class="p">(</span><span class="n">body_list</span><span class="p">,</span> <span class="n">one_time_body_count</span><span class="p">))</span>
         <span class="c1"># Folder to save the downloaded data</span>
         <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;Data/&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">j</span><span class="p">,</span><span class="n">body_chunks</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">body_chunks_list</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;No. of Body Chunks : &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">body_chunks_list</span><span class="p">)))</span>
+        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">body_chunks</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">body_chunks_list</span><span class="p">):</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Requesting data for body chunk no. : &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">j</span><span class="p">))</span>
             <span class="c1"># Request chunkwise data</span>
             <span class="k">async</span> <span class="k">with</span> <span class="n">ClientSession</span><span class="p">()</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
-                <span class="n">results</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">http_get_with_aiohttp</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span> <span class="k">for</span> <span class="n">body</span> <span class="ow">in</span> <span class="n">body_chunks</span><span class="p">])</span>
+                <span class="n">results</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span>
+                    <span class="o">*</span><span class="p">[</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">http_get_with_aiohttp</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">body</span> <span class="ow">in</span> <span class="n">body_chunks</span>
+                    <span class="p">]</span>
+                <span class="p">)</span>
                 <span class="c1"># Create a dataframe and save as parquet</span>
                 <span class="n">results_list</span> <span class="o">=</span> <span class="p">[]</span>
                 <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">res</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">res</span><span class="p">[</span><span class="s1">&#39;HistoryReadResults&#39;</span><span class="p">]:</span>
+                        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">res</span><span class="p">[</span><span class="s2">&quot;HistoryReadResults&quot;</span><span class="p">]:</span>
                             <span class="n">results_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
                 <span class="n">df_results</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">results_list</span><span class="p">)</span>
                 <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_response_dataframe</span><span class="p">(</span><span class="n">df_results</span><span class="p">)</span>
-                <span class="n">df</span><span class="o">.</span><span class="n">to_parquet</span><span class="p">(</span><span class="s1">&#39;Data/data_chunk_&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">j</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;.parquet&#39;</span><span class="p">)</span></div></div>
+                <span class="n">df</span><span class="o">.</span><span class="n">to_parquet</span><span class="p">(</span><span class="s2">&quot;Data/data_chunk_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">j</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;.parquet&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot; Data download is complete &quot;</span><span class="p">)</span></div></div>
 </pre></div>
 
            </div>
