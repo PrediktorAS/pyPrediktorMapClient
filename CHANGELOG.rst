@@ -2,6 +2,11 @@
 Changelog
 =========
 
+version 0.1.0
+===========
+
+- Added an analytics helper
+
 version 0.0.9
 ===========
 
