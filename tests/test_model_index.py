@@ -100,18 +100,14 @@ class ModelIndexTestCase(unittest.TestCase):
     def test_get_object_of_type(self, mock_get):
         model = ModelIndex(url=URL)
         with mock.patch("requests.post", side_effect=mocked_requests):
-            result = model.get_objects_of_type(
-                type_name="IPVBaseCalculate"
-            )
+            result = model.get_objects_of_type(type_name="IPVBaseCalculate")
             assert result == objects_of_type
 
     @mock.patch("requests.get", side_effect=mocked_requests)
     def test_get_object_of_type_with_wrong_type(self, mock_get):
         model = ModelIndex(url=URL)
         with mock.patch("requests.post", side_effect=mocked_requests):
-            result = model.get_objects_of_type(
-                type_name="IPVBaseCalculate2"
-            )
+            result = model.get_objects_of_type(type_name="IPVBaseCalculate2")
             assert result == None
 
     @mock.patch("requests.get", side_effect=mocked_requests)

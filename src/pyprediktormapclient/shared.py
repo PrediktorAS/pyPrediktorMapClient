@@ -26,4 +26,3 @@ def request_from_api(
         raise Exception("Method not supported")
     result.raise_for_status()
     return result.json()
-
