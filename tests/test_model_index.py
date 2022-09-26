@@ -1,10 +1,8 @@
 import requests
 import unittest
 from unittest import mock
-from pandas.testing import assert_frame_equal
 
 from pyprediktormapclient.model_index import ModelIndex
-from pyprediktormapclient.shared import normalize_as_dataframe
 
 URL = "http://someserver.somedomain.com/v1/"
 object_types = [
@@ -87,63 +85,37 @@ def mocked_requests(*args, **kwargs):
 # Our test case class
 class ModelIndexTestCase(unittest.TestCase):
     @mock.patch("requests.get", side_effect=mocked_requests)
-    def test_get_object_types_as_json(self, mock_get):
+    def test_get_object_types(self, mock_get):
         model = ModelIndex(url=URL)
-        result = model.get_object_types(return_format="json")
+        result = model.get_object_types()
         assert result == object_types
 
     @mock.patch("requests.get", side_effect=mocked_requests)
-    def test_get_object_types_as_dataframe(self, mock_get):
+    def test_get_namespace_array(self, mock_get):
         model = ModelIndex(url=URL)
-        result_json = model.get_object_types(return_format="json")
-        result = model.get_object_types(return_format="dataframe")
-        assert_frame_equal(result, normalize_as_dataframe(result_json))
-
-    @mock.patch("requests.get", side_effect=mocked_requests)
-    def test_get_namespace_array_as_json(self, mock_get):
-        model = ModelIndex(url=URL)
-        result = model.get_namespace_array(return_format="json")
+        result = model.get_namespace_array()
         assert result == namespaces
 
     @mock.patch("requests.get", side_effect=mocked_requests)
-    def test_get_namespace_array_as_dataframe(self, mock_get):
-        model = ModelIndex(url=URL)
-        result_json = model.get_namespace_array(return_format="json")
-        result = model.get_namespace_array(return_format="dataframe")
-        assert_frame_equal(result, normalize_as_dataframe(result_json))
-
-    @mock.patch("requests.get", side_effect=mocked_requests)
-    def test_get_object_of_type_as_json(self, mock_get):
+    def test_get_object_of_type(self, mock_get):
         model = ModelIndex(url=URL)
         with mock.patch("requests.post", side_effect=mocked_requests):
             result = model.get_objects_of_type(
-                type_name="IPVBaseCalculate", return_format="json"
+                type_name="IPVBaseCalculate"
             )
             assert result == objects_of_type
 
     @mock.patch("requests.get", side_effect=mocked_requests)
-    def test_get_object_of_type_as_json_with_wrong_type(self, mock_get):
+    def test_get_object_of_type_with_wrong_type(self, mock_get):
         model = ModelIndex(url=URL)
         with mock.patch("requests.post", side_effect=mocked_requests):
             result = model.get_objects_of_type(
-                type_name="IPVBaseCalculate2", return_format="json"
+                type_name="IPVBaseCalculate2"
             )
             assert result == None
 
     @mock.patch("requests.get", side_effect=mocked_requests)
-    def test_get_object_of_type_as_dataframe(self, mock_get):
-        model = ModelIndex(url=URL)
-        with mock.patch("requests.post", side_effect=mocked_requests):
-            result_json = model.get_objects_of_type(
-                type_name="IPVBaseCalculate", return_format="json"
-            )
-            result = model.get_objects_of_type(
-                type_name="IPVBaseCalculate", return_format="dataframe"
-            )
-            assert_frame_equal(result, normalize_as_dataframe(result_json))
-
-    @mock.patch("requests.get", side_effect=mocked_requests)
-    def test_get_object_descendants_as_json(self, mock_get):
+    def test_get_object_descendants(self, mock_get):
         model = ModelIndex(url=URL)
         with mock.patch("requests.post", side_effect=mocked_requests):
             result = model.get_object_descendants(
@@ -170,22 +142,7 @@ class ModelIndexTestCase(unittest.TestCase):
             assert result == None
 
     @mock.patch("requests.get", side_effect=mocked_requests)
-    def test_get_object_descendants_as_dataframe(self, mock_get):
-        model = ModelIndex(url=URL)
-        with mock.patch("requests.post", side_effect=mocked_requests):
-            result_json = model.get_object_descendants(
-                type_name="IPVBaseCalculate", ids=["Anything"], domain="PV_Assets"
-            )
-            result_dataframe = model.get_object_descendants(
-                type_name="IPVBaseCalculate",
-                ids=["Anything"],
-                domain="PV_Assets",
-                return_format="dataframe",
-            )
-            assert_frame_equal(result_dataframe, normalize_as_dataframe(result_json))
-
-    @mock.patch("requests.get", side_effect=mocked_requests)
-    def test_get_object_ancestors_as_json(self, mock_get):
+    def test_get_object_ancestors(self, mock_get):
         model = ModelIndex(url=URL)
         with mock.patch("requests.post", side_effect=mocked_requests):
             result = model.get_object_ancestors(
@@ -210,21 +167,6 @@ class ModelIndexTestCase(unittest.TestCase):
                 type_name="IPVBaseCalculate", ids=None, domain="PV_Assets"
             )
             assert result == None
-
-    @mock.patch("requests.get", side_effect=mocked_requests)
-    def test_get_object_ancestors_as_dataframe(self, mock_get):
-        model = ModelIndex(url=URL)
-        with mock.patch("requests.post", side_effect=mocked_requests):
-            result_json = model.get_object_ancestors(
-                type_name="IPVBaseCalculate", ids=["Anything"], domain="PV_Assets"
-            )
-            result_dataframe = model.get_object_ancestors(
-                type_name="IPVBaseCalculate",
-                ids=["Anything"],
-                domain="PV_Assets",
-                return_format="dataframe",
-            )
-            assert_frame_equal(result_dataframe, normalize_as_dataframe(result_json))
 
 
 if __name__ == "__main__":
