@@ -6,38 +6,21 @@ from pyprediktormapclient.analytics_helper import AnalyticsHelper
 
 proper_json = [
     {
-    "Id": "id1",
-    "Type": "SomeType",
-    "DisplayName": "SomeName",
-    "Props": [
-        {
-            "DisplayName": "Property1",
-            "Value": "Value1"
-        },
-        {
-            "DisplayName": "Property2",
-            "Value": "Value2"
-        }
-    ],
-    "Vars": [
-        {
-            "Id": "SomeId",
-            "DisplayName": "SomeName"
-        },
-        {
-            "Id": "SomeId2",
-            "DisplayName": "SomeName2"
-        }
-    ]
+        "Id": "id1",
+        "Type": "SomeType",
+        "DisplayName": "SomeName",
+        "Props": [
+            {"DisplayName": "Property1", "Value": "Value1"},
+            {"DisplayName": "Property2", "Value": "Value2"},
+        ],
+        "Vars": [
+            {"Id": "SomeId", "DisplayName": "SomeName"},
+            {"Id": "SomeId2", "DisplayName": "SomeName2"},
+        ],
     }
 ]
 
-faulty_json = [
-    {
-        "Rubbish": "MoreRubbish",
-        "ShitIn": "ShitOut"
-    }
-]
+faulty_json = [{"Rubbish": "MoreRubbish", "ShitIn": "ShitOut"}]
 
 # Our test case class
 class AnalyticsHelperTestCase(unittest.TestCase):
@@ -53,7 +36,7 @@ class AnalyticsHelperTestCase(unittest.TestCase):
         assert "Property1" in result.properties_as_dataframe()["Property"].to_list()
         assert "VariableName" in result.variables_as_dataframe()
         assert "SomeName" in result.variables_as_dataframe()["VariableName"].to_list()
-    
+
     def test_analytics_helper_failure(self):
         result = AnalyticsHelper(faulty_json)
         assert isinstance(result.dataframe, NoneType)
@@ -63,6 +46,7 @@ class AnalyticsHelperTestCase(unittest.TestCase):
         assert result.list_of_variables() is None
         assert result.properties_as_dataframe() is None
         assert result.variables_as_dataframe() is None
+
 
 if __name__ == "__main__":
     unittest.main()

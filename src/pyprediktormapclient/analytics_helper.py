@@ -45,7 +45,7 @@ class AnalyticsHelper:
         Returns:
             Nothing, but nomralizes the instance "dataframe"
         """
-        
+
         # Check if there is an Id column
 
         # Remove "Subtype"
@@ -85,7 +85,7 @@ class AnalyticsHelper:
                 },
                 inplace=True,
             )
-        
+
         # Now check to see if all needed columns are there, else set to None
         needed_columns = ["Id", "Name", "Type", "Vars", "Props"]
         for needed_column in needed_columns:
