@@ -10,30 +10,22 @@ URL = "http://someserver.somedomain.com/v1/"
 OPC_URL = "opc.tcp://nosuchserver.nosuchdomain.com"
 
 values_get_result = [
-  {
-    "Success": True,
-    "ErrorMessage": "",
-    "ErrorCode": 0,
-    "ServerNamespaces": [
-      "string"
-    ],
-    "Values": [
-      {
-        "Value": {
-          "Type": 0,
-          "Body": "string"
-        },
-        "StatusCode": {
-          "Code": 0,
-          "Symbol": "string"
-        },
-        "SourceTimestamp": "2022-09-21T13:13:38.183Z",
-        "SourcePicoseconds": 0,
-        "ServerTimestamp": "2022-09-21T13:13:38.183Z",
-        "ServerPicoseconds": 0
-      }
-    ]
-  }
+    {
+        "Success": True,
+        "ErrorMessage": "",
+        "ErrorCode": 0,
+        "ServerNamespaces": ["string"],
+        "Values": [
+            {
+                "Value": {"Type": 0, "Body": "string"},
+                "StatusCode": {"Code": 0, "Symbol": "string"},
+                "SourceTimestamp": "2022-09-21T13:13:38.183Z",
+                "SourcePicoseconds": 0,
+                "ServerTimestamp": "2022-09-21T13:13:38.183Z",
+                "ServerPicoseconds": 0,
+            }
+        ],
+    }
 ]
 
 correct_live_df = pd.DataFrame({"Id": ["1", "2"], "AnotherColumnName": [40, 34]})
@@ -59,11 +51,12 @@ def mocked_requests(*args, **kwargs):
 class OPCUATestCase(unittest.TestCase):
     @mock.patch("requests.post", side_effect=mocked_requests)
     def test_get_live_values(self, mock_get):
-        
+
         pass  # wait with this test until dataframes can be removed
-        #tsdata = OPC_UA(rest_url=URL, opcua_url= OPC_URL)
-        #result = tsdata.get_live_values_data(['AngleMeasured', 'AngleSetpoint'], correct_live_df)
-        #assert result == values_get_result
+        # tsdata = OPC_UA(rest_url=URL, opcua_url= OPC_URL)
+        # result = tsdata.get_live_values_data(['AngleMeasured', 'AngleSetpoint'], correct_live_df)
+        # assert result == values_get_result
+
 
 if __name__ == "__main__":
     unittest.main()

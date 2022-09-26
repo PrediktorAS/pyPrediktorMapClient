@@ -1,5 +1,6 @@
 import sys
 from .shared import *
+from .analytics_helper import *
 from .model_index import *
 from .opc_ua import *
 
