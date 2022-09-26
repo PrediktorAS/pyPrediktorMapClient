@@ -39,7 +39,7 @@ class AnalyticsHelperTestCase(unittest.TestCase):
 
     def test_analytics_helper_failure(self):
         result = AnalyticsHelper(faulty_json)
-        assert isinstance(result.dataframe, NoneType)
+        assert result.dataframe is None
         assert result.list_of_ids() is None
         assert result.list_of_names() is None
         assert result.list_of_types() is None
