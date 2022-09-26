@@ -45,6 +45,8 @@ class AnalyticsHelper:
         Returns:
             Nothing, but nomralizes the instance "dataframe"
         """
+        
+        # Check if there is an Id column
 
         # Remove "Subtype"
         if "Subtype" in self.dataframe.columns:
@@ -83,6 +85,13 @@ class AnalyticsHelper:
                 },
                 inplace=True,
             )
+        
+        # Now check to see if all needed columns are there, else set to None
+        needed_columns = ["Id", "Name", "Type", "Vars", "Props"]
+        for needed_column in needed_columns:
+            if not needed_column in self.dataframe:
+                self.dataframe = None
+                return
 
     def list_of_ids(self) -> list:
         """Extracts the values in the column "Id" to a list of unique IDs
@@ -91,7 +100,14 @@ class AnalyticsHelper:
             list of unique IDs
         """
 
+        # Return if dataframe is None
+        if self.dataframe is None:
+            return None
+
+        # Check if there is an Id column present
         if "Id" in self.dataframe.columns:
+            # Get the content of the column Id as a list, loop it through
+            # the set function to remove duplicates and then back to a list
             return list(set(self.dataframe["Id"].to_list()))
 
         return []
@@ -103,7 +119,14 @@ class AnalyticsHelper:
             list of unique names
         """
 
+        # Return if dataframe is None
+        if self.dataframe is None:
+            return None
+
+        # Check if there is a Name column
         if "Name" in self.dataframe.columns:
+            # Get the content of the column Name as a list, loop it through
+            # the set function to remove duplicates and then back to a list
             return list(set(self.dataframe["Name"].to_list()))
 
         return []
@@ -114,7 +137,15 @@ class AnalyticsHelper:
         Returns:
             list of unique types
         """
+
+        # Return if dataframe is None
+        if self.dataframe is None:
+            return None
+
+        # Check if there is a Type column
         if "Type" in self.dataframe.columns:
+            # Get the content of the column Type as a list, loop it through
+            # the set function to remove duplicates and then back to a list
             return list(set(self.dataframe["Type"].to_list()))
 
         return []
@@ -127,18 +158,25 @@ class AnalyticsHelper:
             list of unique variable names
         """
 
+        # Return if dataframe is None
+        if self.dataframe is None:
+            return None
+
+        # Check if there is a Vars column
         if not "Vars" in self.dataframe:
             return []
 
+        # Check that the Vars column contains pd.Series content
         if not isinstance(self.dataframe["Vars"], pd.Series):
             return []
 
-        list = set([])
+        vars_set = set([])
+        # Loop through the Vars column and add DisplayName to the vars_set
         for i in self.dataframe["Vars"].array:
             for a in i:
-                list.add(a["DisplayName"])
+                vars_set.add(a["DisplayName"])
 
-        return list
+        return list(vars_set)
 
     def properties_as_dataframe(self) -> pd.DataFrame:
         """Explodes the column "Props" into a new dataframe. Column names will be
@@ -152,19 +190,30 @@ class AnalyticsHelper:
             a new dataframe with all properties as individual rows
         """
 
+        # Return if dataframe is None
+        if self.dataframe is None:
+            return None
+
+        # Check if there is a Props column
         if not "Props" in self.dataframe:
             return None
 
+        # Check if the Props column contains pd.Series data
         if not isinstance(self.dataframe["Props"], pd.Series):
             return None
 
+        # Explode will add a row for every series in the Prop column
         propery_frame = self.dataframe.explode("Props")
+        # Remove Vars
         propery_frame.drop(columns=["Vars"], inplace=True)
+        # Add Property and Value vcolumns
         propery_frame["Property"] = ""
         propery_frame["Value"] = ""
+        # Iterate over the rows and add to the new columns
         for index, row in propery_frame.iterrows():
             row["Property"] = row["Props"]["DisplayName"]
             row["Value"] = row["Props"]["Value"]
+        # Remove original Props column
         propery_frame.drop(columns=["Props"], inplace=True)
 
         return propery_frame
@@ -181,19 +230,30 @@ class AnalyticsHelper:
             a new dataframe with all variables as individual rows
         """
 
+        # Return if dataframe is None
+        if self.dataframe is None:
+            return None
+
+        # Check if there is a Vars column
         if not "Vars" in self.dataframe:
             return None
 
+        # Check if the Vars column contains pd.Series content
         if not isinstance(self.dataframe["Vars"], pd.Series):
             return None
 
+        # Explode will add a row for every series in the Prop column
         variables_frame = self.dataframe.explode("Vars")
+        # Remove the Props column
         variables_frame.drop(columns=["Props"], inplace=True)
+        # Add VariableId and VariableName columns
         variables_frame["VariableId"] = ""
         variables_frame["VariableName"] = ""
+        # Iterate over the rows and add to the new columns
         for index, row in variables_frame.iterrows():
             row["VariableId"] = row["Vars"]["Id"]
             row["VariableName"] = row["Vars"]["DisplayName"]
+        # Remove the original Vars column
         variables_frame.drop(columns=["Vars"], inplace=True)
 
         return variables_frame
