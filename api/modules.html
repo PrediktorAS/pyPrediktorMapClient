@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pyprediktormapclient &mdash; pyPrediktorMapClient 0.0.9 documentation</title>
+  <title>pyprediktormapclient &mdash; pyPrediktorMapClient 0.1.0 documentation</title>
       <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -16,6 +16,7 @@
         <script src="../_static/underscore.js"></script>
         <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -31,7 +32,7 @@
             <a href="../index.html" class="icon icon-home"> pyPrediktorMapClient
           </a>
               <div class="version">
-                0.0.9
+                0.1.0
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -83,9 +84,64 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="pyprediktormapclient.html">pyprediktormapclient package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="pyprediktormapclient.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="pyprediktormapclient.html#module-pyprediktormapclient.model_index">pyprediktormapclient.model_index module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="pyprediktormapclient.html#module-pyprediktormapclient.opc_ua">pyprediktormapclient.opc_ua module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="pyprediktormapclient.html#module-pyprediktormapclient.shared">pyprediktormapclient.shared module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyprediktormapclient.html#module-pyprediktormapclient.analytics_helper">pyprediktormapclient.analytics_helper module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper"><code class="docutils literal notranslate"><span class="pre">AnalyticsHelper</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.list_of_ids"><code class="docutils literal notranslate"><span class="pre">AnalyticsHelper.list_of_ids()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.list_of_names"><code class="docutils literal notranslate"><span class="pre">AnalyticsHelper.list_of_names()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.list_of_types"><code class="docutils literal notranslate"><span class="pre">AnalyticsHelper.list_of_types()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.list_of_variables"><code class="docutils literal notranslate"><span class="pre">AnalyticsHelper.list_of_variables()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.normalize"><code class="docutils literal notranslate"><span class="pre">AnalyticsHelper.normalize()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.properties_as_dataframe"><code class="docutils literal notranslate"><span class="pre">AnalyticsHelper.properties_as_dataframe()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.variables_as_dataframe"><code class="docutils literal notranslate"><span class="pre">AnalyticsHelper.variables_as_dataframe()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="pyprediktormapclient.html#module-pyprediktormapclient.model_index">pyprediktormapclient.model_index module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.model_index.ModelIndex"><code class="docutils literal notranslate"><span class="pre">ModelIndex</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.model_index.ModelIndex.get_namespace_array"><code class="docutils literal notranslate"><span class="pre">ModelIndex.get_namespace_array()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.model_index.ModelIndex.get_object_ancestors"><code class="docutils literal notranslate"><span class="pre">ModelIndex.get_object_ancestors()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.model_index.ModelIndex.get_object_descendants"><code class="docutils literal notranslate"><span class="pre">ModelIndex.get_object_descendants()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.model_index.ModelIndex.get_object_type_id_from_name"><code class="docutils literal notranslate"><span class="pre">ModelIndex.get_object_type_id_from_name()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.model_index.ModelIndex.get_object_types"><code class="docutils literal notranslate"><span class="pre">ModelIndex.get_object_types()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.model_index.ModelIndex.get_objects_of_type"><code class="docutils literal notranslate"><span class="pre">ModelIndex.get_objects_of_type()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.model_index.RESTUrls"><code class="docutils literal notranslate"><span class="pre">RESTUrls</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.model_index.RESTUrls.rest_url"><code class="docutils literal notranslate"><span class="pre">RESTUrls.rest_url</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="pyprediktormapclient.html#module-pyprediktormapclient.opc_ua">pyprediktormapclient.opc_ua module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPCUrls"><code class="docutils literal notranslate"><span class="pre">OPCUrls</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPCUrls.opcua_url"><code class="docutils literal notranslate"><span class="pre">OPCUrls.opcua_url</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPCUrls.rest_url"><code class="docutils literal notranslate"><span class="pre">OPCUrls.rest_url</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA"><code class="docutils literal notranslate"><span class="pre">OPC_UA</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.chunk_datetimes"><code class="docutils literal notranslate"><span class="pre">OPC_UA.chunk_datetimes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.chunk_ids"><code class="docutils literal notranslate"><span class="pre">OPC_UA.chunk_ids()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.create_readvalueids_dict"><code class="docutils literal notranslate"><span class="pre">OPC_UA.create_readvalueids_dict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.expand_props_vars"><code class="docutils literal notranslate"><span class="pre">OPC_UA.expand_props_vars()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.filter_json_response"><code class="docutils literal notranslate"><span class="pre">OPC_UA.filter_json_response()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.filter_read_results"><code class="docutils literal notranslate"><span class="pre">OPC_UA.filter_read_results()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.get_agg_hist_value_data"><code class="docutils literal notranslate"><span class="pre">OPC_UA.get_agg_hist_value_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.get_live_values_data"><code class="docutils literal notranslate"><span class="pre">OPC_UA.get_live_values_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.get_vars_node_ids"><code class="docutils literal notranslate"><span class="pre">OPC_UA.get_vars_node_ids()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.http_get_with_aiohttp"><code class="docutils literal notranslate"><span class="pre">OPC_UA.http_get_with_aiohttp()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.process_response_dataframe"><code class="docutils literal notranslate"><span class="pre">OPC_UA.process_response_dataframe()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.split_node_id"><code class="docutils literal notranslate"><span class="pre">OPC_UA.split_node_id()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="pyprediktormapclient.html#module-pyprediktormapclient.shared">pyprediktormapclient.shared module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.shared.get_ids_from_dataframe"><code class="docutils literal notranslate"><span class="pre">get_ids_from_dataframe()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.shared.normalize_as_dataframe"><code class="docutils literal notranslate"><span class="pre">normalize_as_dataframe()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="pyprediktormapclient.html#pyprediktormapclient.shared.request_from_api"><code class="docutils literal notranslate"><span class="pre">request_from_api()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="pyprediktormapclient.html#module-pyprediktormapclient">Module contents</a></li>
 </ul>
 </li>

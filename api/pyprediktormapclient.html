@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pyprediktormapclient package &mdash; pyPrediktorMapClient 0.0.9 documentation</title>
+  <title>pyprediktormapclient package &mdash; pyPrediktorMapClient 0.1.0 documentation</title>
       <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -16,6 +16,7 @@
         <script src="../_static/underscore.js"></script>
         <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -30,7 +31,7 @@
             <a href="../index.html" class="icon icon-home"> pyPrediktorMapClient
           </a>
               <div class="version">
-                0.0.9
+                0.1.0
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -49,9 +50,26 @@
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">Module Reference</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">pyprediktormapclient package</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#submodules">Submodules</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-pyprediktormapclient.model_index">pyprediktormapclient.model_index module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-pyprediktormapclient.opc_ua">pyprediktormapclient.opc_ua module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-pyprediktormapclient.shared">pyprediktormapclient.shared module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-pyprediktormapclient.analytics_helper">pyprediktormapclient.analytics_helper module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pyprediktormapclient.analytics_helper.AnalyticsHelper"><code class="docutils literal notranslate"><span class="pre">AnalyticsHelper</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-pyprediktormapclient.model_index">pyprediktormapclient.model_index module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pyprediktormapclient.model_index.ModelIndex"><code class="docutils literal notranslate"><span class="pre">ModelIndex</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyprediktormapclient.model_index.RESTUrls"><code class="docutils literal notranslate"><span class="pre">RESTUrls</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-pyprediktormapclient.opc_ua">pyprediktormapclient.opc_ua module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pyprediktormapclient.opc_ua.OPCUrls"><code class="docutils literal notranslate"><span class="pre">OPCUrls</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyprediktormapclient.opc_ua.OPC_UA"><code class="docutils literal notranslate"><span class="pre">OPC_UA</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-pyprediktormapclient.shared">pyprediktormapclient.shared module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pyprediktormapclient.shared.get_ids_from_dataframe"><code class="docutils literal notranslate"><span class="pre">get_ids_from_dataframe()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyprediktormapclient.shared.normalize_as_dataframe"><code class="docutils literal notranslate"><span class="pre">normalize_as_dataframe()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyprediktormapclient.shared.request_from_api"><code class="docutils literal notranslate"><span class="pre">request_from_api()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="#module-pyprediktormapclient">Module contents</a></li>
 </ul>
 </li>
@@ -88,6 +106,155 @@
 <h1>pyprediktormapclient package<a class="headerlink" href="#pyprediktormapclient-package" title="Permalink to this heading"></a></h1>
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading"></a></h2>
+</section>
+<section id="module-pyprediktormapclient.analytics_helper">
+<span id="pyprediktormapclient-analytics-helper-module"></span><h2>pyprediktormapclient.analytics_helper module<a class="headerlink" href="#module-pyprediktormapclient.analytics_helper" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="pyprediktormapclient.analytics_helper.AnalyticsHelper">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyprediktormapclient.analytics_helper.</span></span><span class="sig-name descname"><span class="pre">AnalyticsHelper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyprediktormapclient/analytics_helper.html#AnalyticsHelper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.analytics_helper.AnalyticsHelper" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#object" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Your data as a Pandas DataFrame, but with a specific formatting
+and some nifty functions. Put the data from ModelIndex in here
+and move further on by adding data and from other ModelIndex calls
+or live or historical data from OPC UA.</p>
+<p>Columns in the normalizes dataframe are:
+- Id
+- Name
+- Type
+- Props</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>DisplayName</p></li>
+<li><p>Value</p></li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li><dl class="simple">
+<dt>Vars</dt><dd><ul>
+<li><p>DisplayName</p></li>
+<li><p>Id</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>An instance of the class with some resources. You can access the dataframe directly as “dataframe”</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="pyprediktormapclient.analytics_helper.AnalyticsHelper.list_of_ids">
+<span class="sig-name descname"><span class="pre">list_of_ids</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><span class="pre">list</span></a></span></span><a class="reference internal" href="../_modules/pyprediktormapclient/analytics_helper.html#AnalyticsHelper.list_of_ids"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.analytics_helper.AnalyticsHelper.list_of_ids" title="Permalink to this definition"></a></dt>
+<dd><p>Extracts the values in the column “Id” to a list of unique IDs</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>list of unique IDs</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyprediktormapclient.analytics_helper.AnalyticsHelper.list_of_names">
+<span class="sig-name descname"><span class="pre">list_of_names</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><span class="pre">list</span></a></span></span><a class="reference internal" href="../_modules/pyprediktormapclient/analytics_helper.html#AnalyticsHelper.list_of_names"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.analytics_helper.AnalyticsHelper.list_of_names" title="Permalink to this definition"></a></dt>
+<dd><p>Extracts the values in the column “Name” to a list of unique names</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>list of unique names</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyprediktormapclient.analytics_helper.AnalyticsHelper.list_of_types">
+<span class="sig-name descname"><span class="pre">list_of_types</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><span class="pre">list</span></a></span></span><a class="reference internal" href="../_modules/pyprediktormapclient/analytics_helper.html#AnalyticsHelper.list_of_types"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.analytics_helper.AnalyticsHelper.list_of_types" title="Permalink to this definition"></a></dt>
+<dd><p>Extracts the values in the column “Type” to a list of unique types</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>list of unique types</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyprediktormapclient.analytics_helper.AnalyticsHelper.list_of_variables">
+<span class="sig-name descname"><span class="pre">list_of_variables</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><span class="pre">list</span></a></span></span><a class="reference internal" href="../_modules/pyprediktormapclient/analytics_helper.html#AnalyticsHelper.list_of_variables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.analytics_helper.AnalyticsHelper.list_of_variables" title="Permalink to this definition"></a></dt>
+<dd><p>Explodes the content of the column “Vars” and extracts the values
+from DisplayName into a list of unique values</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>list of unique variable names</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyprediktormapclient.analytics_helper.AnalyticsHelper.normalize">
+<span class="sig-name descname"><span class="pre">normalize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyprediktormapclient/analytics_helper.html#AnalyticsHelper.normalize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.analytics_helper.AnalyticsHelper.normalize" title="Permalink to this definition"></a></dt>
+<dd><p>Normalize column names in the dataframe. Different ModelIndex calls has different column names
+but this will be normalized with this function according to the class docs.</p>
+<p>Columns in the dataframe are:
+- Id
+- Name
+- Type
+- Props</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>DisplayName</p></li>
+<li><p>Value</p></li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li><dl class="simple">
+<dt>Vars</dt><dd><ul>
+<li><p>DisplayName</p></li>
+<li><p>Id</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Nothing, but nomralizes the instance “dataframe”</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyprediktormapclient.analytics_helper.AnalyticsHelper.properties_as_dataframe">
+<span class="sig-name descname"><span class="pre">properties_as_dataframe</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v1.5.0)"><span class="pre">DataFrame</span></a></span></span><a class="reference internal" href="../_modules/pyprediktormapclient/analytics_helper.html#AnalyticsHelper.properties_as_dataframe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.analytics_helper.AnalyticsHelper.properties_as_dataframe" title="Permalink to this definition"></a></dt>
+<dd><p>Explodes the column “Props” into a new dataframe. Column names will be
+- Id (same as from the original dataframe)
+- Name (same as from the original dataframe)
+- Type (same as from the original dataframe)
+- Property (from the exploded value DisplayName)
+- Value (from the exploded value Value)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a new dataframe with all properties as individual rows</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyprediktormapclient.analytics_helper.AnalyticsHelper.variables_as_dataframe">
+<span class="sig-name descname"><span class="pre">variables_as_dataframe</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v1.5.0)"><span class="pre">DataFrame</span></a></span></span><a class="reference internal" href="../_modules/pyprediktormapclient/analytics_helper.html#AnalyticsHelper.variables_as_dataframe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.analytics_helper.AnalyticsHelper.variables_as_dataframe" title="Permalink to this definition"></a></dt>
+<dd><p>Explodes the column “Vars” into a new dataframe. Column names will be
+- Id (same as from the original dataframe)
+- Name (same as from the original dataframe)
+- Type (same as from the original dataframe)
+- VariableId (from the exploded value Id)
+- VariableName (from the exploded value DisplayName)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a new dataframe with all variables as individual rows</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 <section id="module-pyprediktormapclient.model_index">
 <span id="pyprediktormapclient-model-index-module"></span><h2>pyprediktormapclient.model_index module<a class="headerlink" href="#module-pyprediktormapclient.model_index" title="Permalink to this heading"></a></h2>
@@ -290,7 +457,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pyprediktormapclient.opc_ua.OPC_UA.filter_json_response">
-<span class="sig-name descname"><span class="pre">filter_json_response</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">response_json:</span> <span class="pre">&lt;module</span> <span class="pre">'json'</span> <span class="pre">from</span> <span class="pre">'/opt/hostedtoolcache/Python/3.10.6/x64/lib/python3.10/json/__init__.py'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyprediktormapclient/opc_ua.html#OPC_UA.filter_json_response"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.opc_ua.OPC_UA.filter_json_response" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">filter_json_response</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">response_json:</span> <span class="pre">&lt;module</span> <span class="pre">'json'</span> <span class="pre">from</span> <span class="pre">'/opt/hostedtoolcache/Python/3.10.7/x64/lib/python3.10/json/__init__.py'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyprediktormapclient/opc_ua.html#OPC_UA.filter_json_response"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.opc_ua.OPC_UA.filter_json_response" title="Permalink to this definition"></a></dt>
 <dd><p>Function to filter json data after requesting to opc ua server</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>

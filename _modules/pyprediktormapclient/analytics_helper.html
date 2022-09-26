@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pyprediktormapclient.analytics_helper &mdash; pyPrediktorMapClient 0.1.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> pyPrediktorMapClient
+          </a>
+              <div class="version">
+                0.1.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../readme.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributions &amp; Help</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../authors.html">Authors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/modules.html">Module Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">pyPrediktorMapClient</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      <li>pyprediktormapclient.analytics_helper</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pyprediktormapclient.analytics_helper</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">json</span>
+
+
+<div class="viewcode-block" id="AnalyticsHelper"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper">[docs]</a><span class="k">class</span> <span class="nc">AnalyticsHelper</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Your data as a Pandas DataFrame, but with a specific formatting</span>
+<span class="sd">    and some nifty functions. Put the data from ModelIndex in here</span>
+<span class="sd">    and move further on by adding data and from other ModelIndex calls</span>
+<span class="sd">    or live or historical data from OPC UA.</span>
+
+<span class="sd">    Columns in the normalizes dataframe are:</span>
+<span class="sd">    - Id</span>
+<span class="sd">    - Name</span>
+<span class="sd">    - Type</span>
+<span class="sd">    - Props</span>
+<span class="sd">        - DisplayName</span>
+<span class="sd">        - Value</span>
+<span class="sd">    - Vars</span>
+<span class="sd">        - DisplayName</span>
+<span class="sd">        - Id</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        An instance of the class with some resources. You can access the dataframe directly as &quot;dataframe&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initial_data</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">initial_data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">normalize</span><span class="p">()</span>
+
+<div class="viewcode-block" id="AnalyticsHelper.normalize"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.normalize">[docs]</a>    <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Normalize column names in the dataframe. Different ModelIndex calls has different column names</span>
+<span class="sd">        but this will be normalized with this function according to the class docs.</span>
+
+<span class="sd">        Columns in the dataframe are:</span>
+<span class="sd">        - Id</span>
+<span class="sd">        - Name</span>
+<span class="sd">        - Type</span>
+<span class="sd">        - Props</span>
+<span class="sd">            - DisplayName</span>
+<span class="sd">            - Value</span>
+<span class="sd">        - Vars</span>
+<span class="sd">            - DisplayName</span>
+<span class="sd">            - Id</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Nothing, but nomralizes the instance &quot;dataframe&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Check if there is an Id column</span>
+
+        <span class="c1"># Remove &quot;Subtype&quot;</span>
+        <span class="k">if</span> <span class="s2">&quot;Subtype&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s2">&quot;Subtype&quot;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Remove &quot;ObjectId&quot;</span>
+        <span class="k">if</span> <span class="s2">&quot;ObjectId&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s2">&quot;ObjectId&quot;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Remove &quot;ObjectId&quot;</span>
+        <span class="k">if</span> <span class="s2">&quot;ObjectName&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s2">&quot;ObjectName&quot;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Check if the content is from get_objects_of_type</span>
+        <span class="k">if</span> <span class="s2">&quot;DisplayName&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;DisplayName&quot;</span><span class="p">:</span> <span class="s2">&quot;Name&quot;</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Check if the content is from object-descendants</span>
+        <span class="k">if</span> <span class="s2">&quot;DescendantId&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
+                <span class="n">columns</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">&quot;DescendantId&quot;</span><span class="p">:</span> <span class="s2">&quot;Id&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;DescendantName&quot;</span><span class="p">:</span> <span class="s2">&quot;Name&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;DescendantType&quot;</span><span class="p">:</span> <span class="s2">&quot;Type&quot;</span><span class="p">,</span>
+                <span class="p">},</span>
+                <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Check if the content is from object-ancestors</span>
+        <span class="k">if</span> <span class="s2">&quot;AncestorId&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
+                <span class="n">columns</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">&quot;AncestorId&quot;</span><span class="p">:</span> <span class="s2">&quot;Id&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;AncestorName&quot;</span><span class="p">:</span> <span class="s2">&quot;Name&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;AncestorType&quot;</span><span class="p">:</span> <span class="s2">&quot;Type&quot;</span><span class="p">,</span>
+                <span class="p">},</span>
+                <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Now check to see if all needed columns are there, else set to None</span>
+        <span class="n">needed_columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Id&quot;</span><span class="p">,</span> <span class="s2">&quot;Name&quot;</span><span class="p">,</span> <span class="s2">&quot;Type&quot;</span><span class="p">,</span> <span class="s2">&quot;Vars&quot;</span><span class="p">,</span> <span class="s2">&quot;Props&quot;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">needed_column</span> <span class="ow">in</span> <span class="n">needed_columns</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">needed_column</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">return</span></div>
+
+<div class="viewcode-block" id="AnalyticsHelper.list_of_ids"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.list_of_ids">[docs]</a>    <span class="k">def</span> <span class="nf">list_of_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Extracts the values in the column &quot;Id&quot; to a list of unique IDs</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list of unique IDs</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Return if dataframe is None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># Check if there is an Id column present</span>
+        <span class="k">if</span> <span class="s2">&quot;Id&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="c1"># Get the content of the column Id as a list, loop it through</span>
+            <span class="c1"># the set function to remove duplicates and then back to a list</span>
+            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;Id&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to_list</span><span class="p">()))</span>
+
+        <span class="k">return</span> <span class="p">[]</span></div>
+
+<div class="viewcode-block" id="AnalyticsHelper.list_of_names"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.list_of_names">[docs]</a>    <span class="k">def</span> <span class="nf">list_of_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Extracts the values in the column &quot;Name&quot; to a list of unique names</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list of unique names</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Return if dataframe is None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># Check if there is a Name column</span>
+        <span class="k">if</span> <span class="s2">&quot;Name&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="c1"># Get the content of the column Name as a list, loop it through</span>
+            <span class="c1"># the set function to remove duplicates and then back to a list</span>
+            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;Name&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to_list</span><span class="p">()))</span>
+
+        <span class="k">return</span> <span class="p">[]</span></div>
+
+<div class="viewcode-block" id="AnalyticsHelper.list_of_types"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.list_of_types">[docs]</a>    <span class="k">def</span> <span class="nf">list_of_types</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Extracts the values in the column &quot;Type&quot; to a list of unique types</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list of unique types</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Return if dataframe is None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># Check if there is a Type column</span>
+        <span class="k">if</span> <span class="s2">&quot;Type&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="c1"># Get the content of the column Type as a list, loop it through</span>
+            <span class="c1"># the set function to remove duplicates and then back to a list</span>
+            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;Type&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to_list</span><span class="p">()))</span>
+
+        <span class="k">return</span> <span class="p">[]</span></div>
+
+<div class="viewcode-block" id="AnalyticsHelper.list_of_variables"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.list_of_variables">[docs]</a>    <span class="k">def</span> <span class="nf">list_of_variables</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Explodes the content of the column &quot;Vars&quot; and extracts the values</span>
+<span class="sd">        from DisplayName into a list of unique values</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list of unique variable names</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Return if dataframe is None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># Check if there is a Vars column</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="s2">&quot;Vars&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="c1"># Check that the Vars column contains pd.Series content</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;Vars&quot;</span><span class="p">],</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="n">vars_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([])</span>
+        <span class="c1"># Loop through the Vars column and add DisplayName to the vars_set</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;Vars&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">i</span><span class="p">:</span>
+                <span class="n">vars_set</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="s2">&quot;DisplayName&quot;</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">vars_set</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AnalyticsHelper.properties_as_dataframe"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.properties_as_dataframe">[docs]</a>    <span class="k">def</span> <span class="nf">properties_as_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Explodes the column &quot;Props&quot; into a new dataframe. Column names will be</span>
+<span class="sd">        - Id (same as from the original dataframe)</span>
+<span class="sd">        - Name (same as from the original dataframe)</span>
+<span class="sd">        - Type (same as from the original dataframe)</span>
+<span class="sd">        - Property (from the exploded value DisplayName)</span>
+<span class="sd">        - Value (from the exploded value Value)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            a new dataframe with all properties as individual rows</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Return if dataframe is None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># Check if there is a Props column</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="s2">&quot;Props&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># Check if the Props column contains pd.Series data</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;Props&quot;</span><span class="p">],</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># Explode will add a row for every series in the Prop column</span>
+        <span class="n">propery_frame</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="s2">&quot;Props&quot;</span><span class="p">)</span>
+        <span class="c1"># Remove Vars</span>
+        <span class="n">propery_frame</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Vars&quot;</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># Add Property and Value vcolumns</span>
+        <span class="n">propery_frame</span><span class="p">[</span><span class="s2">&quot;Property&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">propery_frame</span><span class="p">[</span><span class="s2">&quot;Value&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="c1"># Iterate over the rows and add to the new columns</span>
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">propery_frame</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+            <span class="n">row</span><span class="p">[</span><span class="s2">&quot;Property&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;Props&quot;</span><span class="p">][</span><span class="s2">&quot;DisplayName&quot;</span><span class="p">]</span>
+            <span class="n">row</span><span class="p">[</span><span class="s2">&quot;Value&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;Props&quot;</span><span class="p">][</span><span class="s2">&quot;Value&quot;</span><span class="p">]</span>
+        <span class="c1"># Remove original Props column</span>
+        <span class="n">propery_frame</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Props&quot;</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">propery_frame</span></div>
+
+<div class="viewcode-block" id="AnalyticsHelper.variables_as_dataframe"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.variables_as_dataframe">[docs]</a>    <span class="k">def</span> <span class="nf">variables_as_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Explodes the column &quot;Vars&quot; into a new dataframe. Column names will be</span>
+<span class="sd">        - Id (same as from the original dataframe)</span>
+<span class="sd">        - Name (same as from the original dataframe)</span>
+<span class="sd">        - Type (same as from the original dataframe)</span>
+<span class="sd">        - VariableId (from the exploded value Id)</span>
+<span class="sd">        - VariableName (from the exploded value DisplayName)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            a new dataframe with all variables as individual rows</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Return if dataframe is None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># Check if there is a Vars column</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="s2">&quot;Vars&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># Check if the Vars column contains pd.Series content</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;Vars&quot;</span><span class="p">],</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># Explode will add a row for every series in the Prop column</span>
+        <span class="n">variables_frame</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="s2">&quot;Vars&quot;</span><span class="p">)</span>
+        <span class="c1"># Remove the Props column</span>
+        <span class="n">variables_frame</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Props&quot;</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># Add VariableId and VariableName columns</span>
+        <span class="n">variables_frame</span><span class="p">[</span><span class="s2">&quot;VariableId&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">variables_frame</span><span class="p">[</span><span class="s2">&quot;VariableName&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="c1"># Iterate over the rows and add to the new columns</span>
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">variables_frame</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+            <span class="n">row</span><span class="p">[</span><span class="s2">&quot;VariableId&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;Vars&quot;</span><span class="p">][</span><span class="s2">&quot;Id&quot;</span><span class="p">]</span>
+            <span class="n">row</span><span class="p">[</span><span class="s2">&quot;VariableName&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;Vars&quot;</span><span class="p">][</span><span class="s2">&quot;DisplayName&quot;</span><span class="p">]</span>
+        <span class="c1"># Remove the original Vars column</span>
+        <span class="n">variables_frame</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Vars&quot;</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">variables_frame</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Prediktor Support.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -4,6 +4,14 @@ pyprediktormapclient package
 Submodules
 ----------
 
+pyprediktormapclient.analytics\_helper module
+---------------------------------------------
+
+.. automodule:: pyprediktormapclient.analytics_helper
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 pyprediktormapclient.model\_index module
 ----------------------------------------
 
