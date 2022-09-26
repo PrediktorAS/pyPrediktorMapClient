@@ -1,4 +1,3 @@
-from types import NoneType
 import unittest
 import pandas as pd
 
