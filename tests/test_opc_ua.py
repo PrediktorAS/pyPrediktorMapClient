@@ -3,6 +3,8 @@ import unittest
 from unittest import mock
 from pandas.testing import assert_frame_equal
 import pandas as pd
+import pytest
+from pydantic import ValidationError
 
 from pyprediktormapclient.opc_ua import OPC_UA
 
@@ -49,10 +51,18 @@ def mocked_requests(*args, **kwargs):
 
 # Our test case class
 class OPCUATestCase(unittest.TestCase):
-    @mock.patch("requests.post", side_effect=mocked_requests)
-    def test_get_live_values(self, mock_get):
 
-        pass  # wait with this test until dataframes can be removed
+    def test_malformed_rest_url(self):
+        with pytest.raises(ValidationError):
+            OPC_UA(rest_url="not_an_url", opcua_url=OPC_URL)
+    
+    def test_malformed_opcua_url(self):
+        with pytest.raises(ValidationError):
+            OPC_UA(rest_url=URL, opcua_url="not_an_url")
+    #@mock.patch("requests.post", side_effect=mocked_requests)
+    #def test_get_live_values(self, mock_get):
+
+        #pass  # wait with this test until dataframes can be removed
         # tsdata = OPC_UA(rest_url=URL, opcua_url= OPC_URL)
         # result = tsdata.get_live_values_data(['AngleMeasured', 'AngleSetpoint'], correct_live_df)
         # assert result == values_get_result

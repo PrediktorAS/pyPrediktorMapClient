@@ -7,26 +7,33 @@ import asyncio
 from typing import Dict, List
 from aiohttp import ClientSession
 import logging
-from pydantic import BaseModel, HttpUrl, AnyUrl
+from pydantic import HttpUrl, AnyUrl, validate_arguments
 from pyprediktormapclient.shared import request_from_api
 
 
 logger = logging.getLogger()
 
 
-class OPCUrls(BaseModel):
-    rest_url: HttpUrl
-    opcua_url: AnyUrl
-
-
 class OPC_UA:
-    """Value data from the opc ua api server
+    """Helper functions to access the OPC UA REST Values API server
+
+    Args:
+        rest_url (str): URL for the OPC UA REST Values API
+        opcua_url (str): URI for the OPC UA server
 
     Returns:
-        live and aggregated historical value data
+        Object
+        
+    Todo:
+        * Clean up logging
+        * Use pydantic for argument validation
+        * Remove all datatable related actions
+        * Clean up use of files
+        * Better session handling on aiohttp
     """
 
-    def __init__(self, rest_url: str, opcua_url: str):
+    @validate_arguments
+    def __init__(self, rest_url: HttpUrl, opcua_url: AnyUrl):
         """Class initializer
 
         Args:
@@ -35,7 +42,6 @@ class OPC_UA:
         Returns:
             Object: The initialized class object
         """
-        OPCUrls(rest_url=rest_url, opcua_url=opcua_url)
         self.rest_url = rest_url
         self.opcua_url = opcua_url
 
