@@ -1,5 +1,7 @@
 import pandas as pd
 import json
+from typing import List
+from pydantic import validate_arguments
 
 
 class AnalyticsHelper:
@@ -9,6 +11,7 @@ class AnalyticsHelper:
     or live or historical data from OPC UA.
 
     Columns in the normalizes dataframe are:
+    
     - Id
     - Name
     - Type
@@ -18,13 +21,17 @@ class AnalyticsHelper:
     - Vars
         - DisplayName
         - Id
+        
+    Args:
+        List: The return from a ModelIndex call function
 
     Returns:
         An instance of the class with some resources. You can access the dataframe directly as "dataframe"
     """
 
-    def __init__(self, initial_data: str):
-        self.dataframe = pd.DataFrame(initial_data)
+    @validate_arguments
+    def __init__(self, input: List):
+        self.dataframe = pd.DataFrame(input)  # Create a DataFrame from the input
         self.normalize()
 
     def normalize(self):
@@ -43,7 +50,7 @@ class AnalyticsHelper:
             - Id
 
         Returns:
-            Nothing, but nomralizes the instance "dataframe"
+            Nothing, but normalizes the instance "dataframe"
         """
 
         # Check if there is an Id column
@@ -87,7 +94,7 @@ class AnalyticsHelper:
             )
 
         # Now check to see if all needed columns are there, else set to None
-        needed_columns = ["Id", "Name", "Type", "Vars", "Props"]
+        needed_columns = ["Id", "Name", "Vars", "Props"]
         for needed_column in needed_columns:
             if not needed_column in self.dataframe:
                 self.dataframe = None
@@ -97,7 +104,7 @@ class AnalyticsHelper:
         """Extracts the values in the column "Id" to a list of unique IDs
 
         Returns:
-            list of unique IDs
+            list: Unique IDs
         """
 
         # Return if dataframe is None
@@ -112,7 +119,7 @@ class AnalyticsHelper:
         """Extracts the values in the column "Name" to a list of unique names
 
         Returns:
-            list of unique names
+            list: Unique names
         """
 
         # Return if dataframe is None
@@ -127,7 +134,7 @@ class AnalyticsHelper:
         """Extracts the values in the column "Type" to a list of unique types
 
         Returns:
-            list of unique types
+            list: Unique types
         """
 
         # Return if dataframe is None
@@ -143,7 +150,7 @@ class AnalyticsHelper:
         from DisplayName into a list of unique values
 
         Returns:
-            list of unique variable names
+            list: Unique variable names
         """
 
         # Return if dataframe is None
@@ -164,6 +171,7 @@ class AnalyticsHelper:
 
     def properties_as_dataframe(self) -> pd.DataFrame:
         """Explodes the column "Props" into a new dataframe. Column names will be
+        
         - Id (same as from the original dataframe)
         - Name (same as from the original dataframe)
         - Type (same as from the original dataframe)
@@ -171,7 +179,7 @@ class AnalyticsHelper:
         - Value (from the exploded value Value)
 
         Returns:
-            a new dataframe with all properties as individual rows
+            pandas.DataFrame: A new dataframe with all properties as individual rows
         """
 
         # Return if dataframe is None
@@ -200,6 +208,7 @@ class AnalyticsHelper:
 
     def variables_as_dataframe(self) -> pd.DataFrame:
         """Explodes the column "Vars" into a new dataframe. Column names will be
+        
         - Id (same as from the original dataframe)
         - Name (same as from the original dataframe)
         - Type (same as from the original dataframe)
@@ -207,7 +216,7 @@ class AnalyticsHelper:
         - VariableName (from the exploded value DisplayName)
 
         Returns:
-            a new dataframe with all variables as individual rows
+            pandas.DataFrame: A new dataframe with all variables as individual rows
         """
 
         # Return if dataframe is None

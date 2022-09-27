@@ -1,17 +1,14 @@
 import json
-from pydantic import BaseModel, HttpUrl
+from typing import List
+from pydantic import HttpUrl, validate_arguments, ValidationError
 from pyprediktormapclient.shared import request_from_api
-
-
-class RESTUrls(BaseModel):
-    rest_url: HttpUrl
 
 
 class ModelIndex:
     """Data structure from the model index API server"""
 
-    def __init__(self, url: str):
-        RESTUrls(rest_url=url)
+    @validate_arguments
+    def __init__(self, url: HttpUrl):
         self.url = url
         self.object_types = self.get_object_types()
 
@@ -25,6 +22,7 @@ class ModelIndex:
 
         return content
 
+    @validate_arguments
     def get_object_type_id_from_name(self, type_name: str) -> str:
         """Function to get object type id from type name
 
@@ -44,6 +42,7 @@ class ModelIndex:
 
         return object_type_id
 
+    @validate_arguments
     def get_objects_of_type(self, type_name: str) -> str:
         """Function to get all the types of an object
 
@@ -62,10 +61,11 @@ class ModelIndex:
 
         return content
 
+    @validate_arguments
     def get_object_descendants(
         self,
         type_name: str,
-        ids: list,
+        ids: List,
         domain: str,
     ) -> str:
         """A function to get object descendants
@@ -79,12 +79,6 @@ class ModelIndex:
             A json-formatted string with descendats data of selected object (or None if the type is not found)
         """
         id = self.get_object_type_id_from_name(type_name)
-        if id is None:
-            return None
-
-        if ids is None:
-            return None
-
         body = json.dumps(
             {
                 "typeId": id,
@@ -96,10 +90,11 @@ class ModelIndex:
 
         return content
 
+    @validate_arguments
     def get_object_ancestors(
         self,
         type_name: str,
-        ids: list,
+        ids: List,
         domain: str,
     ) -> str:
         """Function to get object ancestors
@@ -113,12 +108,6 @@ class ModelIndex:
             A json-formatted string with ancestors data of selected object (or None if the type is not found)
         """
         id = self.get_object_type_id_from_name(type_name)
-        if id is None:
-            return None
-
-        if ids is None:
-            return None
-
         body = json.dumps(
             {
                 "typeId": id,
