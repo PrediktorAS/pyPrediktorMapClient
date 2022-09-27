@@ -5,7 +5,15 @@ from pyprediktormapclient.shared import request_from_api
 
 
 class ModelIndex:
-    """Data structure from the model index API server"""
+    """Helper functions to access the ModelIndex API server
+
+    Args:
+        url (str): The URL of the ModelIndex server with the trailing slash
+
+    Todo:
+        * Add logging
+        * Validate combination of url and endpoint
+    """
 
     @validate_arguments
     def __init__(self, url: HttpUrl):

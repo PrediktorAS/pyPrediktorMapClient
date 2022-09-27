@@ -27,6 +27,10 @@ class AnalyticsHelper:
 
     Returns:
         An instance of the class with some resources. You can access the dataframe directly as "dataframe"
+        
+    Todo:
+        * Add logging
+        * Use pydantic for more validations on the list input
     """
 
     @validate_arguments
