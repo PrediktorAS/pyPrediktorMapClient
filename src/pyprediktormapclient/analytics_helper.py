@@ -102,15 +102,11 @@ class AnalyticsHelper:
 
         # Return if dataframe is None
         if self.dataframe is None:
-            return None
+            return []
 
-        # Check if there is an Id column present
-        if "Id" in self.dataframe.columns:
-            # Get the content of the column Id as a list, loop it through
-            # the set function to remove duplicates and then back to a list
-            return list(set(self.dataframe["Id"].to_list()))
-
-        return []
+        # Get the content of the column Id as a list, loop it through
+        # the set function to remove duplicates and then back to a list
+        return list(set(self.dataframe["Id"].to_list()))
 
     def list_of_names(self) -> list:
         """Extracts the values in the column "Name" to a list of unique names
@@ -121,15 +117,11 @@ class AnalyticsHelper:
 
         # Return if dataframe is None
         if self.dataframe is None:
-            return None
+            return []
 
-        # Check if there is a Name column
-        if "Name" in self.dataframe.columns:
-            # Get the content of the column Name as a list, loop it through
-            # the set function to remove duplicates and then back to a list
-            return list(set(self.dataframe["Name"].to_list()))
-
-        return []
+        # Get the content of the column Name as a list, loop it through
+        # the set function to remove duplicates and then back to a list
+        return list(set(self.dataframe["Name"].to_list()))
 
     def list_of_types(self) -> list:
         """Extracts the values in the column "Type" to a list of unique types
@@ -140,15 +132,11 @@ class AnalyticsHelper:
 
         # Return if dataframe is None
         if self.dataframe is None:
-            return None
+            return []
 
-        # Check if there is a Type column
-        if "Type" in self.dataframe.columns:
-            # Get the content of the column Type as a list, loop it through
-            # the set function to remove duplicates and then back to a list
-            return list(set(self.dataframe["Type"].to_list()))
-
-        return []
+        # Get the content of the column Type as a list, loop it through
+        # the set function to remove duplicates and then back to a list
+        return list(set(self.dataframe["Type"].to_list()))
 
     def list_of_variables(self) -> list:
         """Explodes the content of the column "Vars" and extracts the values
@@ -160,14 +148,10 @@ class AnalyticsHelper:
 
         # Return if dataframe is None
         if self.dataframe is None:
-            return None
-
-        # Check if there is a Vars column
-        if not "Vars" in self.dataframe:
             return []
 
         # Check that the Vars column contains pd.Series content
-        if not isinstance(self.dataframe["Vars"], pd.Series):
+        if not type(self.dataframe["Vars"][0]) == list:
             return []
 
         vars_set = set([])
@@ -194,12 +178,8 @@ class AnalyticsHelper:
         if self.dataframe is None:
             return None
 
-        # Check if there is a Props column
-        if not "Props" in self.dataframe:
-            return None
-
         # Check if the Props column contains pd.Series data
-        if not isinstance(self.dataframe["Props"], pd.Series):
+        if not type(self.dataframe["Props"][0]) == list:
             return None
 
         # Explode will add a row for every series in the Prop column
@@ -234,12 +214,8 @@ class AnalyticsHelper:
         if self.dataframe is None:
             return None
 
-        # Check if there is a Vars column
-        if not "Vars" in self.dataframe:
-            return None
-
         # Check if the Vars column contains pd.Series content
-        if not isinstance(self.dataframe["Vars"], pd.Series):
+        if not type(self.dataframe["Vars"][0]) == list:
             return None
 
         # Explode will add a row for every series in the Prop column
