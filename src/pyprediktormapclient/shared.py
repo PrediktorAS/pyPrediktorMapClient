@@ -22,7 +22,7 @@ def request_from_api(
         headers (str): default to None but can contain the headers og the request
     Returns:
         JSON: The result if successfull
-        
+
     Todo:
         * Add logging
     """

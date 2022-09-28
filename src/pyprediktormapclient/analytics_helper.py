@@ -1,7 +1,7 @@
 import pandas as pd
 import json
 from typing import List
-from pydantic import validate_arguments
+from pydantic import validate_arguments, constr
 
 
 class AnalyticsHelper:
@@ -11,7 +11,7 @@ class AnalyticsHelper:
     or live or historical data from OPC UA.
 
     Columns in the normalizes dataframe are:
-    
+
     - Id
     - Name
     - Type
@@ -21,16 +21,17 @@ class AnalyticsHelper:
     - Vars
         - DisplayName
         - Id
-        
+
     Args:
         List: The return from a ModelIndex call function
 
     Returns:
         An instance of the class with some resources. You can access the dataframe directly as "dataframe"
-        
+
     Todo:
         * Add logging
         * Use pydantic for more validations on the list input
+        * Input checks for nodeIds in variables that requires format int:int:string
     """
 
     @validate_arguments
@@ -104,6 +105,15 @@ class AnalyticsHelper:
                 self.dataframe = None
                 return
 
+    @validate_arguments
+    def split_id(self, id: constr(regex=r"^\d+:\d+:\S+$")):
+        id_split = id.split(":")
+        return {
+            "Id": id_split[2],
+            "Namespace": int(id_split[0]),
+            "IdType": int(id_split[1]),
+        }
+
     def list_of_ids(self) -> list:
         """Extracts the values in the column "Id" to a list of unique IDs
 
@@ -149,7 +159,7 @@ class AnalyticsHelper:
         # the set function to remove duplicates and then back to a list
         return list(set(self.dataframe["Type"].to_list()))
 
-    def list_of_variables(self) -> list:
+    def list_of_variable_names(self) -> list:
         """Explodes the content of the column "Vars" and extracts the values
         from DisplayName into a list of unique values
 
@@ -175,7 +185,7 @@ class AnalyticsHelper:
 
     def properties_as_dataframe(self) -> pd.DataFrame:
         """Explodes the column "Props" into a new dataframe. Column names will be
-        
+
         - Id (same as from the original dataframe)
         - Name (same as from the original dataframe)
         - Type (same as from the original dataframe)
@@ -212,7 +222,7 @@ class AnalyticsHelper:
 
     def variables_as_dataframe(self) -> pd.DataFrame:
         """Explodes the column "Vars" into a new dataframe. Column names will be
-        
+
         - Id (same as from the original dataframe)
         - Name (same as from the original dataframe)
         - Type (same as from the original dataframe)
@@ -238,11 +248,19 @@ class AnalyticsHelper:
         # Add VariableId and VariableName columns
         variables_frame["VariableId"] = ""
         variables_frame["VariableName"] = ""
+        variables_frame["VariableIdSplit"] = ""
         # Iterate over the rows and add to the new columns
         for index, row in variables_frame.iterrows():
             row["VariableId"] = row["Vars"]["Id"]
             row["VariableName"] = row["Vars"]["DisplayName"]
+            row["VariableIdSplit"] = self.split_id(row["Vars"]["Id"])
         # Remove the original Vars column
         variables_frame.drop(columns=["Vars"], inplace=True)
 
         return variables_frame
+
+    def variables_as_list(self):
+        variable_dataframe = self.variables_as_dataframe()
+        # Get the content of the column VariableIdSplit as a list, loop it through
+        # the set function to remove duplicates and then back to a list
+        return variable_dataframe["VariableIdSplit"].to_list()

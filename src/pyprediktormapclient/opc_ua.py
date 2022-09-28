@@ -7,11 +7,18 @@ import asyncio
 from typing import Dict, List
 from aiohttp import ClientSession
 import logging
-from pydantic import HttpUrl, AnyUrl, validate_arguments
+from pydantic import BaseModel, HttpUrl, AnyUrl, validate_arguments
+from operator import itemgetter
 from pyprediktormapclient.shared import request_from_api
 
 
 logger = logging.getLogger()
+
+
+class Variables(BaseModel):
+    Id: str
+    Namespace: int
+    IdType: int
 
 
 class OPC_UA:
@@ -23,7 +30,7 @@ class OPC_UA:
 
     Returns:
         Object
-        
+
     Todo:
         * Clean up logging
         * Use pydantic for argument validation
@@ -45,6 +52,20 @@ class OPC_UA:
         self.rest_url = rest_url
         self.opcua_url = opcua_url
 
+    def get_value_type(self, id: int) -> dict:
+        """Get the type of a value from the OPC UA return, as documentet at
+        https://docs.prediktor.com/docs/opcuavaluesrestapi/datatypes.html#variant
+
+        Args:
+            id (int): An integer in the range 1-25 representing the id
+        Returns:
+            dict: Dictionaly with keys "id", "type" and "description". All with None values if not found
+        """
+        return next(
+            (sub for sub in TYPE_LIST if sub["id"] == id),
+            {"id": None, "type": None, "description": None},
+        )
+
     def get_vars_node_ids(self, obj_dataframe: pd.DataFrame) -> List:
         """Function to get variables node ids of the objects
 
@@ -61,100 +82,6 @@ class OPC_UA:
         vars_list = [x for xs in objects_vars for x in xs]
         vars_node_ids = [x["Id"] for x in vars_list]
         return vars_node_ids
-
-    def expand_props_vars(self, json_df: pd.DataFrame):
-        """Get a dataframe with required columns by expanding and merging back Vars and Props columns
-
-        Args:
-            json_df (pd.DataFrame): json dataframe of API request
-        Returns:
-            dataframe: Pandas dataframe
-        """
-        # Make list of column names except vars and props
-        non_vars_props_columns = [
-            x for x in json_df.columns if x not in ["Vars", "Props"]
-        ]
-        json_df1 = json_df.explode("Props").reset_index(drop=True)
-        json_df1[["Parameter", "Value"]] = json_df1["Props"].apply(pd.Series)
-        json_df1 = json_df1.drop(columns=["Props", "Vars"])
-        # Create Pivot to convert parameter column into dataframe's columns
-        json_df_props = json_df1.pivot(
-            index=non_vars_props_columns, columns="Parameter", values="Value"
-        ).reset_index()
-        json_df_props.columns.name = None
-        json_df_vars = json_df.explode("Vars").reset_index(drop=True)
-        json_df_vars[["Variable", "VariableId"]] = json_df_vars["Vars"].apply(pd.Series)
-        json_df_vars = json_df_vars.drop(columns=["Vars", "Props"])
-        # Merge props and vars dataframes
-        json_df_merged = json_df_vars.merge(json_df_props, on=non_vars_props_columns)
-        return json_df_merged
-
-    def split_node_id(self, node_id: str):
-        """Functions to get node id(s) with namespace index and data format of the node
-
-        Args:
-            node_id (str): node id of a node
-        Returns:
-            Dict: dictionary with three elements
-        """
-        id_split = node_id.split(":")
-        node_id_dict = {
-            "Id": id_split[2],
-            "Namespace": int(id_split[0]),
-            "IdType": int(id_split[1]),
-        }
-        return node_id_dict
-
-    def get_live_values_data(
-        self, include_variables: List, obj_dataframe: pd.DataFrame
-    ):
-        """Request to get real time data values of the variables for the requested node(s)
-
-        Args:
-            include_variables (List): list of variables
-            obj_dataframe (pd.DataFrame): dataframe of object ids
-        """
-        node_ids = self.get_vars_node_ids(obj_dataframe)
-        var_node_ids = [x for x in node_ids if (x.split(".")[-1]) in include_variables]
-        node_ids_dicts = [self.split_node_id(x) for x in var_node_ids]
-        body = json.dumps(
-            [
-                {
-                    "Connection": {"Url": self.opcua_url, "AuthenticationType": 1},
-                    "NodeIds": node_ids_dicts,
-                }
-            ]
-        )
-        headers = {"Content-Type": "application/json"}
-        from_api = request_from_api(self.rest_url, "POST", "values/get", body, headers)
-        if from_api is None:
-            return None
-
-        response = pd.DataFrame(from_api)
-        result = pd.json_normalize(response["Values"][0])
-        if len(result.columns) == 6:
-            result1 = result.drop(columns=["Value.Type", "ServerTimestamp"]).set_axis(
-                ["Timestamp", "Value", "Code", "Quality"], axis=1
-            )
-        elif len(result.columns) == 4:
-            result1 = result.drop(columns=["Value.Type", "ServerTimestamp"]).set_axis(
-                ["Timestamp", "Value"], axis=1
-            )
-        df = self.expand_props_vars(obj_dataframe)
-        name_column = [
-            x
-            for x in df
-            if x in ["Name", "DisplayName", "DescendantName", "AncestorName"]
-        ][0]
-        df1 = df[["VariableId", name_column, "Variable"]].set_axis(
-            ["Id", "Name", "Variable"], axis=1
-        )
-        # Filtering dataframe for the variables
-        obj_dataframe1 = df1[df1["Variable"].isin(include_variables)].reset_index(
-            drop=True
-        )
-        final_df = pd.concat([obj_dataframe1, result1], axis=1)
-        return final_df
 
     def create_readvalueids_dict(self, node_id: str, agg_name: str) -> Dict:
         """A function to get ReadValueIds
@@ -372,3 +299,125 @@ class OPC_UA:
                 df = self.process_response_dataframe(df_results)
                 df.to_parquet("Data/data_chunk_" + str(j) + ".parquet")
         logger.info(" Data download is complete ")
+
+    @validate_arguments
+    def get_values(self, variable_list: List[Variables]) -> List:
+        variables = []
+        for var in variable_list:
+            # Convert pydantic model to dict
+            variables.append(var.dict())
+
+        body = json.dumps(
+            [
+                {
+                    "Connection": {"Url": self.opcua_url, "AuthenticationType": 1},
+                    "NodeIds": variables,
+                }
+            ]
+        )
+        headers = {"Content-Type": "application/json"}
+        content = request_from_api(self.rest_url, "POST", "values/get", body, headers)
+
+        for var in variables:
+            # Add default None values
+            var["Timestamp"] = None
+            var["Value"] = None
+            var["ValueType"] = None
+            var["StatusCode"] = None
+            var["StatusSymbol"] = None
+
+        if not isinstance(content, list):
+            return variables
+
+        content = content[0]
+        if not content.get("Success") is True:
+            return variables
+
+        if not content.get("Values"):
+            return variables
+
+        for num, row in enumerate(variables):
+            variables[num]["Timestamp"] = content["Values"][num].get("ServerTimestamp")
+            variables[num]["Value"] = content["Values"][num]["Value"].get("Body")
+            variables[num]["ValueType"] = self.get_value_type(
+                content["Values"][num]["Value"].get("Type")
+            ).get("type")
+            if "StatusCode" in content["Values"][num]:
+                variables[num]["StatusCode"] = content["Values"][num]["StatusCode"].get(
+                    "Code"
+                )
+                variables[num]["StatusSymbol"] = content["Values"][num][
+                    "StatusCode"
+                ].get("Symbol")
+
+        return variables
+
+
+TYPE_LIST = [
+    {"id": 0, "type": "Null", "description": "An invalid or unspecified value"},
+    {
+        "id": 1,
+        "type": "Boolean",
+        "description": "A boolean logic value (true or false)",
+    },
+    {"id": 2, "type": "SByte", "description": "An 8 bit signed integer value"},
+    {"id": 3, "type": "Byte", "description": "An 8 bit unsigned integer value"},
+    {"id": 4, "type": "Int16", "description": "A 16 bit signed integer value"},
+    {"id": 5, "type": "UInt16", "description": "A 16 bit unsigned integer value"},
+    {"id": 6, "type": "Int32", "description": "A 32 bit signed integer value"},
+    {"id": 7, "type": "UInt32", "description": "A 32 bit unsigned integer value"},
+    {"id": 8, "type": "Int64", "description": "A 64 bit signed integer value"},
+    {"id": 9, "type": "UInt64", "description": "A 64 bit unsigned integer value"},
+    {
+        "id": 10,
+        "type": "Float",
+        "description": "An IEEE single precision (32 bit) floating point value",
+    },
+    {
+        "id": 11,
+        "type": "Double",
+        "description": "An IEEE double precision (64 bit) floating point value",
+    },
+    {"id": 12, "type": "String", "description": "A sequence of Unicode characters"},
+    {"id": 13, "type": "DateTime", "description": "An instance in time"},
+    {"id": 14, "type": "Guid", "description": "A 128-bit globally unique identifier"},
+    {"id": 15, "type": "ByteString", "description": "A sequence of bytes"},
+    {"id": 16, "type": "XmlElement", "description": "An XML element"},
+    {
+        "id": 17,
+        "type": "NodeId",
+        "description": "An identifier for a node in the address space of a UA server",
+    },
+    {
+        "id": 18,
+        "type": "ExpandedNodeId",
+        "description": "A node id that stores the namespace URI instead of the namespace index",
+    },
+    {"id": 19, "type": "StatusCode", "description": "A structured result code"},
+    {
+        "id": 20,
+        "type": "QualifiedName",
+        "description": "A string qualified with a namespace",
+    },
+    {
+        "id": 21,
+        "type": "LocalizedText",
+        "description": "A localized text string with an locale identifier",
+    },
+    {
+        "id": 22,
+        "type": "ExtensionObject",
+        "description": "An opaque object with a syntax that may be unknown to the receiver",
+    },
+    {
+        "id": 23,
+        "type": "DataValue",
+        "description": "A data value with an associated quality and timestamp",
+    },
+    {"id": 24, "type": "Variant", "description": "Any of the other built-in types"},
+    {
+        "id": 25,
+        "type": "DiagnosticInfo",
+        "description": "A diagnostic information associated with a result code",
+    },
+]
