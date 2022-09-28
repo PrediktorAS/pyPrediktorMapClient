@@ -302,6 +302,14 @@ class OPC_UA:
 
     @validate_arguments
     def get_values(self, variable_list: List[Variables]) -> List:
+        """Request realtime values from the OPC UA server
+
+        Args:
+            variable_list (list): A list of variables you want, containing keys "Id", "Namespace" and "IdType"
+        Returns:
+            list: The input variable_list extended with "Timestamp", "Value", "ValueType", "StatusCode" and "StatusSymbol" (all defaults to None)
+        """
+        # Create a new variable list to remove pydantic models
         variables = []
         for var in variable_list:
             # Convert pydantic model to dict
@@ -326,22 +334,27 @@ class OPC_UA:
             var["StatusCode"] = None
             var["StatusSymbol"] = None
 
+        # Return if no content from server
         if not isinstance(content, list):
             return variables
 
+        # Chose first item and return if not successful
         content = content[0]
         if not content.get("Success") is True:
             return variables
 
+        # Return if missing values
         if not content.get("Values"):
             return variables
 
+        # Use .get from one dict to the other to ensure None values if something is missing
         for num, row in enumerate(variables):
             variables[num]["Timestamp"] = content["Values"][num].get("ServerTimestamp")
             variables[num]["Value"] = content["Values"][num]["Value"].get("Body")
             variables[num]["ValueType"] = self.get_value_type(
                 content["Values"][num]["Value"].get("Type")
             ).get("type")
+            # StatusCode is not always present in the answer
             if "StatusCode" in content["Values"][num]:
                 variables[num]["StatusCode"] = content["Values"][num]["StatusCode"].get(
                     "Code"
