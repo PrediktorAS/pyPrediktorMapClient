@@ -259,8 +259,18 @@ class AnalyticsHelper:
 
         return variables_frame
 
-    def variables_as_list(self):
+    def variables_as_list(self, include_only: List = []) -> List:
+        """Extracts variables as a list. If there are names listed in the include_only
+        argument, only variables matching that name will be encluded.
+        
+        Args:
+            include_only (list): A list of variable names (str) that should be included
+
+        Returns:
+            list: Unique types
+        """
         variable_dataframe = self.variables_as_dataframe()
-        # Get the content of the column VariableIdSplit as a list, loop it through
-        # the set function to remove duplicates and then back to a list
+        # If there are any items in the include_only list, include only them
+        if len(include_only) > 0:
+            variable_dataframe = variable_dataframe[variable_dataframe.VariableName.isin(include_only)]
         return variable_dataframe["VariableIdSplit"].to_list()

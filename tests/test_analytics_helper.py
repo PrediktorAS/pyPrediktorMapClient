@@ -134,6 +134,11 @@ class AnalyticsHelperTestCase(unittest.TestCase):
         assert "IdType" in ids[0].keys()
         assert len(ids) == 2
 
+    def test_analytics_helper_variables_as_list_with_include_only(self):
+        result = AnalyticsHelper(proper_json)
+        ids = result.variables_as_list(include_only=['SomeName2'])
+        assert len(ids) == 1
+
 
 if __name__ == "__main__":
     unittest.main()
