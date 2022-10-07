@@ -5,7 +5,7 @@ import pytest
 from pydantic import ValidationError
 from copy import deepcopy
 
-from pyprediktormapclient.opc_ua import OPC_UA
+from pyprediktormapclient.opc_ua import OPC_UA, Variables
 
 URL = "http://someserver.somedomain.com/v1/"
 OPC_URL = "opc.tcp://nosuchserver.nosuchdomain.com"
@@ -108,13 +108,21 @@ class OPCUATestCase(unittest.TestCase):
 
     def test_get_value_type(self):
         opc = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
-        result_none = opc.get_value_type("NoSuchType")
+        result_none = opc._get_value_type(100000)
         assert result_none["id"] == None
-        result = opc.get_value_type(1)
+        result = opc._get_value_type(1)
         assert "id" in result
         assert "type" in result
         assert "description" in result
         assert result["type"] == "Boolean"
+
+    def test_get_variable_list_as_list(self):
+        opc = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
+        var = Variables(Id="ID", Namespace=1, IdType=2)
+        list = [var]
+        result = opc._get_variable_list_as_list(list)
+        assert "Id" in result[0]
+        assert result[0]["Id"] == "ID"
 
     @mock.patch("requests.post", side_effect=successful_mocked_requests)
     def test_get_live_values_successful(self, mock_get):
@@ -132,7 +140,7 @@ class OPCUATestCase(unittest.TestCase):
             )
             assert (
                 result[num]["ValueType"]
-                == tsdata.get_value_type(
+                == tsdata._get_value_type(
                     successful_response[0]["Values"][num]["Value"]["Type"]
                 )["type"]
             )

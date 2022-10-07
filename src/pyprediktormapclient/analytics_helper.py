@@ -58,8 +58,6 @@ class AnalyticsHelper:
             Nothing, but normalizes the instance "dataframe"
         """
 
-        # Check if there is an Id column
-
         # Remove "Subtype"
         if "Subtype" in self.dataframe.columns:
             self.dataframe.drop("Subtype", inplace=True, axis=1)
@@ -99,9 +97,8 @@ class AnalyticsHelper:
             )
 
         # Now check to see if all needed columns are there, else set to None
-        needed_columns = ["Id", "Name", "Vars", "Props"]
-        for needed_column in needed_columns:
-            if not needed_column in self.dataframe:
+        for required_key in ["Id", "Name", "Vars", "Props"]:
+            if not required_key in self.dataframe:
                 self.dataframe = None
                 return
 
@@ -237,7 +234,7 @@ class AnalyticsHelper:
         if self.dataframe is None:
             return None
 
-        # Check if the Vars column contains pd.Series content
+        # Check if the Vars column contains list content
         if not type(self.dataframe["Vars"][0]) == list:
             return None
 
@@ -245,7 +242,7 @@ class AnalyticsHelper:
         variables_frame = self.dataframe.explode("Vars")
         # Remove the Props column
         variables_frame.drop(columns=["Props"], inplace=True)
-        # Add VariableId and VariableName columns
+        # Add new columns
         variables_frame["VariableId"] = ""
         variables_frame["VariableName"] = ""
         variables_frame["VariableIdSplit"] = ""
@@ -262,7 +259,7 @@ class AnalyticsHelper:
     def variables_as_list(self, include_only: List = []) -> List:
         """Extracts variables as a list. If there are names listed in the include_only
         argument, only variables matching that name will be encluded.
-        
+
         Args:
             include_only (list): A list of variable names (str) that should be included
 
@@ -272,5 +269,7 @@ class AnalyticsHelper:
         variable_dataframe = self.variables_as_dataframe()
         # If there are any items in the include_only list, include only them
         if len(include_only) > 0:
-            variable_dataframe = variable_dataframe[variable_dataframe.VariableName.isin(include_only)]
+            variable_dataframe = variable_dataframe[
+                variable_dataframe.VariableName.isin(include_only)
+            ]
         return variable_dataframe["VariableIdSplit"].to_list()

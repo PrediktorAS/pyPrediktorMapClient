@@ -1,7 +1,6 @@
 import requests
-import pandas as pd
 from pydantic import HttpUrl, validate_arguments
-from typing import Literal, List
+from typing import Literal
 
 
 @validate_arguments
@@ -11,7 +10,8 @@ def request_from_api(
     endpoint: str,
     data: str = None,
     headers: dict = None,
-):
+    extended_timeout: bool = False,
+) -> str:
     """Function to perform the request to the ModelIndex server
 
     Args:
@@ -26,13 +26,13 @@ def request_from_api(
     Todo:
         * Add logging
     """
-    timeout = (3, 27)
+    request_timeout = (3, 300 if extended_timeout else 27)
     if method == "GET":
-        result = requests.get(rest_url + endpoint, timeout=timeout)
+        result = requests.get(rest_url + endpoint, timeout=request_timeout)
 
     if method == "POST":
         result = requests.post(
-            rest_url + endpoint, data=data, headers=headers, timeout=timeout
+            rest_url + endpoint, data=data, headers=headers, timeout=request_timeout
         )
 
     result.raise_for_status()

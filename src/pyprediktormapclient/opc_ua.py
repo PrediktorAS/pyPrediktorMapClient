@@ -8,7 +8,7 @@ from typing import Dict, List
 from aiohttp import ClientSession
 import logging
 from pydantic import BaseModel, HttpUrl, AnyUrl, validate_arguments
-from operator import itemgetter
+import datetime
 from pyprediktormapclient.shared import request_from_api
 
 
@@ -34,9 +34,10 @@ class OPC_UA:
     Todo:
         * Clean up logging
         * Use pydantic for argument validation
-        * Remove all datatable related actions
+        * Remove all incoming datatable related actions
         * Clean up use of files
         * Better session handling on aiohttp
+        * Make sure that time convertions are with timezone
     """
 
     @validate_arguments
@@ -51,9 +52,11 @@ class OPC_UA:
         """
         self.rest_url = rest_url
         self.opcua_url = opcua_url
+        self.headers = {"Content-Type": "application/json"}
 
-    def get_value_type(self, id: int) -> dict:
-        """Get the type of a value from the OPC UA return, as documentet at
+    @validate_arguments
+    def _get_value_type(self, id: int) -> Dict:
+        """Internal function to get the type of a value from the OPC UA return,as documentet at
         https://docs.prediktor.com/docs/opcuavaluesrestapi/datatypes.html#variant
 
         Args:
@@ -65,6 +68,24 @@ class OPC_UA:
             (sub for sub in TYPE_LIST if sub["id"] == id),
             {"id": None, "type": None, "description": None},
         )
+
+    @validate_arguments
+    def _get_variable_list_as_list(self, variable_list: List[Variables]) -> List:
+        """Internal function to convert a list of pydantic Variable models to a
+        list of dicts
+
+        Args:
+            variable_list (List[Variables]): List of pydantic models adhering to Values class
+
+        Returns:
+            List: List of dicts
+        """
+        new_vars = []
+        for var in variable_list:
+            # Convert pydantic model to dict
+            new_vars.append(var.dict())
+
+        return new_vars
 
     def get_vars_node_ids(self, obj_dataframe: pd.DataFrame) -> List:
         """Function to get variables node ids of the objects
@@ -140,12 +161,11 @@ class OPC_UA:
             data (_type_): body data
             timeout (int, optional): time of one session. Defaults to 10E25.
         """
-        headers = {"Content-Type": "application/json"}
         try:
             response = await session.post(
                 url=self.rest_url + endpoint,
                 data=data,
-                headers=headers,
+                headers=self.headers,
                 timeout=timeout,
             )
         except:
@@ -310,23 +330,21 @@ class OPC_UA:
             list: The input variable_list extended with "Timestamp", "Value", "ValueType", "StatusCode" and "StatusSymbol" (all defaults to None)
         """
         # Create a new variable list to remove pydantic models
-        variables = []
-        for var in variable_list:
-            # Convert pydantic model to dict
-            variables.append(var.dict())
+        vars = self._get_variable_list_as_list(variable_list)
 
         body = json.dumps(
             [
                 {
                     "Connection": {"Url": self.opcua_url, "AuthenticationType": 1},
-                    "NodeIds": variables,
+                    "NodeIds": vars,
                 }
             ]
         )
-        headers = {"Content-Type": "application/json"}
-        content = request_from_api(self.rest_url, "POST", "values/get", body, headers)
+        content = request_from_api(
+            self.rest_url, "POST", "values/get", body, self.headers
+        )
 
-        for var in variables:
+        for var in vars:
             # Add default None values
             var["Timestamp"] = None
             var["Value"] = None
@@ -336,34 +354,84 @@ class OPC_UA:
 
         # Return if no content from server
         if not isinstance(content, list):
-            return variables
+            return vars
 
-        # Chose first item and return if not successful
+        # Choose first item and return if not successful
         content = content[0]
         if not content.get("Success") is True:
-            return variables
+            return vars
 
         # Return if missing values
         if not content.get("Values"):
-            return variables
+            return vars
 
         # Use .get from one dict to the other to ensure None values if something is missing
-        for num, row in enumerate(variables):
-            variables[num]["Timestamp"] = content["Values"][num].get("ServerTimestamp")
-            variables[num]["Value"] = content["Values"][num]["Value"].get("Body")
-            variables[num]["ValueType"] = self.get_value_type(
-                content["Values"][num]["Value"].get("Type")
+        for num, row in enumerate(vars):
+            contline = content["Values"][num]
+            vars[num]["Timestamp"] = contline.get("ServerTimestamp")
+            vars[num]["Value"] = contline["Value"].get("Body")
+            vars[num]["ValueType"] = self._get_value_type(
+                contline["Value"].get("Type")
             ).get("type")
             # StatusCode is not always present in the answer
-            if "StatusCode" in content["Values"][num]:
-                variables[num]["StatusCode"] = content["Values"][num]["StatusCode"].get(
-                    "Code"
-                )
-                variables[num]["StatusSymbol"] = content["Values"][num][
-                    "StatusCode"
-                ].get("Symbol")
+            if "StatusCode" in contline:
+                vars[num]["StatusCode"] = contline["StatusCode"].get("Code")
+                vars[num]["StatusSymbol"] = contline["StatusCode"].get("Symbol")
 
-        return variables
+        return vars
+
+    @validate_arguments
+    def get_historical_aggregated_values(
+        self,
+        start_time: datetime.datetime,
+        end_time: datetime.datetime,
+        pro_interval: int,
+        agg_name: str,
+        variable_list: List[Variables],
+    ) -> List:
+        """Request historical aggregated values from the OPC UA server
+
+        Args:
+            start_time (datetime.datetime): start time of requested data
+            end_time (datetime.datetime): end time of requested data
+            pro_interval (int): interval time of processing in milliseconds
+            agg_name (str): name of aggregation
+            variable_list (list): A list of variables you want, containing keys "Id", "Namespace" and "IdType"
+        Returns:
+            list: The input variable_list extended with "Timestamp", "Value", "ValueType", "StatusCode" and "StatusSymbol" (all defaults to None)
+        """
+        # Create a new variable list to remove pydantic models
+        variables = self._get_variable_list_as_list(variable_list)
+
+        extended_variables = []
+        for var in variables:
+            extended_variables.append(
+                {
+                    "NodeId": var,
+                    "AggregateName": agg_name,
+                }
+            )
+
+        body = json.dumps(
+            {
+                "Connection": {"Url": self.opcua_url, "AuthenticationType": 1},
+                "StartTime": start_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "EndTime": end_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "ProcessingInterval": pro_interval,
+                "ReadValueIds": extended_variables,
+                "AggregateName": agg_name,
+            }
+        )
+        content = request_from_api(
+            self.rest_url,
+            "POST",
+            "values/historicalaggregated",
+            body=body,
+            headers=self.headers,
+            extended_timeout=True,
+        )
+
+        return content
 
 
 TYPE_LIST = [

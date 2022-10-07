@@ -136,8 +136,10 @@ class AnalyticsHelperTestCase(unittest.TestCase):
 
     def test_analytics_helper_variables_as_list_with_include_only(self):
         result = AnalyticsHelper(proper_json)
-        ids = result.variables_as_list(include_only=['SomeName2'])
+        ids = result.variables_as_list(include_only=["SomeName2"])
         assert len(ids) == 1
+        ids2 = result.variables_as_list(include_only=["SomeRandomName"])
+        assert len(ids2) == 0
 
 
 if __name__ == "__main__":
