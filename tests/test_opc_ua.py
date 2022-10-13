@@ -4,6 +4,9 @@ from unittest import mock
 import pytest
 from pydantic import ValidationError
 from copy import deepcopy
+import datetime
+import pandas as pd
+import pandas.api.types as ptypes
 
 from pyprediktormapclient.opc_ua import OPC_UA, Variables
 
@@ -57,6 +60,54 @@ empty_live_response = [
     }
 ]
 
+successful_historical_result = {
+    "Success": True,
+    "ErrorMessage": "",
+    "ErrorCode": 0,
+    "ServerNamespaces": ["string"],
+    "HistoryReadResults": [
+        {
+            "NodeId": {
+                "IdType": 2,
+                "Id": "SOMEID",
+                "Namespace": 1,
+            },
+            "StatusCode": {"Code": 0, "Symbol": "Good"},
+            "DataValues": [
+                {
+                    "Value": {"Type": 11, "Body": 34.28500000000003},
+                    "StatusCode": {"Code": 1, "Symbol": "Good"},
+                    "SourceTimestamp": "2022-09-13T13:39:51Z",
+                },
+                {
+                    "Value": {"Type": 11, "Body": 6.441666666666666},
+                    "StatusCode": {"Code": 1, "Symbol": "Good"},
+                    "SourceTimestamp": "2022-09-13T14:39:51Z",
+                },
+            ],
+        },
+{
+            "NodeId": {
+                "IdType": 2,
+                "Id": "SOMEID2",
+                "Namespace": 1,
+            },
+            "StatusCode": {"Code": 0, "Symbol": "Good"},
+            "DataValues": [
+                {
+                    "Value": {"Type": 11, "Body": 34.28500000000003},
+                    "StatusCode": {"Code": 1, "Symbol": "Good"},
+                    "SourceTimestamp": "2022-09-13T13:39:51Z",
+                },
+                {
+                    "Value": {"Type": 11, "Body": 6.441666666666666},
+                    "StatusCode": {"Code": 1, "Symbol": "Good"},
+                    "SourceTimestamp": "2022-09-13T14:39:51Z",
+                },
+            ],
+        }
+    ]
+}
 
 class MockResponse:
     def __init__(self, json_data, status_code):
@@ -75,11 +126,13 @@ def successful_mocked_requests(*args, **kwargs):
 
     return MockResponse(None, 404)
 
-def empty_mocked_requests(*args, **kwargs):
+
+def empty_values_mocked_requests(*args, **kwargs):
     if args[0] == f"{URL}values/get":
         return MockResponse(empty_live_response, 200)
 
     return MockResponse(None, 404)
+
 
 def no_mocked_requests(*args, **kwargs):
     if args[0] == f"{URL}values/get":
@@ -94,6 +147,7 @@ def unsuccessful_mocked_requests(*args, **kwargs):
     if args[0] == f"{URL}values/get":
         # Set Success to False
         unsuc = deepcopy(successful_live_response[0])
+        unsuc["Success"] = False
         unsuc["Success"] = False
         return MockResponse([unsuc], 200)
 
@@ -119,6 +173,43 @@ def empty_mocked_requests(*args, **kwargs):
 
     return MockResponse(None, 404)
 
+def successful_mocked_historical_requests(*args, **kwargs):
+    if args[0] == f"{URL}values/historicalaggregated":
+        return MockResponse(successful_historical_result, 200)
+
+    return MockResponse(None, 404)
+
+def no_dict_mocked_historical_requests(*args, **kwargs):
+    if args[0] == f"{URL}values/historicalaggregated":
+        return MockResponse([], 200)
+
+    return MockResponse(None, 404)
+
+def unsuccessful_mocked_historical_requests(*args, **kwargs):
+    if args[0] == f"{URL}values/historicalaggregated":
+        unsuc = deepcopy(successful_historical_result)
+        unsuc.pop("HistoryReadResults")
+        return MockResponse([unsuc], 200)
+
+    return MockResponse(None, 404)
+
+def no_hosticalresult_mocked_historical_requests(*args, **kwargs):
+    if args[0] == f"{URL}values/historicalaggregated":
+        unsuc = deepcopy(successful_historical_result)
+        unsuc["Success"] = False
+        return MockResponse([unsuc], 200)
+
+    return MockResponse(None, 404)
+
+def make_historical_request():
+    tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
+    return tsdata.get_historical_aggregated_values(
+                start_time=(datetime.datetime.now() - datetime.timedelta(30)),
+                end_time=(datetime.datetime.now() - datetime.timedelta(29)),
+                pro_interval=3600000,
+                agg_name="Average",
+                variable_list=list_of_ids,
+            )
 
 # Our test case class
 class OPCUATestCase(unittest.TestCase):
@@ -135,7 +226,6 @@ class OPCUATestCase(unittest.TestCase):
         assert "ClientNamespaces" in opc.body
         opc = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
         assert "ClientNamespaces" not in opc.body
-
 
     def test_get_value_type(self):
         opc = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
@@ -184,8 +274,7 @@ class OPCUATestCase(unittest.TestCase):
                 == successful_live_response[0]["Values"][num]["StatusCode"]["Symbol"]
             )
 
-
-    @mock.patch("requests.post", side_effect=empty_mocked_requests)
+    @mock.patch("requests.post", side_effect=empty_values_mocked_requests)
     def test_get_live_values_with_missing_value_and_statuscode(self, mock_get):
         tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
         result = tsdata.get_values(list_of_ids)
@@ -195,18 +284,10 @@ class OPCUATestCase(unittest.TestCase):
                 result[num]["Timestamp"]
                 == empty_live_response[0]["Values"][num]["ServerTimestamp"]
             )
-            assert (
-                result[num]["Value"] is None
-            )
-            assert (
-                result[num]["ValueType"] is None
-            )
-            assert (
-                result[num]["StatusCode"] is None
-            )
-            assert (
-                result[num]["StatusSymbol"] is None
-            )
+            assert result[num]["Value"] is None
+            assert result[num]["ValueType"] is None
+            assert result[num]["StatusCode"] is None
+            assert result[num]["StatusSymbol"] is None
 
     @mock.patch("requests.post", side_effect=no_mocked_requests)
     def test_get_live_values_no_response(self, mock_get):
@@ -232,6 +313,28 @@ class OPCUATestCase(unittest.TestCase):
         result = tsdata.get_values(list_of_ids)
         assert result[0]["StatusCode"] == None
 
+    @mock.patch("requests.post", side_effect=successful_mocked_historical_requests)
+    def test_historical_values_success(self, mock_get):
+        result = make_historical_request()
+        cols_to_check = ["Value"]
+        assert all(ptypes.is_numeric_dtype(result[col]) for col in cols_to_check)
+        assert result['Value'].tolist() == [34.28500000000003, 6.441666666666666, 34.28500000000003, 6.441666666666666]
+        assert result['ValueType'].tolist() == ["Double", "Double", "Double", "Double"]
 
+    @mock.patch("requests.post", side_effect=no_dict_mocked_historical_requests)
+    def test_historical_values_no_dict(self, mock_get):
+        with pytest.raises(RuntimeError):
+            make_historical_request()
+
+    @mock.patch("requests.post", side_effect=unsuccessful_mocked_historical_requests)
+    def test_historical_values_unsuccess(self, mock_get):
+        with pytest.raises(RuntimeError):
+            make_historical_request()
+
+    @mock.patch("requests.post", side_effect=no_hosticalresult_mocked_historical_requests)
+    def test_historical_values_no_hist(self, mock_get):
+        with pytest.raises(RuntimeError):
+            make_historical_request()
+        
 if __name__ == "__main__":
     unittest.main()

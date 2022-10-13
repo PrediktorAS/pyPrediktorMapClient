@@ -202,7 +202,7 @@ class OPC_UA:
 
         # Return if no content from server
         if not isinstance(content, dict):
-            return vars
+            raise RuntimeError("No content returned from the server")
 
         # Return if not successful
         if content.get("Success") is False:
@@ -210,7 +210,7 @@ class OPC_UA:
 
         # Check for HistoryReadResults
         if not "HistoryReadResults" in content:
-            return vars
+            raise RuntimeError(content.get("ErrorMessage"))
 
         results_list = []
         for x in content["HistoryReadResults"]:
@@ -254,7 +254,9 @@ class OPC_UA:
                 "Symbol": "StatusSymbol",
                 "Code": "StatusCode",
                 "SourceTimestamp": "Timestamp",
-            }, errors="raise", inplace=True
+            },
+            errors="raise",
+            inplace=True,
         )
 
         return df_result
