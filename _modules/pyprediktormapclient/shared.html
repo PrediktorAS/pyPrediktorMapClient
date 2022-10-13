@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pyprediktormapclient.shared &mdash; pyPrediktorMapClient 0.1.0 documentation</title>
+  <title>pyprediktormapclient.shared &mdash; pyPrediktorMapClient 0.2.0 documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -29,7 +29,7 @@
             <a href="../../index.html" class="icon icon-home"> pyPrediktorMapClient
           </a>
               <div class="version">
-                0.1.0
+                0.2.0
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -74,109 +74,44 @@
              
   <h1>Source code for pyprediktormapclient.shared</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">requests</span>
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">HttpUrl</span><span class="p">,</span> <span class="n">validate_arguments</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Literal</span>
 
 
-<div class="viewcode-block" id="request_from_api"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.shared.request_from_api">[docs]</a><span class="k">def</span> <span class="nf">request_from_api</span><span class="p">(</span>
-    <span class="n">rest_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="kc">None</span>
-<span class="p">):</span>
+<div class="viewcode-block" id="request_from_api"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.shared.request_from_api">[docs]</a><span class="nd">@validate_arguments</span>
+<span class="k">def</span> <span class="nf">request_from_api</span><span class="p">(</span>
+    <span class="n">rest_url</span><span class="p">:</span> <span class="n">HttpUrl</span><span class="p">,</span>
+    <span class="n">method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="s2">&quot;POST&quot;</span><span class="p">],</span>
+    <span class="n">endpoint</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">data</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">headers</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">extended_timeout</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Function to perform the request to the ModelIndex server</span>
 
 <span class="sd">    Args:</span>
+<span class="sd">        rest_url (str): The URL with trailing shash</span>
 <span class="sd">        method (str): &quot;GET&quot; or &quot;POST&quot;</span>
-<span class="sd">        endpoint (str): The last part of the url (without the leading &quot;/&quot;)</span>
+<span class="sd">        endpoint (str): The last part of the url (without the leading slash)</span>
 <span class="sd">        data (str): defaults to None but can contain the data to send to the endpoint</span>
 <span class="sd">        headers (str): default to None but can contain the headers og the request</span>
 <span class="sd">    Returns:</span>
 <span class="sd">        JSON: The result if successfull</span>
+
+<span class="sd">    Todo:</span>
+<span class="sd">        * Add logging</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">timeout</span> <span class="o">=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">27</span><span class="p">)</span>
+    <span class="n">request_timeout</span> <span class="o">=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">300</span> <span class="k">if</span> <span class="n">extended_timeout</span> <span class="k">else</span> <span class="mi">27</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;GET&quot;</span><span class="p">:</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">rest_url</span> <span class="o">+</span> <span class="n">endpoint</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;POST&quot;</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">rest_url</span> <span class="o">+</span> <span class="n">endpoint</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">request_timeout</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;POST&quot;</span><span class="p">:</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
-            <span class="n">rest_url</span> <span class="o">+</span> <span class="n">endpoint</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span>
+            <span class="n">rest_url</span> <span class="o">+</span> <span class="n">endpoint</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">request_timeout</span>
         <span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Method not supported&quot;</span><span class="p">)</span>
+
     <span class="n">result</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">json</span><span class="p">()</span></div>
-
-
-<div class="viewcode-block" id="normalize_as_dataframe"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.shared.normalize_as_dataframe">[docs]</a><span class="k">def</span> <span class="nf">normalize_as_dataframe</span><span class="p">(</span><span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Normalizes the input JSON and turns it into a Pandas</span>
-<span class="sd">    Dataframe with the following colums:</span>
-<span class="sd">    - Id</span>
-<span class="sd">    - Type</span>
-<span class="sd">    - Name</span>
-<span class="sd">    - Props</span>
-<span class="sd">    - Vars</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        content (str): the JSON to convert</span>
-<span class="sd">    Returns:</span>
-<span class="sd">        pandas.DataFrame: a normalized dataframe</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">content</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">None</span>
-
-    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
-
-    <span class="c1"># Remove &quot;Subtype&quot;</span>
-    <span class="k">if</span> <span class="s2">&quot;Subtype&quot;</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-        <span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s2">&quot;Subtype&quot;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-
-    <span class="c1"># Remove &quot;ObjectId&quot;</span>
-    <span class="k">if</span> <span class="s2">&quot;ObjectId&quot;</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-        <span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s2">&quot;ObjectId&quot;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-
-    <span class="c1"># Remove &quot;ObjectId&quot;</span>
-    <span class="k">if</span> <span class="s2">&quot;ObjectName&quot;</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-        <span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s2">&quot;ObjectName&quot;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-
-    <span class="c1"># Check if the content is from get_objects_of_type</span>
-    <span class="k">if</span> <span class="s2">&quot;DisplayName&quot;</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-        <span class="n">df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;DisplayName&quot;</span><span class="p">:</span> <span class="s2">&quot;Name&quot;</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-    <span class="c1"># Check if the content is from object-descendants</span>
-    <span class="k">if</span> <span class="s2">&quot;DescendantId&quot;</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-        <span class="n">df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
-            <span class="n">columns</span><span class="o">=</span><span class="p">{</span>
-                <span class="s2">&quot;DescendantId&quot;</span><span class="p">:</span> <span class="s2">&quot;Id&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;DescendantName&quot;</span><span class="p">:</span> <span class="s2">&quot;Name&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;DescendantType&quot;</span><span class="p">:</span> <span class="s2">&quot;Type&quot;</span><span class="p">,</span>
-            <span class="p">},</span>
-            <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="p">)</span>
-
-    <span class="c1"># Check if the content is from object-ancestors</span>
-    <span class="k">if</span> <span class="s2">&quot;AncestorId&quot;</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-        <span class="n">df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
-            <span class="n">columns</span><span class="o">=</span><span class="p">{</span>
-                <span class="s2">&quot;AncestorId&quot;</span><span class="p">:</span> <span class="s2">&quot;Id&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;AncestorName&quot;</span><span class="p">:</span> <span class="s2">&quot;Name&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;AncestorType&quot;</span><span class="p">:</span> <span class="s2">&quot;Type&quot;</span><span class="p">,</span>
-            <span class="p">},</span>
-            <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">df</span></div>
-
-
-<div class="viewcode-block" id="get_ids_from_dataframe"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.shared.get_ids_from_dataframe">[docs]</a><span class="k">def</span> <span class="nf">get_ids_from_dataframe</span><span class="p">(</span><span class="n">obj_dataframe</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Extracts data from &quot;Id&quot; column in a DataFrame or an empty list if none.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        obj_dataframe (pd.DataFrame): DataFrame with a column called &quot;Id&quot;</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        list: a list with ids (empty if None)</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">if</span> <span class="s2">&quot;Id&quot;</span> <span class="ow">in</span> <span class="n">obj_dataframe</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">obj_dataframe</span><span class="p">[</span><span class="s2">&quot;Id&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span>
-
-    <span class="k">return</span> <span class="p">[]</span></div>
 </pre></div>
 
            </div>

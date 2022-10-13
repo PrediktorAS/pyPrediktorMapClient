@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pyprediktormapclient.analytics_helper &mdash; pyPrediktorMapClient 0.1.0 documentation</title>
+  <title>pyprediktormapclient.analytics_helper &mdash; pyPrediktorMapClient 0.2.0 documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -29,7 +29,7 @@
             <a href="../../index.html" class="icon icon-home"> pyPrediktorMapClient
           </a>
               <div class="version">
-                0.1.0
+                0.2.0
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -75,6 +75,8 @@
   <h1>Source code for pyprediktormapclient.analytics_helper</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
+<span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">validate_arguments</span><span class="p">,</span> <span class="n">constr</span>
 
 
 <div class="viewcode-block" id="AnalyticsHelper"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper">[docs]</a><span class="k">class</span> <span class="nc">AnalyticsHelper</span><span class="p">:</span>
@@ -84,6 +86,7 @@
 <span class="sd">    or live or historical data from OPC UA.</span>
 
 <span class="sd">    Columns in the normalizes dataframe are:</span>
+
 <span class="sd">    - Id</span>
 <span class="sd">    - Name</span>
 <span class="sd">    - Type</span>
@@ -94,12 +97,21 @@
 <span class="sd">        - DisplayName</span>
 <span class="sd">        - Id</span>
 
+<span class="sd">    Args:</span>
+<span class="sd">        List: The return from a ModelIndex call function</span>
+
 <span class="sd">    Returns:</span>
 <span class="sd">        An instance of the class with some resources. You can access the dataframe directly as &quot;dataframe&quot;</span>
+
+<span class="sd">    Todo:</span>
+<span class="sd">        * Add logging</span>
+<span class="sd">        * Use pydantic for more validations on the list input</span>
+<span class="sd">        * Input checks for nodeIds in variables that requires format int:int:string</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initial_data</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">initial_data</span><span class="p">)</span>
+    <span class="nd">@validate_arguments</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">List</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>  <span class="c1"># Create a DataFrame from the input</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">normalize</span><span class="p">()</span>
 
 <div class="viewcode-block" id="AnalyticsHelper.normalize"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.normalize">[docs]</a>    <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -118,10 +130,8 @@
 <span class="sd">            - Id</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            Nothing, but nomralizes the instance &quot;dataframe&quot;</span>
+<span class="sd">            Nothing, but normalizes the instance &quot;dataframe&quot;</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
-        <span class="c1"># Check if there is an Id column</span>
 
         <span class="c1"># Remove &quot;Subtype&quot;</span>
         <span class="k">if</span> <span class="s2">&quot;Subtype&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
@@ -162,87 +172,97 @@
             <span class="p">)</span>
 
         <span class="c1"># Now check to see if all needed columns are there, else set to None</span>
-        <span class="n">needed_columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Id&quot;</span><span class="p">,</span> <span class="s2">&quot;Name&quot;</span><span class="p">,</span> <span class="s2">&quot;Type&quot;</span><span class="p">,</span> <span class="s2">&quot;Vars&quot;</span><span class="p">,</span> <span class="s2">&quot;Props&quot;</span><span class="p">]</span>
-        <span class="k">for</span> <span class="n">needed_column</span> <span class="ow">in</span> <span class="n">needed_columns</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">needed_column</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">required_key</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;Id&quot;</span><span class="p">,</span> <span class="s2">&quot;Name&quot;</span><span class="p">,</span> <span class="s2">&quot;Vars&quot;</span><span class="p">,</span> <span class="s2">&quot;Props&quot;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">required_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span> <span class="o">=</span> <span class="kc">None</span>
                 <span class="k">return</span></div>
+
+<div class="viewcode-block" id="AnalyticsHelper.namespaces_as_list"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.namespaces_as_list">[docs]</a>    <span class="nd">@validate_arguments</span>
+    <span class="k">def</span> <span class="nf">namespaces_as_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">list_of_dicts</span><span class="p">:</span> <span class="n">List</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Takes the output of a get_namespace_array() request from ModelIndex and</span>
+<span class="sd">        generates a list of strings that can be used for the OPC UA Values API</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            list_of_dicts (List): A list in of dicts like [{&#39;Idx&#39;: 0, &#39;Uri&#39;: &#39;http://opcfoundation.org/UA/&#39;}, etc]</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List: A list of strings containing the URIs</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">new_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">list_of_dicts</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">&quot;Uri&quot;</span> <span class="ow">in</span> <span class="n">item</span><span class="p">:</span>
+                <span class="n">new_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s2">&quot;Uri&quot;</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">new_list</span></div>
+
+<div class="viewcode-block" id="AnalyticsHelper.split_id"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.split_id">[docs]</a>    <span class="nd">@validate_arguments</span>
+    <span class="k">def</span> <span class="nf">split_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="n">constr</span><span class="p">(</span><span class="n">regex</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;^\d+:\d+:\S+$&quot;</span><span class="p">)):</span>
+        <span class="n">id_split</span> <span class="o">=</span> <span class="nb">id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;Id&quot;</span><span class="p">:</span> <span class="n">id_split</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+            <span class="s2">&quot;Namespace&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">id_split</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+            <span class="s2">&quot;IdType&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">id_split</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+        <span class="p">}</span></div>
 
 <div class="viewcode-block" id="AnalyticsHelper.list_of_ids"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.list_of_ids">[docs]</a>    <span class="k">def</span> <span class="nf">list_of_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Extracts the values in the column &quot;Id&quot; to a list of unique IDs</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            list of unique IDs</span>
+<span class="sd">            list: Unique IDs</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="c1"># Return if dataframe is None</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">None</span>
+            <span class="k">return</span> <span class="p">[]</span>
 
-        <span class="c1"># Check if there is an Id column present</span>
-        <span class="k">if</span> <span class="s2">&quot;Id&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-            <span class="c1"># Get the content of the column Id as a list, loop it through</span>
-            <span class="c1"># the set function to remove duplicates and then back to a list</span>
-            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;Id&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to_list</span><span class="p">()))</span>
-
-        <span class="k">return</span> <span class="p">[]</span></div>
+        <span class="c1"># Get the content of the column Id as a list, loop it through</span>
+        <span class="c1"># the set function to remove duplicates and then back to a list</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;Id&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to_list</span><span class="p">()))</span></div>
 
 <div class="viewcode-block" id="AnalyticsHelper.list_of_names"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.list_of_names">[docs]</a>    <span class="k">def</span> <span class="nf">list_of_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Extracts the values in the column &quot;Name&quot; to a list of unique names</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            list of unique names</span>
+<span class="sd">            list: Unique names</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="c1"># Return if dataframe is None</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">None</span>
+            <span class="k">return</span> <span class="p">[]</span>
 
-        <span class="c1"># Check if there is a Name column</span>
-        <span class="k">if</span> <span class="s2">&quot;Name&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-            <span class="c1"># Get the content of the column Name as a list, loop it through</span>
-            <span class="c1"># the set function to remove duplicates and then back to a list</span>
-            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;Name&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to_list</span><span class="p">()))</span>
-
-        <span class="k">return</span> <span class="p">[]</span></div>
+        <span class="c1"># Get the content of the column Name as a list, loop it through</span>
+        <span class="c1"># the set function to remove duplicates and then back to a list</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;Name&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to_list</span><span class="p">()))</span></div>
 
 <div class="viewcode-block" id="AnalyticsHelper.list_of_types"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.list_of_types">[docs]</a>    <span class="k">def</span> <span class="nf">list_of_types</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Extracts the values in the column &quot;Type&quot; to a list of unique types</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            list of unique types</span>
+<span class="sd">            list: Unique types</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="c1"># Return if dataframe is None</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">None</span>
+            <span class="k">return</span> <span class="p">[]</span>
 
-        <span class="c1"># Check if there is a Type column</span>
-        <span class="k">if</span> <span class="s2">&quot;Type&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-            <span class="c1"># Get the content of the column Type as a list, loop it through</span>
-            <span class="c1"># the set function to remove duplicates and then back to a list</span>
-            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;Type&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to_list</span><span class="p">()))</span>
+        <span class="c1"># Get the content of the column Type as a list, loop it through</span>
+        <span class="c1"># the set function to remove duplicates and then back to a list</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;Type&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to_list</span><span class="p">()))</span></div>
 
-        <span class="k">return</span> <span class="p">[]</span></div>
-
-<div class="viewcode-block" id="AnalyticsHelper.list_of_variables"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.list_of_variables">[docs]</a>    <span class="k">def</span> <span class="nf">list_of_variables</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+<div class="viewcode-block" id="AnalyticsHelper.list_of_variable_names"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.list_of_variable_names">[docs]</a>    <span class="k">def</span> <span class="nf">list_of_variable_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Explodes the content of the column &quot;Vars&quot; and extracts the values</span>
 <span class="sd">        from DisplayName into a list of unique values</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            list of unique variable names</span>
+<span class="sd">            list: Unique variable names</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="c1"># Return if dataframe is None</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">None</span>
-
-        <span class="c1"># Check if there is a Vars column</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="s2">&quot;Vars&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[]</span>
 
         <span class="c1"># Check that the Vars column contains pd.Series content</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;Vars&quot;</span><span class="p">],</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;Vars&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="nb">list</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[]</span>
 
         <span class="n">vars_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([])</span>
@@ -255,6 +275,7 @@
 
 <div class="viewcode-block" id="AnalyticsHelper.properties_as_dataframe"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.properties_as_dataframe">[docs]</a>    <span class="k">def</span> <span class="nf">properties_as_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Explodes the column &quot;Props&quot; into a new dataframe. Column names will be</span>
+
 <span class="sd">        - Id (same as from the original dataframe)</span>
 <span class="sd">        - Name (same as from the original dataframe)</span>
 <span class="sd">        - Type (same as from the original dataframe)</span>
@@ -262,19 +283,15 @@
 <span class="sd">        - Value (from the exploded value Value)</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            a new dataframe with all properties as individual rows</span>
+<span class="sd">            pandas.DataFrame: A new dataframe with all properties as individual rows</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="c1"># Return if dataframe is None</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
 
-        <span class="c1"># Check if there is a Props column</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="s2">&quot;Props&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">None</span>
-
         <span class="c1"># Check if the Props column contains pd.Series data</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;Props&quot;</span><span class="p">],</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;Props&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="nb">list</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
 
         <span class="c1"># Explode will add a row for every series in the Prop column</span>
@@ -295,6 +312,7 @@
 
 <div class="viewcode-block" id="AnalyticsHelper.variables_as_dataframe"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.variables_as_dataframe">[docs]</a>    <span class="k">def</span> <span class="nf">variables_as_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Explodes the column &quot;Vars&quot; into a new dataframe. Column names will be</span>
+
 <span class="sd">        - Id (same as from the original dataframe)</span>
 <span class="sd">        - Name (same as from the original dataframe)</span>
 <span class="sd">        - Type (same as from the original dataframe)</span>
@@ -302,36 +320,52 @@
 <span class="sd">        - VariableName (from the exploded value DisplayName)</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            a new dataframe with all variables as individual rows</span>
+<span class="sd">            pandas.DataFrame: A new dataframe with all variables as individual rows</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="c1"># Return if dataframe is None</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
 
-        <span class="c1"># Check if there is a Vars column</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="s2">&quot;Vars&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">None</span>
-
-        <span class="c1"># Check if the Vars column contains pd.Series content</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;Vars&quot;</span><span class="p">],</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
+        <span class="c1"># Check if the Vars column contains list content</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;Vars&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="nb">list</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
 
         <span class="c1"># Explode will add a row for every series in the Prop column</span>
         <span class="n">variables_frame</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span><span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="s2">&quot;Vars&quot;</span><span class="p">)</span>
         <span class="c1"># Remove the Props column</span>
         <span class="n">variables_frame</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Props&quot;</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="c1"># Add VariableId and VariableName columns</span>
+        <span class="c1"># Add new columns</span>
         <span class="n">variables_frame</span><span class="p">[</span><span class="s2">&quot;VariableId&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
         <span class="n">variables_frame</span><span class="p">[</span><span class="s2">&quot;VariableName&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">variables_frame</span><span class="p">[</span><span class="s2">&quot;VariableIdSplit&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
         <span class="c1"># Iterate over the rows and add to the new columns</span>
         <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">variables_frame</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
             <span class="n">row</span><span class="p">[</span><span class="s2">&quot;VariableId&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;Vars&quot;</span><span class="p">][</span><span class="s2">&quot;Id&quot;</span><span class="p">]</span>
             <span class="n">row</span><span class="p">[</span><span class="s2">&quot;VariableName&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;Vars&quot;</span><span class="p">][</span><span class="s2">&quot;DisplayName&quot;</span><span class="p">]</span>
+            <span class="n">row</span><span class="p">[</span><span class="s2">&quot;VariableIdSplit&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_id</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;Vars&quot;</span><span class="p">][</span><span class="s2">&quot;Id&quot;</span><span class="p">])</span>
         <span class="c1"># Remove the original Vars column</span>
         <span class="n">variables_frame</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Vars&quot;</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">variables_frame</span></div></div>
+        <span class="k">return</span> <span class="n">variables_frame</span></div>
+
+<div class="viewcode-block" id="AnalyticsHelper.variables_as_list"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.variables_as_list">[docs]</a>    <span class="k">def</span> <span class="nf">variables_as_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">include_only</span><span class="p">:</span> <span class="n">List</span> <span class="o">=</span> <span class="p">[])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Extracts variables as a list. If there are names listed in the include_only</span>
+<span class="sd">        argument, only variables matching that name will be encluded.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            include_only (list): A list of variable names (str) that should be included</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list: Unique types</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">variable_dataframe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables_as_dataframe</span><span class="p">()</span>
+        <span class="c1"># If there are any items in the include_only list, include only them</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">include_only</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">variable_dataframe</span> <span class="o">=</span> <span class="n">variable_dataframe</span><span class="p">[</span>
+                <span class="n">variable_dataframe</span><span class="o">.</span><span class="n">VariableName</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">include_only</span><span class="p">)</span>
+            <span class="p">]</span>
+        <span class="k">return</span> <span class="n">variable_dataframe</span><span class="p">[</span><span class="s2">&quot;VariableIdSplit&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span></div></div>
 </pre></div>
 
            </div>
