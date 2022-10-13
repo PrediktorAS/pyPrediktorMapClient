@@ -21,6 +21,11 @@ class ModelIndex:
         self.object_types = self.get_object_types()
 
     def get_namespace_array(self) -> str:
+        """Get the namespace array
+
+        Returns:
+            str: the JSON returned from the server
+        """
         content = request_from_api(self.url, "GET", "query/namespace-array")
 
         return content
@@ -32,7 +37,7 @@ class ModelIndex:
 
     @validate_arguments
     def get_object_type_id_from_name(self, type_name: str) -> str:
-        """Function to get object type id from type name
+        """Get object type id from type name
 
         Args:
             type_name (str): type name
