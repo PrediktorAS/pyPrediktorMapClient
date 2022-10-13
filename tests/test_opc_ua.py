@@ -15,7 +15,7 @@ list_of_ids = [
     {"Id": "SOMEID2", "Namespace": 1, "IdType": 2},
 ]
 
-successful_response = [
+successful_live_response = [
     {
         "Success": True,
         "ErrorMessage": "",
@@ -38,6 +38,25 @@ successful_response = [
     }
 ]
 
+empty_live_response = [
+    {
+        "Success": True,
+        "ErrorMessage": "",
+        "ErrorCode": 0,
+        "ServerNamespaces": ["string"],
+        "Values": [
+            {
+                "SourceTimestamp": "2022-09-21T13:13:38.183Z",
+                "ServerTimestamp": "2022-09-21T13:13:38.183Z",
+            },
+            {
+                "SourceTimestamp": "2023-09-21T13:13:38.183Z",
+                "ServerTimestamp": "2023-09-21T13:13:38.183Z",
+            },
+        ],
+    }
+]
+
 
 class MockResponse:
     def __init__(self, json_data, status_code):
@@ -52,10 +71,15 @@ class MockResponse:
 # This method will be used by the mock to replace requests
 def successful_mocked_requests(*args, **kwargs):
     if args[0] == f"{URL}values/get":
-        return MockResponse(successful_response, 200)
+        return MockResponse(successful_live_response, 200)
 
     return MockResponse(None, 404)
 
+def empty_mocked_requests(*args, **kwargs):
+    if args[0] == f"{URL}values/get":
+        return MockResponse(empty_live_response, 200)
+
+    return MockResponse(None, 404)
 
 def no_mocked_requests(*args, **kwargs):
     if args[0] == f"{URL}values/get":
@@ -69,7 +93,7 @@ def no_mocked_requests(*args, **kwargs):
 def unsuccessful_mocked_requests(*args, **kwargs):
     if args[0] == f"{URL}values/get":
         # Set Success to False
-        unsuc = deepcopy(successful_response[0])
+        unsuc = deepcopy(successful_live_response[0])
         unsuc["Success"] = False
         return MockResponse([unsuc], 200)
 
@@ -79,7 +103,7 @@ def unsuccessful_mocked_requests(*args, **kwargs):
 def no_status_code_mocked_requests(*args, **kwargs):
     if args[0] == f"{URL}values/get":
         # Set Success to False
-        nostats = deepcopy(successful_response[0])
+        nostats = deepcopy(successful_live_response[0])
         nostats["Values"][0].pop("StatusCode")
         return MockResponse([nostats], 200)
 
@@ -89,7 +113,7 @@ def no_status_code_mocked_requests(*args, **kwargs):
 def empty_mocked_requests(*args, **kwargs):
     if args[0] == f"{URL}values/get":
         # Remove values from the dict
-        empty = deepcopy(successful_response[0])
+        empty = deepcopy(successful_live_response[0])
         empty.pop("Values")
         return MockResponse([empty], 200)
 
@@ -105,6 +129,13 @@ class OPCUATestCase(unittest.TestCase):
     def test_malformed_opcua_url(self):
         with pytest.raises(ValidationError):
             OPC_UA(rest_url=URL, opcua_url="not_an_url")
+
+    def test_namespaces(self):
+        opc = OPC_UA(rest_url=URL, opcua_url=OPC_URL, namespaces=["1", "2"])
+        assert "ClientNamespaces" in opc.body
+        opc = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
+        assert "ClientNamespaces" not in opc.body
+
 
     def test_get_value_type(self):
         opc = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
@@ -132,25 +163,49 @@ class OPCUATestCase(unittest.TestCase):
             assert result[num]["Id"] == list_of_ids[num]["Id"]
             assert (
                 result[num]["Timestamp"]
-                == successful_response[0]["Values"][num]["ServerTimestamp"]
+                == successful_live_response[0]["Values"][num]["ServerTimestamp"]
             )
             assert (
                 result[num]["Value"]
-                == successful_response[0]["Values"][num]["Value"]["Body"]
+                == successful_live_response[0]["Values"][num]["Value"]["Body"]
             )
             assert (
                 result[num]["ValueType"]
                 == tsdata._get_value_type(
-                    successful_response[0]["Values"][num]["Value"]["Type"]
+                    successful_live_response[0]["Values"][num]["Value"]["Type"]
                 )["type"]
             )
             assert (
                 result[num]["StatusCode"]
-                == successful_response[0]["Values"][num]["StatusCode"]["Code"]
+                == successful_live_response[0]["Values"][num]["StatusCode"]["Code"]
             )
             assert (
                 result[num]["StatusSymbol"]
-                == successful_response[0]["Values"][num]["StatusCode"]["Symbol"]
+                == successful_live_response[0]["Values"][num]["StatusCode"]["Symbol"]
+            )
+
+
+    @mock.patch("requests.post", side_effect=empty_mocked_requests)
+    def test_get_live_values_with_missing_value_and_statuscode(self, mock_get):
+        tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
+        result = tsdata.get_values(list_of_ids)
+        for num, row in enumerate(list_of_ids):
+            assert result[num]["Id"] == list_of_ids[num]["Id"]
+            assert (
+                result[num]["Timestamp"]
+                == empty_live_response[0]["Values"][num]["ServerTimestamp"]
+            )
+            assert (
+                result[num]["Value"] is None
+            )
+            assert (
+                result[num]["ValueType"] is None
+            )
+            assert (
+                result[num]["StatusCode"] is None
+            )
+            assert (
+                result[num]["StatusSymbol"] is None
             )
 
     @mock.patch("requests.post", side_effect=no_mocked_requests)
@@ -162,8 +217,8 @@ class OPCUATestCase(unittest.TestCase):
     @mock.patch("requests.post", side_effect=unsuccessful_mocked_requests)
     def test_get_live_values_unsuccessful(self, mock_get):
         tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
-        result = tsdata.get_values(list_of_ids)
-        assert result[0]["Timestamp"] == None
+        with pytest.raises(RuntimeError):
+            result = tsdata.get_values(list_of_ids)
 
     @mock.patch("requests.post", side_effect=empty_mocked_requests)
     def test_get_live_values_empty(self, mock_get):

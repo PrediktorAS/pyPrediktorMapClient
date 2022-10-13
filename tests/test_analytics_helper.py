@@ -60,6 +60,16 @@ ancestor_json = [
 
 faulty_json = [{"Rubbish": "MoreRubbish", "ShitIn": "ShitOut"}]
 
+namespace_array = [
+    {"Idx": 0, "Uri": "http://opcfoundation.org/UA/"},
+    {"Idx": 1, "Uri": "http://prediktor.no/apis/ua/"},
+    {"Idx": 2, "Uri": "urn:prediktor:UAA-W2022-01:Scatec"},
+    {"Idx": 3, "Uri": "http://scatecsolar.com/EG-AS"},
+    {"Idx": 4, "Uri": "http://scatecsolar.com/Enterprise"},
+    {"Idx": 5, "Uri": "http://scatecsolar.com/JO-GL"},
+    {"Idx": 6, "Uri": "http://prediktor.no/PVTypes/"},
+]
+
 # Our test case class
 class AnalyticsHelperTestCase(unittest.TestCase):
     def test_analytics_helper_initialization_success(self):
@@ -140,6 +150,17 @@ class AnalyticsHelperTestCase(unittest.TestCase):
         assert len(ids) == 1
         ids2 = result.variables_as_list(include_only=["SomeRandomName"])
         assert len(ids2) == 0
+
+    def test_namespaces_as_list_successful(self):
+        result = AnalyticsHelper(proper_json)
+        nslist = result.namespaces_as_list(namespace_array)
+        assert len(nslist) == 7
+        assert nslist[0] == "http://opcfoundation.org/UA/"
+
+    def test_namespaces_as_list_empty(self):
+        result = AnalyticsHelper(proper_json)
+        nslist = result.namespaces_as_list(["CrappyItem"])
+        assert len(nslist) == 0
 
 
 if __name__ == "__main__":

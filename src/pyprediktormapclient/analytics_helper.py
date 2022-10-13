@@ -103,6 +103,24 @@ class AnalyticsHelper:
                 return
 
     @validate_arguments
+    def namespaces_as_list(self, list_of_dicts: List) -> List:
+        """Takes the output of a get_namespace_array() request from ModelIndex and
+        generates a list of strings that can be used for the OPC UA Values API
+
+        Args:
+            list_of_dicts (List): A list in of dicts like [{'Idx': 0, 'Uri': 'http://opcfoundation.org/UA/'}, etc]
+
+        Returns:
+            List: A list of strings containing the URIs
+        """
+        new_list = []
+        for item in list_of_dicts:
+            if "Uri" in item:
+                new_list.append(item["Uri"])
+
+        return new_list
+
+    @validate_arguments
     def split_id(self, id: constr(regex=r"^\d+:\d+:\S+$")):
         id_split = id.split(":")
         return {
