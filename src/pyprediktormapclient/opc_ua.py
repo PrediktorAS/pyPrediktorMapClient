@@ -1,16 +1,11 @@
 import json
-import pandas as pd
-import numpy as np
-import itertools
 import math
-from pathlib import Path
-import asyncio
-from typing import Dict, List
-from aiohttp import ClientSession
 import logging
-from pydantic import BaseModel, HttpUrl, AnyUrl, validate_arguments
 import datetime
 import copy
+import pandas as pd
+from typing import Dict, List
+from pydantic import BaseModel, HttpUrl, AnyUrl, validate_arguments
 from pyprediktormapclient.shared import request_from_api
 
 

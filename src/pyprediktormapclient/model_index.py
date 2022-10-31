@@ -1,6 +1,6 @@
 import json
 from typing import List
-from pydantic import HttpUrl, validate_arguments, ValidationError
+from pydantic import HttpUrl, validate_arguments
 from pyprediktormapclient.shared import request_from_api
 
 
