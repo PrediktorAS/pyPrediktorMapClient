@@ -9,7 +9,8 @@ from pydantic import BaseModel, HttpUrl, AnyUrl, validate_arguments
 from pyprediktormapclient.shared import request_from_api
 
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 
 class Variables(BaseModel):
