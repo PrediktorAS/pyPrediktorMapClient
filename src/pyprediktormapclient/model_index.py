@@ -1,7 +1,12 @@
 import json
+import logging
 from typing import List
 from pydantic import HttpUrl, validate_arguments
 from pyprediktormapclient.shared import request_from_api
+
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 
 class ModelIndex:

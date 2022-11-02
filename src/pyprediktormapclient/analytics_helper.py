@@ -1,7 +1,12 @@
 import pandas as pd
 import json
+import logging
 from typing import List
 from pydantic import validate_arguments, constr
+
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 
 class AnalyticsHelper:
