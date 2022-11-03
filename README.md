@@ -31,8 +31,29 @@ Further information, documentation and module reference on [the documentation si
 ```
 git clone git@github.com:PrediktorAS/pyPrediktorMapClient.git
 ```
-2. Install dependencies
-As this is a python package, dependencies are in setyp.py (actually in setup.cfg, as this is a pyScaffold project)
+2. Create Virtual environment
 ```
-pip install -e .
+python3 -m venv .venv
+source .venv/bin/activate
+```
+3. Install dependencies
+As this is a python package, dependencies are in setyp.py (actually in setup.cfg, as this is a pyScaffold project). Requirements.txt will perform the correct installation and add a couple of
+additional packages
+```
+pip install -r requirements.txt
+```
+4. Run tests
+```
+tox
+```
+5. Do your changes
+Add whatever you need and create PRs to be approved
+6. Build
+```
+tox -e build
+```
+7. Publish to PyPi test and live
+```
+tox -e publish
+tox -e publish -- --repository pypi
 ```
