@@ -19,6 +19,26 @@ list_of_ids = [
 ]
 
 list_of_values = [
+    {
+        "NodeId": {
+            'Id': 'SOMEID',
+            'Namespace': 1,
+            'IdType': 2
+        },
+        "Value": {
+            "Value": {
+                "Type": 10,
+                "Body": 1.2
+            },
+            "SourceTimestamp": "2022-11-03T12:00:00Z",
+            "StatusCode": {
+                "Code": 0
+            }
+        }
+    }
+]
+
+list_of_historical_values = [
         {
             "NodeId": {
                 "Id": "SOMEID",
@@ -153,7 +173,7 @@ successful_write_live_response = [
     "StatusCodes": [
       {
         "Code": 0,
-        "Symbol": "string"
+        "Symbol": "Good"
       }
     ]
   }
@@ -428,28 +448,14 @@ class OPCUATestCase(unittest.TestCase):
         tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
         result = tsdata.write_values(list_of_values)
         for num, row in enumerate(list_of_values):
-            assert result[num]["Id"] == list_of_ids[num]["Id"]
-            assert (
-                result[num]["Timestamp"]
-                == successful_live_response[0]["Values"][num]["ServerTimestamp"]
-            )
-            assert (
-                result[num]["Value"]
-                == successful_live_response[0]["Values"][num]["Value"]["Body"]
-            )
-            assert (
-                result[num]["ValueType"]
-                == tsdata._get_value_type(
-                    successful_live_response[0]["Values"][num]["Value"]["Type"]
-                )["type"]
-            )
+            assert result[num]["Id"] == list_of_values[num]["Id"]
             assert (
                 result[num]["StatusCode"]
-                == successful_live_response[0]["Values"][num]["StatusCode"]["Code"]
+                == successful_write_live_response[0]["StatusCode"][num]["Code"]
             )
             assert (
                 result[num]["StatusSymbol"]
-                == successful_live_response[0]["Values"][num]["StatusCode"]["Symbol"]
+                == successful_write_live_response[0]["StatusCode"][num]["Symbol"]
             )
         
 if __name__ == "__main__":
