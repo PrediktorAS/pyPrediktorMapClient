@@ -305,7 +305,7 @@ class OPCUATestCase(unittest.TestCase):
         node_id = Variables(Id="ID", Namespace=1, IdType=2)
         sub_value = SubValue(1, 1.1)
         value = Value(Value=sub_value, SourceTimestamp="2022-01-01T12:00:00Z")
-        var = WriteVariables(Id="ID", Namespace=1, IdType=2)
+        var = WriteVariables(NodeId=node_id, Value=value)
         list = [var]
         result = opc._get_variable_list_as_list(list)
         assert "Id" in result[0]

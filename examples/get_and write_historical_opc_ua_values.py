@@ -1,5 +1,4 @@
 # Import the required packeages
-import pandas as pd
 import datetime
 
 # Import OPC UA functions

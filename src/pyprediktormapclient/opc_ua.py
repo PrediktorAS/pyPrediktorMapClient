@@ -4,10 +4,9 @@ import logging
 import datetime
 import copy
 import pandas as pd
-from typing import Dict, List
+from typing import Dict, List, Union, Optional
 from pydantic import BaseModel, HttpUrl, AnyUrl, validate_arguments
 from pyprediktormapclient.shared import request_from_api
-from typing import Union, Optional
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
