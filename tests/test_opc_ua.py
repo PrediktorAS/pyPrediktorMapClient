@@ -449,12 +449,12 @@ class OPCUATestCase(unittest.TestCase):
         result = tsdata.write_values(list_of_values)
         for num, row in enumerate(list_of_values):
             assert (
-                result[num]["StatusCode"]
-                == successful_write_live_response[0]["StatusCode"][num]["Code"]
+                result["StatusCodes"][num]["Code"]
+                == successful_write_live_response[0]["StatusCodes"][num]["Code"]
             )
             assert (
-                result[num]["StatusSymbol"]
-                == successful_write_live_response[0]["StatusCode"][num]["Symbol"]
+                result["StatusCodes"][num]["Symbol"]
+                == successful_write_live_response[0]["StatusCodes"][num]["Symbol"]
             )
         
 if __name__ == "__main__":
