@@ -7,17 +7,115 @@ import pandas as pd
 from typing import Dict, List
 from pydantic import BaseModel, HttpUrl, AnyUrl, validate_arguments
 from pyprediktormapclient.shared import request_from_api
-
+from typing import Union, Optional
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
 class Variables(BaseModel):
+    """Helper class to parse all values api's.
+
+        Variables:
+            Id: str
+            Namespace: int
+            IdType: int
+            
+        TODO: Properly describe variables
+    """
     Id: str
     Namespace: int
     IdType: int
 
+class SubValue(BaseModel):
+    """Helper class to parse all values api's.
+
+        Variables:
+            Type: int
+            Body: Union[str, float, int, bool]
+            
+        TODO: Properly describe variables
+    """
+    Type: int
+    Body: Union[str, float, int, bool]
+
+class HistoryValue(BaseModel):
+    """Helper class to parse all values api's.
+
+        Variables:
+            Value: SubValue
+            
+        TODO: Properly describe variables
+    """
+    Value: SubValue
+
+class StatusCode(BaseModel):
+    """Helper class to parse all values api's.
+
+        Variables:
+            Code: Optional[int]
+            Symbol: Optional[str]
+            
+        TODO: Properly describe variables
+    """
+    Code: Optional[int]
+    Symbol: Optional[str]
+
+class Value(BaseModel):
+    """Helper class to parse all values api's.
+
+        Variables:
+            Value: SubValue
+            SourceTimestamp: str
+            SourcePicoseconds: Optional[int]
+            ServerTimestamp: Optional[str]
+            ServerPicoseconds: Optional[int]
+            StatusCode: StatusCode
+            
+        TODO: Properly describe variables
+    """
+    Value: SubValue
+    SourceTimestamp: str
+    SourcePicoseconds: Optional[int]
+    ServerTimestamp: Optional[str]
+    ServerPicoseconds: Optional[int]
+    StatusCode: StatusCode
+
+class WriteVariables(BaseModel):
+    """Helper class for write values api.
+
+        Variables:
+            NodeId (str): The complete node'id for the variable
+            Value (Value): The value to update for the node'id.
+            
+        TODO: Properly describe variables
+    """
+    NodeId: Variables
+    Value: Value
+
+class WriteHistoricalVariables(BaseModel):
+    """Helper class for write historical values api.
+
+        Variables:
+            NodeId (str): The complete node'id for the variable
+            PerformInsertReplace (int): Historical insertion method 1. Upsert, 2. etc..
+            UpdateValues (list): List of values to update for the node'id. Time must be in descending order.
+
+        TODO: Properly describe variables
+    """
+    NodeId: Variables
+    PerformInsertReplace: int
+    UpdateValues: List[Value]
+
+class WriteVariablesResponse(BaseModel):
+    """Helper class for write historical values api.
+
+        Variables:
+            SymbolCodes: List[StatusCode]
+
+        TODO: Properly describe variables
+    """
+    SymbolCodes: List[StatusCode]
 
 class OPC_UA:
     """Helper functions to access the OPC UA REST Values API server
@@ -72,13 +170,12 @@ class OPC_UA:
             {"id": None, "type": None, "description": None},
         )
 
-    @validate_arguments
-    def _get_variable_list_as_list(self, variable_list: List[Variables]) -> List:
+    def _get_variable_list_as_list(self, variable_list: List) -> List:
         """Internal function to convert a list of pydantic Variable models to a
         list of dicts
 
         Args:
-            variable_list (List[Variables]): List of pydantic models adhering to Values class
+            variable_list (List): List of pydantic models
 
         Returns:
             List: List of dicts
@@ -256,6 +353,72 @@ class OPC_UA:
         )
 
         return df_result
+
+
+    @validate_arguments
+    def write_values(self, variable_list: List[WriteVariables]) -> List:
+        """Request to write realtime values to the OPC UA server
+
+        Args:
+            variable_list (list): A list of variables you want, containing keys "Id", "Namespace", "Values" and "IdType".
+        Returns:
+            list: The input variable_list extended with "Timestamp", "Value", "ValueType", "StatusCode" and "StatusSymbol" (all defaults to None)
+        """
+        # Create a new variable list to remove pydantic models
+        vars = self._get_variable_list_as_list(variable_list)
+        body = copy.deepcopy(self.body)
+        body["WriteValues"] = vars
+        content = request_from_api(
+            rest_url=self.rest_url,
+            method="POST",
+            endpoint="values/set",
+            data=json.dumps([body]),
+            headers=self.headers,
+            extended_timeout=True,
+        )
+
+        # Return if no content from server
+        if not isinstance(content, list):
+            return vars
+
+        # Choose first item and return if not successful
+        content = content[0]
+        if content.get("Success") is False:
+            raise RuntimeError(content.get("ErrorMessage"))
+
+        return content["StatusCodes"]
+
+    @validate_arguments
+    def write_historical_values(self, variable_list: List[WriteHistoricalVariables]) -> List:
+        """Request to write realtime values to the OPC UA server
+
+        Args:
+            variable_list (list): A list of variables you want, containing keys "Id", "Namespace", "Values" and "IdType". Values must be in descending order of the timestamps.
+        Returns:
+            list: The input variable_list extended with "Timestamp", "Value", "ValueType", "StatusCode" and "StatusSymbol" (all defaults to None)
+        """
+        # Create a new variable list to remove pydantic models
+        vars = self._get_variable_list_as_list(variable_list)
+        body = copy.deepcopy(self.body)
+        body["UpdateDataDetails"] = vars
+        content = request_from_api(
+            rest_url=self.rest_url,
+            method="POST",
+            endpoint="values/historicalwrite",
+            data=json.dumps(body),
+            headers=self.headers,
+            extended_timeout=True,
+        )
+        # Return if no content from server
+        if not isinstance(content, list):
+            return vars
+
+        # Choose first item and return if not successful
+        content = content[0]
+        if content.get("Success") is False:
+            raise RuntimeError(content.get("ErrorMessage"))
+
+        return content["StatusCodes"]
 
 
 TYPE_LIST = [

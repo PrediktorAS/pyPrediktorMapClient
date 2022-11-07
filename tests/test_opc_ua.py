@@ -109,6 +109,60 @@ successful_historical_result = {
     ]
 }
 
+successful_write_live_response = [
+  {
+    "Success": True,
+    "ErrorMessage": "string",
+    "ErrorCode": 0,
+    "ServerNamespaces": [
+      "string"
+    ],
+    "StatusCodes": [
+      {
+        "Code": 0,
+        "Symbol": "string"
+      }
+    ]
+  }
+]
+
+successful_write_historical_response = {
+  "Success": True,
+  "ErrorMessage": "string",
+  "ErrorCode": 0,
+  "ServerNamespaces": [
+    "string"
+  ],
+  "HistoryUpdateResults": [
+    {
+      "StatusCode": {
+        "Code": 0,
+        "Symbol": "string"
+      },
+      "OperationResults": [
+        {
+          "Code": 0,
+          "Symbol": "string"
+        }
+      ],
+      "DiagnosticInfos": [
+        {
+          "SymbolicId": 0,
+          "NamespaceUri": 0,
+          "Locale": 0,
+          "LocalizedText": 0,
+          "AdditionalInfo": "string",
+          "InnerStatusCode": {
+            "Code": 0,
+            "Symbol": "string"
+          },
+          "InnerDiagnosticInfo": "string"
+        }
+      ]
+    }
+  ]
+}
+
 class MockResponse:
     def __init__(self, json_data, status_code):
         self.json_data = json_data
