@@ -307,7 +307,7 @@ class OPCUATestCase(unittest.TestCase):
         var = WriteVariables(NodeId=node_id, Value=value)
         list = [var]
         result = opc._get_variable_list_as_list(list)
-        assert "Id" in result[0]
+        assert "Id" in result[0]['NodeId']
         assert result[0]["Id"] == "ID"
 
     @mock.patch("requests.post", side_effect=successful_mocked_requests)
