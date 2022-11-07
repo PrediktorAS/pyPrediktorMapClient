@@ -162,8 +162,7 @@ successful_historical_result = {
     ]
 }
 
-successful_write_live_response = [
-  {
+successful_write_live_response = {
     "Success": True,
     "ErrorMessage": "string",
     "ErrorCode": 0,
@@ -177,7 +176,6 @@ successful_write_live_response = [
       }
     ]
   }
-]
 
 successful_write_historical_response = {
   "Success": True,
@@ -450,11 +448,11 @@ class OPCUATestCase(unittest.TestCase):
         for num, row in enumerate(list_of_values):
             assert (
                 result["StatusCodes"][num]["Code"]
-                == successful_write_live_response[0]["StatusCodes"][num]["Code"]
+                == successful_write_live_response["StatusCodes"][num]["Code"]
             )
             assert (
                 result["StatusCodes"][num]["Symbol"]
-                == successful_write_live_response[0]["StatusCodes"][num]["Symbol"]
+                == successful_write_live_response["StatusCodes"][num]["Symbol"]
             )
         
 if __name__ == "__main__":
