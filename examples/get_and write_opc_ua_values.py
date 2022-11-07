@@ -59,6 +59,7 @@ def main():
     values = Value(Value=sub_value, SourceTimestamp="2022-01-01T12:00:00Z", ServerTimestamp="2022-01-01T12:00:00Z")
     write_variables = WriteVariables(NodeId=variable_1, Value=values)
     write_values = tsdata.write_values([write_variables])
+    # {'StatusCodes': [{'Code': 0, 'Symbol': 'Good'}], 'ServerNamespaces': None, 'Success': True}
     print(write_values)
 
 if __name__ == "__main__":

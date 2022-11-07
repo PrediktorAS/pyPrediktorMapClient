@@ -448,7 +448,6 @@ class OPCUATestCase(unittest.TestCase):
         tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
         result = tsdata.write_values(list_of_values)
         for num, row in enumerate(list_of_values):
-            assert result[num]["Id"] == list_of_values[num]["Id"]
             assert (
                 result[num]["StatusCode"]
                 == successful_write_live_response[0]["StatusCode"][num]["Code"]

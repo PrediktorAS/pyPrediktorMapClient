@@ -385,7 +385,7 @@ class OPC_UA:
         if content.get("Success") is False:
             raise RuntimeError(content.get("ErrorMessage"))
 
-        return content["StatusCodes"]
+        return content
 
     @validate_arguments
     def write_historical_values(self, variable_list: List[WriteHistoricalVariables]) -> List:
