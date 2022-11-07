@@ -8,7 +8,7 @@ import datetime
 import pandas as pd
 import pandas.api.types as ptypes
 
-from pyprediktormapclient.opc_ua import OPC_UA, Variables, WriteVariables, Value, SubValue
+from pyprediktormapclient.opc_ua import OPC_UA, Variables
 
 URL = "http://someserver.somedomain.com/v1/"
 OPC_URL = "opc.tcp://nosuchserver.nosuchdomain.com"
@@ -17,6 +17,39 @@ list_of_ids = [
     {"Id": "SOMEID", "Namespace": 1, "IdType": 2},
     {"Id": "SOMEID2", "Namespace": 1, "IdType": 2},
 ]
+
+list_of_values = [
+        {
+            "NodeId": {
+                "Id": "SOMEID",
+                "Namespace": 1,
+                "IdType": 2
+            },
+            "PerformInsertReplace": 1,
+            "UpdateValues": [
+                {
+                    "Value": {
+                        "Type": 10,
+                        "Body": 1.1
+                    },
+                    "SourceTimestamp": "2022-11-03T12:00:00Z",
+                    "StatusCode": {
+                        "Code": 0
+                    }
+                },
+                {
+                    "Value": {
+                        "Type": 10,
+                        "Body": 2.1
+                    },
+                    "SourceTimestamp": "2022-11-03T13:00:00Z",
+                    "StatusCode": {
+                        "Code": 0
+                    }
+                }
+            ]
+        }
+    ]
 
 successful_live_response = [
     {
@@ -299,17 +332,6 @@ class OPCUATestCase(unittest.TestCase):
         assert "Id" in result[0]
         assert result[0]["Id"] == "ID"
 
-    
-    def test_write_variable_list_as_list(self):
-        opc = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
-        node_id = Variables(Id="ID", Namespace=1, IdType=2)
-        value = Value(Value=SubValue(Type=10, Body="3.3"), SourceTimestamp="2022-01-01T12:00:00Z", ServerTimestamp="2022-01-01T12:00:00Z")
-        var = WriteVariables(NodeId=node_id, Value=value)
-        list = [var]
-        result = opc._get_variable_list_as_list(list)
-        assert "Id" in result[0]['NodeId']
-        assert result[0]['NodeId']["Id"] == "ID"
-
     @mock.patch("requests.post", side_effect=successful_mocked_requests)
     def test_get_live_values_successful(self, mock_get):
         tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
@@ -400,6 +422,35 @@ class OPCUATestCase(unittest.TestCase):
     def test_historical_values_no_hist(self, mock_get):
         with pytest.raises(RuntimeError):
             make_historical_request()
+
+    @mock.patch("requests.post", side_effect=successful_mocked_requests)
+    def test_write_live_values_successful(self, mock_get):
+        tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
+        result = tsdata.write_values(list_of_values)
+        for num, row in enumerate(list_of_values):
+            assert result[num]["Id"] == list_of_ids[num]["Id"]
+            assert (
+                result[num]["Timestamp"]
+                == successful_live_response[0]["Values"][num]["ServerTimestamp"]
+            )
+            assert (
+                result[num]["Value"]
+                == successful_live_response[0]["Values"][num]["Value"]["Body"]
+            )
+            assert (
+                result[num]["ValueType"]
+                == tsdata._get_value_type(
+                    successful_live_response[0]["Values"][num]["Value"]["Type"]
+                )["type"]
+            )
+            assert (
+                result[num]["StatusCode"]
+                == successful_live_response[0]["Values"][num]["StatusCode"]["Code"]
+            )
+            assert (
+                result[num]["StatusSymbol"]
+                == successful_live_response[0]["Values"][num]["StatusCode"]["Symbol"]
+            )
         
 if __name__ == "__main__":
     unittest.main()
