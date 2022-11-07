@@ -8,7 +8,7 @@ import datetime
 import pandas as pd
 import pandas.api.types as ptypes
 
-from pyprediktormapclient.opc_ua import OPC_UA, Variables
+from pyprediktormapclient.opc_ua import OPC_UA, Variables, WriteVariables, Value, SubValue
 
 URL = "http://someserver.somedomain.com/v1/"
 OPC_URL = "opc.tcp://nosuchserver.nosuchdomain.com"
@@ -294,6 +294,18 @@ class OPCUATestCase(unittest.TestCase):
     def test_get_variable_list_as_list(self):
         opc = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
         var = Variables(Id="ID", Namespace=1, IdType=2)
+        list = [var]
+        result = opc._get_variable_list_as_list(list)
+        assert "Id" in result[0]
+        assert result[0]["Id"] == "ID"
+
+    
+    def test_write_variable_list_as_list(self):
+        opc = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
+        node_id = Variables(Id="ID", Namespace=1, IdType=2)
+        sub_value = SubValue(1, 1.1)
+        value = Value(Value=sub_value, SourceTimestamp="2022-01-01T12:00:00Z")
+        var = WriteVariables(Id="ID", Namespace=1, IdType=2)
         list = [var]
         result = opc._get_variable_list_as_list(list)
         assert "Id" in result[0]

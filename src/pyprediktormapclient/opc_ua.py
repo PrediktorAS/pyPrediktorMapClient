@@ -79,7 +79,7 @@ class Value(BaseModel):
     SourcePicoseconds: Optional[int]
     ServerTimestamp: Optional[str]
     ServerPicoseconds: Optional[int]
-    StatusCode: StatusCode
+    StatusCode: Optional[StatusCode]
 
 class WriteVariables(BaseModel):
     """Helper class for write values api.
