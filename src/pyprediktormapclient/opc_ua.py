@@ -31,11 +31,8 @@ class OPC_UA:
         Object
 
     Todo:
-        * Clean up logging
-        * Use pydantic for argument validation
-        * Remove all incoming datatable related actions
         * Clean up use of files
-        * Better session handling on aiohttp
+        * Better session handling with aiohttp
         * Make sure that time convertions are with timezone
     """
 
