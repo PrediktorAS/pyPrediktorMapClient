@@ -16,7 +16,6 @@ class ModelIndex:
         url (str): The URL of the ModelIndex server with the trailing slash
 
     Todo:
-        * Add logging
         * Validate combination of url and endpoint
     """
 
