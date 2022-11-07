@@ -303,8 +303,7 @@ class OPCUATestCase(unittest.TestCase):
     def test_write_variable_list_as_list(self):
         opc = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
         node_id = Variables(Id="ID", Namespace=1, IdType=2)
-        sub_value = SubValue(1, 1.1)
-        value = Value(Value=sub_value, SourceTimestamp="2022-01-01T12:00:00Z")
+        value = Value(Value=SubValue(Type=10, Body="3.3"), SourceTimestamp="2022-01-01T12:00:00Z", ServerTimestamp="2022-01-01T12:00:00Z")
         var = WriteVariables(NodeId=node_id, Value=value)
         list = [var]
         result = opc._get_variable_list_as_list(list)
