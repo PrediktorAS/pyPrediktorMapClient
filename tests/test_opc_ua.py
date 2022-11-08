@@ -18,7 +18,7 @@ list_of_ids = [
     {"Id": "SOMEID2", "Namespace": 1, "IdType": 2},
 ]
 
-list_of_values = [
+list_of_write_values = [
     {
         "NodeId": {
             'Id': 'SOMEID',
@@ -173,7 +173,8 @@ successful_write_live_response = {
     "StatusCodes": [
       {
         "Code": 0,
-        "Symbol": "Good"
+        "Symbol": "Good",
+        "WriteSuccess": True
       }
     ]
   }
@@ -253,6 +254,12 @@ def empty_values_mocked_requests(*args, **kwargs):
 
     return MockResponse(None, 404)
 
+def successful_write_mocked_requests(*args, **kwargs):
+    if args[0] == f"{URL}values/set":
+        return MockResponse(successful_write_live_response, 200)
+
+    return MockResponse(None, 404)
+
 
 def empty_write_values_mocked_requests(*args, **kwargs):
     if args[0] == f"{URL}values/set":
@@ -260,6 +267,43 @@ def empty_write_values_mocked_requests(*args, **kwargs):
 
     return MockResponse(None, 404)
 
+def no_write_mocked_requests(*args, **kwargs):
+    if args[0] == f"{URL}values/set":
+        # Set Success to False
+        response = ""
+        return MockResponse(response, 200)
+
+    return MockResponse(None, 404)
+
+
+def unsuccessful_write_mocked_requests(*args, **kwargs):
+    if args[0] == f"{URL}values/set":
+        # Set Success to False
+        unsuc = deepcopy(successful_write_live_response[0])
+        unsuc["Success"] = False
+        return MockResponse([unsuc], 200)
+
+    return MockResponse(None, 404)
+
+
+def no_status_code_write_mocked_requests(*args, **kwargs):
+    if args[0] == f"{URL}values/set":
+        # Set Success to False
+        nostats = deepcopy(successful_write_live_response[0])
+        nostats["Values"][0].pop("StatusCode")
+        return MockResponse([nostats], 200)
+
+    return MockResponse(None, 404)
+
+
+def empty_write_mocked_requests(*args, **kwargs):
+    if args[0] == f"{URL}values/set":
+        # Remove values from the dict
+        empty = deepcopy(successful_write_live_response[0])
+        empty.pop("Values")
+        return MockResponse([empty], 200)
+
+    return MockResponse(None, 404)
 
 def no_mocked_requests(*args, **kwargs):
     if args[0] == f"{URL}values/get":
@@ -463,11 +507,11 @@ class OPCUATestCase(unittest.TestCase):
         with pytest.raises(RuntimeError):
             make_historical_request()
 
-    @mock.patch("requests.post", side_effect=successful_mocked_requests)
+    @mock.patch("requests.post", side_effect=successful_write_mocked_requests)
     def test_write_live_values_successful(self, mock_get):
         tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
-        result = tsdata.write_values(list_of_values)
-        for num, row in enumerate(list_of_values):
+        result = tsdata.write_values(list_of_write_values)
+        for num, row in enumerate(list_of_write_values):
             assert (
                 result[num]["Value"]["StatusCode"]["Code"]
                 == successful_write_live_response["StatusCodes"][num]["Code"]
@@ -476,14 +520,39 @@ class OPCUATestCase(unittest.TestCase):
                 result[num]["Value"]["StatusCode"]["Symbol"]
                 == successful_write_live_response["StatusCodes"][num]["Symbol"]
             )
+            assert result[num]["WriteSuccess"] is True
 
     @mock.patch("requests.post", side_effect=empty_write_values_mocked_requests)
     def test_write_live_values_with_missing_value_and_statuscode(self, mock_get):
+        tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL) 
+        result = tsdata.write_values(list_of_write_values)
+        print(result[0]["WriteSuccess"])
+        for num, row in enumerate(list_of_write_values):
+            assert result[num]["WriteSuccess"] is False
+
+    @mock.patch("requests.post", side_effect=no_write_mocked_requests)
+    def test_get_write_live_values_no_response(self, mock_get):
         tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
-        result = tsdata.write_values(list_of_values)
-        for num, row in enumerate(list_of_values):
-            assert result[num]["Value"]["StatusCode"]["Code"] is None
-            assert result[num]["Value"]["StatusCode"]["Symbol"] is None
+        result = tsdata.write_values(list_of_write_values)
+        assert result[0]["Timestamp"] == None
+
+    @mock.patch("requests.post", side_effect=unsuccessful_write_mocked_requests)
+    def test_get_write_live_values_unsuccessful(self, mock_get):
+        tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
+        with pytest.raises(RuntimeError):
+            result = tsdata.write_values(list_of_write_values)
+
+    @mock.patch("requests.post", side_effect=empty_write_mocked_requests)
+    def test_get_write_live_values_empty(self, mock_get):
+        tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
+        result = tsdata.write_values(list_of_write_values)
+        assert result[0]["Timestamp"] == None
+
+    @mock.patch("requests.post", side_effect=no_status_code_write_mocked_requests)
+    def test_get_write_live_values_no_status_code(self, mock_get):
+        tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
+        result = tsdata.write_values(list_of_write_values)
+        assert result[0]["StatusCode"] == None
 
 if __name__ == "__main__":
     unittest.main()

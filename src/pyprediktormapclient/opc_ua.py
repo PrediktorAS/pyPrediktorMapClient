@@ -388,22 +388,12 @@ class OPC_UA:
             extended_timeout=True,
         )
 
-        # Return if no content from server
-        if not isinstance(content, list):
-            return vars
-
-        # Choose first item and return if not successful
-        content = content[0]
         if content.get("Success") is False:
             raise RuntimeError(content.get("ErrorMessage"))
 
-        # output_vars = []
-        # for num, variable in enumerate(content['StatusCodes']):
-        #     output_vars.append(WriteReturn(Id=vars[num]["NodeId"]["Id"], Value=vars[num]["NodeId"]["Id"], TimeStamp=vars[num]["NodeId"]["Id"], Success=(lambda x : True if(x == 0) else False)(variable["Code"])).dict())
-
         # Use .get from one dict to the other to ensure None values if something is missing
         for num, row in enumerate(vars):
-            vars[num]["Success"]=(lambda x : True if(x == 0) else False)(content['StatusCodes'][num].get("Code"))
+            vars[num]["WriteSuccess"]=(lambda x : True if(x == 0) else False)(content['StatusCodes'][num].get("Code"))
 
         return vars
 
@@ -429,8 +419,8 @@ class OPC_UA:
             extended_timeout=True,
         )
         # Return if no content from server
-        if not isinstance(content, list):
-            return vars
+        # if not isinstance(content, list):
+        #     return vars
 
         # Choose first item and return if not successful
         content = content[0]
