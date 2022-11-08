@@ -32,7 +32,8 @@ list_of_values = [
             },
             "SourceTimestamp": "2022-11-03T12:00:00Z",
             "StatusCode": {
-                "Code": 0
+                "Code": 0,
+                "Symbol": "Good"
             }
         }
     }
@@ -177,6 +178,20 @@ successful_write_live_response = {
     ]
   }
 
+empty_write_live_response = {
+    "Success": True,
+    "ErrorMessage": "string",
+    "ErrorCode": 0,
+    "ServerNamespaces": [
+      "string"
+    ],
+    "StatusCodes": [
+      {
+
+      }
+    ]
+  }
+
 successful_write_historical_response = {
   "Success": True,
   "ErrorMessage": "string",
@@ -235,6 +250,13 @@ def successful_mocked_requests(*args, **kwargs):
 def empty_values_mocked_requests(*args, **kwargs):
     if args[0] == f"{URL}values/get":
         return MockResponse(empty_live_response, 200)
+
+    return MockResponse(None, 404)
+
+
+def empty_write_values_mocked_requests(*args, **kwargs):
+    if args[0] == f"{URL}values/set":
+        return MockResponse(empty_write_live_response, 200)
 
     return MockResponse(None, 404)
 
@@ -447,13 +469,21 @@ class OPCUATestCase(unittest.TestCase):
         result = tsdata.write_values(list_of_values)
         for num, row in enumerate(list_of_values):
             assert (
-                result["StatusCodes"][num]["Code"]
+                result[num]["Value"]["StatusCode"]["Code"]
                 == successful_write_live_response["StatusCodes"][num]["Code"]
             )
             assert (
-                result["StatusCodes"][num]["Symbol"]
+                result[num]["Value"]["StatusCode"]["Symbol"]
                 == successful_write_live_response["StatusCodes"][num]["Symbol"]
             )
-        
+
+    @mock.patch("requests.post", side_effect=empty_write_values_mocked_requests)
+    def test_write_live_values_with_missing_value_and_statuscode(self, mock_get):
+        tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
+        result = tsdata.write_values(list_of_values)
+        for num, row in enumerate(list_of_values):
+            assert result[num]["Value"]["StatusCode"]["Code"] is None
+            assert result[num]["Value"]["StatusCode"]["Symbol"] is None
+
 if __name__ == "__main__":
     unittest.main()

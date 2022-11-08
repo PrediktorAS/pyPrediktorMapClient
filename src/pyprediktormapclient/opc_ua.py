@@ -97,7 +97,7 @@ class WriteHistoricalVariables(BaseModel):
 
         Variables:
             NodeId (str): The complete node'id for the variable
-            PerformInsertReplace (int): Historical insertion method 1. Upsert, 2. etc..
+            PerformInsertReplace (int): Historical insertion method 1. Insert, 2. Replace 3. Update, 4. Remove
             UpdateValues (list): List of values to update for the node'id. Time must be in descending order.
 
         TODO: Properly describe variables
@@ -417,7 +417,7 @@ class OPC_UA:
         if content.get("Success") is False:
             raise RuntimeError(content.get("ErrorMessage"))
 
-        return content["StatusCodes"]
+        return content
 
 
 TYPE_LIST = [
