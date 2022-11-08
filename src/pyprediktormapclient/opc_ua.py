@@ -116,6 +116,18 @@ class WriteVariablesResponse(BaseModel):
     """
     SymbolCodes: List[StatusCode]
 
+class WriteReturn(BaseModel):
+    """Helper class to collect API output with API input to see successfull writes for nodes.
+
+        Variables:
+            NodeId: str - The node id
+            Success: str - If the write was a success.
+    """
+    Id: str
+    Value: str
+    TimeStamp: str
+    Success: bool
+
 class OPC_UA:
     """Helper functions to access the OPC UA REST Values API server
 
@@ -385,7 +397,15 @@ class OPC_UA:
         if content.get("Success") is False:
             raise RuntimeError(content.get("ErrorMessage"))
 
-        return content
+        # output_vars = []
+        # for num, variable in enumerate(content['StatusCodes']):
+        #     output_vars.append(WriteReturn(Id=vars[num]["NodeId"]["Id"], Value=vars[num]["NodeId"]["Id"], TimeStamp=vars[num]["NodeId"]["Id"], Success=(lambda x : True if(x == 0) else False)(variable["Code"])).dict())
+
+        # Use .get from one dict to the other to ensure None values if something is missing
+        for num, row in enumerate(vars):
+            vars[num]["Success"]=(lambda x : True if(x == 0) else False)(content['StatusCodes'][num].get("Code"))
+
+        return vars
 
     @validate_arguments
     def write_historical_values(self, variable_list: List[WriteHistoricalVariables]) -> List:
