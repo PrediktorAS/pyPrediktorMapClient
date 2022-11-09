@@ -72,6 +72,72 @@ list_of_write_historical_values = [
         }
     ]
 
+list_of_write_historical_values_in_wrong_order = [
+            {
+                "NodeId": {
+                    "Id": "SOMEID",
+                    "Namespace": 4,
+                    "IdType": 1
+                },
+                "PerformInsertReplace": 1,
+                "UpdateValues": [
+                    {
+                        "Value": {
+                            "Type": 10,
+                            "Body": 1.1
+                        },
+                        "SourceTimestamp": "2022-11-03T14:00:00Z",
+                        "StatusCode": {
+                            "Code": 0
+                        }
+                    },
+                    {
+                        "Value": {
+                            "Type": 10,
+                            "Body": 2.1
+                        },
+                        "SourceTimestamp": "2022-11-03T13:00:00Z",
+                        "StatusCode": {
+                            "Code": 0
+                        }
+                    }
+                ]
+            }
+        ]
+
+list_of_historical_values_wrong_type_and_value = [
+            {
+                "NodeId": {
+                    "Id": "SSO.JO-GL.321321321",
+                    "Namespace": 4,
+                    "IdType": 1
+                },
+                "PerformInsertReplace": 1,
+                "UpdateValues": [
+                    {
+                        "Value": {
+                            "Type": 10,
+                            "Body": 1.1
+                        },
+                        "SourceTimestamp": "2022-11-03T14:00:00Z",
+                        "StatusCode": {
+                            "Code": 0
+                        }
+                    },
+                    {
+                        "Value": {
+                            "Type": 1,
+                            "Body": "2.1"
+                        },
+                        "SourceTimestamp": "2022-11-03T15:00:00Z",
+                        "StatusCode": {
+                            "Code": 0
+                        }
+                    }
+                ]
+            }
+        ]
+
 successful_live_response = [
     {
         "Success": True,
@@ -178,6 +244,7 @@ successful_write_live_response = {
       }
     ]
   }
+  
 
 empty_write_live_response = {
     "Success": True,
@@ -202,31 +269,40 @@ successful_write_historical_response = {
   ],
   "HistoryUpdateResults": [
     {
-      "StatusCode": {
-        "Code": 0,
-        "Symbol": "string"
-      },
-      "OperationResults": [
-        {
-          "Code": 0,
-          "Symbol": "string"
-        }
-      ],
-      "DiagnosticInfos": [
-        {
-          "SymbolicId": 0,
-          "NamespaceUri": 0,
-          "Locale": 0,
-          "LocalizedText": 0,
-          "AdditionalInfo": "string",
-          "InnerStatusCode": {
-            "Code": 0,
-            "Symbol": "string"
-          },
-          "InnerDiagnosticInfo": "string"
-        }
-      ]
     }
+  ]
+}
+
+unsuccessful_write_historical_response = {
+  "Success": True,
+  "ErrorMessage": "string",
+  "ErrorCode": 0,
+  "ServerNamespaces": [
+    "string"
+  ],
+  "HistoryUpdateResults": [
+    {
+    }
+  ]
+}
+
+successfull_write_historical_response_with_errors = {
+  "Success": True,
+  "ErrorMessage": "string",
+  "ErrorCode": 0,
+  "ServerNamespaces": [
+    "string"
+  ],
+  "HistoryUpdateResults": [
+      {
+        "Code": 0,
+        "Symbol": "Good",
+        "WriteSuccess": False,
+        "WriteError": {
+            'Code': 2158690304,
+            'Symbol': 'BadInvalidArgument'
+        }
+      }
   ]
 }
 
@@ -312,6 +388,53 @@ def successful_write_historical_mocked_requests(*args, **kwargs):
 
     return MockResponse(None, 404)
 
+
+def no_write_mocked_historical_requests(*args, **kwargs):
+    if args[0] == f"{URL}values/historicalwrite":
+        # Set Success to False
+        response = ""
+        return MockResponse(response, 200)
+
+    return MockResponse(None, 404)
+
+def successful_write_historical_with_errors_mocked_requests(*args, **kwargs):
+    if args[0] == f"{URL}values/historicalwrite":
+        # Set Success to False
+        suce = deepcopy(successfull_write_historical_response_with_errors)
+        return MockResponse(suce, 200)
+
+    return MockResponse(None, 404)
+
+def unsuccessful_write_historical_mocked_requests(*args, **kwargs):
+    if args[0] == f"{URL}values/historicalwrite":
+        # Set Success to False
+        unsuc = deepcopy(successful_write_historical_response)
+        unsuc["Success"] = False
+        return MockResponse(unsuc, 200)
+
+    return MockResponse(None, 404)
+
+
+def no_status_code_write_historical_mocked_requests(*args, **kwargs):
+    if args[0] == f"{URL}values/historicalwrite":
+        # Set Success to False
+        nostats = deepcopy(successful_write_historical_response)
+        nostats["StatusCodes"][0].pop("Code")
+        return MockResponse(nostats, 200)
+
+    return MockResponse(None, 404)
+
+
+def empty_write_historical_mocked_requests(*args, **kwargs):
+    if args[0] == f"{URL}values/historicalwrite":
+        # Remove values from the dict
+        empty = deepcopy(successful_write_historical_response)
+        empty.pop("HistoryUpdateResults")
+        return MockResponse(empty, 200)
+
+    return MockResponse(None, 404)
+
+
 def no_mocked_requests(*args, **kwargs):
     if args[0] == f"{URL}values/get":
         # Set Success to False
@@ -370,7 +493,7 @@ def unsuccessful_mocked_historical_requests(*args, **kwargs):
 
     return MockResponse(None, 404)
 
-def no_hosticalresult_mocked_historical_requests(*args, **kwargs):
+def no_historical_result_mocked_historical_requests(*args, **kwargs):
     if args[0] == f"{URL}values/historicalaggregated":
         unsuc = deepcopy(successful_historical_result)
         unsuc["Success"] = False
@@ -508,7 +631,7 @@ class OPCUATestCase(unittest.TestCase):
         with pytest.raises(RuntimeError):
             make_historical_request()
 
-    @mock.patch("requests.post", side_effect=no_hosticalresult_mocked_historical_requests)
+    @mock.patch("requests.post", side_effect=no_historical_result_mocked_historical_requests)
     def test_historical_values_no_hist(self, mock_get):
         with pytest.raises(RuntimeError):
             make_historical_request()
@@ -532,7 +655,6 @@ class OPCUATestCase(unittest.TestCase):
     def test_write_live_values_with_missing_value_and_statuscode(self, mock_get):
         tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL) 
         result = tsdata.write_values(list_of_write_values)
-        print(result[0]["WriteSuccess"])
         for num, row in enumerate(list_of_write_values):
             assert result[num]["WriteSuccess"] is False
 
@@ -558,18 +680,40 @@ class OPCUATestCase(unittest.TestCase):
     def test_write_historical_values_successful(self, mock_get):
         tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
         result = tsdata.write_historical_values(list_of_write_historical_values)
-        print(result[0]["UpdateValues"][0]["Value"]["Type"])
-        print(successful_write_historical_response["HistoryUpdateResults"][0]["OperationResults"][0]["Code"])
         for num, row in enumerate(list_of_write_values):
-            assert (
-                result[num]["UpdateValues"][0]["Value"]["Type"]
-                == successful_write_historical_response["HistoryUpdateResults"][num]["OperationResults"][0]["Code"]
-            )
-            assert (
-                result[num]["UpdateValues"][0]["StatusCode"]["Code"]
-                == successful_write_historical_response["HistoryUpdateResults"][num]["StatusCode"][0]["Code"]
-            )
-            assert result[num]["WriteSuccess"] is True
+            assert result[0]["WriteSuccess"] == True
+
+    @mock.patch("requests.post", side_effect=successful_write_historical_mocked_requests)
+    def test_write_wrong_order_historical_values_successful(self, mock_get):
+        tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
+        with pytest.raises(ValueError):
+            result = tsdata.write_historical_values(list_of_write_historical_values_in_wrong_order)
+
+    @mock.patch("requests.post", side_effect=empty_write_historical_mocked_requests)
+    def test_write_historical_values_with_missing_value_and_statuscode(self, mock_get):
+        tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
+        with pytest.raises(ValueError):
+            result = tsdata.write_historical_values(list_of_write_historical_values)
+
+    @mock.patch("requests.post", side_effect=no_write_mocked_historical_requests)
+    def test_get_write_historical_values_no_response(self, mock_get):
+        tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
+        result = tsdata.write_historical_values(list_of_write_historical_values)
+        assert result is None
+
+    @mock.patch("requests.post", side_effect=unsuccessful_write_historical_mocked_requests)
+    def test_get_write_historical_values_unsuccessful(self, mock_get):
+        tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
+        with pytest.raises(RuntimeError):
+           result = tsdata.write_historical_values(list_of_write_historical_values) 
+
+    @mock.patch("requests.post", side_effect=successful_write_historical_with_errors_mocked_requests)
+    def test_get_write_historical_values_successful_with_error_codes(self, mock_get):
+        tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
+        result = tsdata.write_historical_values(list_of_historical_values_wrong_type_and_value)
+        assert result[0]["WriteSuccess"] == successfull_write_historical_response_with_errors["HistoryUpdateResults"][0]["WriteSuccess"]
+        assert result[0]["WriteError"]["Code"] == successfull_write_historical_response_with_errors["HistoryUpdateResults"][0]["WriteError"]["Code"]
+        assert result[0]["WriteError"]["Code"] == successfull_write_historical_response_with_errors["HistoryUpdateResults"][0]["WriteError"]["Symbol"]
 
 if __name__ == "__main__":
     unittest.main()

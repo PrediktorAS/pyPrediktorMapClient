@@ -71,6 +71,42 @@ def main():
 
     print(write_values)
 
+    write_jibberish_values = tsdata.write_historical_values(
+        [
+            {
+                "NodeId": {
+                    "Id": "SSO.JO-GL.321321321",
+                    "Namespace": 4,
+                    "IdType": 1
+                },
+                "PerformInsertReplace": 1,
+                "UpdateValues": [
+                    {
+                        "Value": {
+                            "Type": 10,
+                            "Body": 1.1
+                        },
+                        "SourceTimestamp": "2022-11-03T14:00:00Z",
+                        "StatusCode": {
+                            "Code": 0
+                        }
+                    },
+                    {
+                        "Value": {
+                            "Type": 1,
+                            "Body": "2.1"
+                        },
+                        "SourceTimestamp": "2022-11-03T15:00:00Z",
+                        "StatusCode": {
+                            "Code": 0
+                        }
+                    }
+                ]
+            }
+        ]
+    )
+    print(write_jibberish_values)
+
     write_wrong_values = tsdata.write_historical_values(
         [
             {

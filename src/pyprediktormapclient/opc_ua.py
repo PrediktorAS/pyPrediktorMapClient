@@ -447,15 +447,16 @@ class OPC_UA:
         # Crash if history report is missing
         if content.get("HistoryUpdateResults") is None:
             raise ValueError('No status codes returned, might indicate no values written')
-        # if content.get("HistoryUpdateResults")[0] == {}:
-        #     # raise ValueError('No status codes returned, might indicate no values written')
-        #     return content
-
 
         # Check if there are per history update error codes returned
         for num_var, variable_row in enumerate(vars):
             # Use to place successfull write next to each written values as API only returns list. Assumes same index in response as in request.
-            vars[num_var]["WriteSuccess"]=(lambda x : True if(x == {}) else False)(content["HistoryUpdateResults"][num_var])
+            if content["HistoryUpdateResults"][num_var] == {}:
+                vars[num_var]["WriteSuccess"] = True
+            else:
+                vars[num_var]["WriteSuccess"] = False
+                vars[num_var]["WriteError"] = content["HistoryUpdateResults"][num_var].get("StatusCode")
+            # vars[num_var]["WriteSuccess"]=(lambda x : True if(x == {}) else False)(content["HistoryUpdateResults"][num_var])
             # Second level for operation result doesn't seem to be implemented in API.
             # TODO - Check if implemented
             # for num_values, value_row in enumerate(variable_row["UpdateValues"]):
