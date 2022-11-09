@@ -39,7 +39,7 @@ list_of_write_values = [
     }
 ]
 
-list_of_historical_values = [
+list_of_write_historical_values = [
         {
             "NodeId": {
                 "Id": "SOMEID",
@@ -305,6 +305,13 @@ def empty_write_mocked_requests(*args, **kwargs):
 
     return MockResponse(None, 404)
 
+
+def successful_write_historical_mocked_requests(*args, **kwargs):
+    if args[0] == f"{URL}values/historicalwrite":
+        return MockResponse(successful_write_historical_response, 200)
+
+    return MockResponse(None, 404)
+
 def no_mocked_requests(*args, **kwargs):
     if args[0] == f"{URL}values/get":
         # Set Success to False
@@ -544,9 +551,25 @@ class OPCUATestCase(unittest.TestCase):
     @mock.patch("requests.post", side_effect=empty_write_mocked_requests)
     def test_get_write_live_values_empty(self, mock_get):
         tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
-        with pytest.raises(RuntimeError):
+        with pytest.raises(ValueError):
             result = tsdata.write_values(list_of_write_values)
 
+    @mock.patch("requests.post", side_effect=successful_write_historical_mocked_requests)
+    def test_write_historical_values_successful(self, mock_get):
+        tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
+        result = tsdata.write_historical_values(list_of_write_historical_values)
+        print(result[0]["UpdateValues"][0]["Value"]["Type"])
+        print(successful_write_historical_response["HistoryUpdateResults"][0]["OperationResults"][0]["Code"])
+        for num, row in enumerate(list_of_write_values):
+            assert (
+                result[num]["UpdateValues"][0]["Value"]["Type"]
+                == successful_write_historical_response["HistoryUpdateResults"][num]["OperationResults"][0]["Code"]
+            )
+            assert (
+                result[num]["UpdateValues"][0]["StatusCode"]["Code"]
+                == successful_write_historical_response["HistoryUpdateResults"][num]["StatusCode"][0]["Code"]
+            )
+            assert result[num]["WriteSuccess"] is True
 
 if __name__ == "__main__":
     unittest.main()

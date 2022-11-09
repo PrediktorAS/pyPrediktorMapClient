@@ -74,9 +74,9 @@ class Value(BaseModel):
         TODO: Properly describe variables
     """
     Value: SubValue
-    SourceTimestamp: str
+    SourceTimestamp: datetime.datetime
     SourcePicoseconds: Optional[int]
-    ServerTimestamp: Optional[str]
+    ServerTimestamp: Optional[datetime.datetime]
     ServerPicoseconds: Optional[int]
     StatusCode: Optional[StatusCode]
 
@@ -166,6 +166,13 @@ class OPC_UA:
         if namespaces:
             self.body["ClientNamespaces"] = namespaces
 
+    def json_serial(obj):
+        """JSON serializer for objects not serializable by default json code"""
+
+        if isinstance(obj, (datetime.datetime, datetime.date)):
+            return obj.isoformat()
+        raise TypeError ("Type %s not serializable" % type(obj))
+
     @validate_arguments
     def _get_value_type(self, id: int) -> Dict:
         """Internal function to get the type of a value from the OPC UA return,as documentet at
@@ -215,7 +222,7 @@ class OPC_UA:
             rest_url=self.rest_url,
             method="POST",
             endpoint="values/get",
-            data=json.dumps([body]),
+            data=json.dumps([body], default=self.json_serial),
             headers=self.headers,
             extended_timeout=True,
         )
@@ -299,7 +306,7 @@ class OPC_UA:
             rest_url=self.rest_url,
             method="POST",
             endpoint="values/historicalaggregated",
-            data=json.dumps(body),
+            data=json.dumps(body, default=self.json_serial),
             headers=self.headers,
             extended_timeout=True,
         )
@@ -383,7 +390,7 @@ class OPC_UA:
             rest_url=self.rest_url,
             method="POST",
             endpoint="values/set",
-            data=json.dumps([body]),
+            data=json.dumps([body], default=self.json_serial),
             headers=self.headers,
             extended_timeout=True,
         )
@@ -394,7 +401,7 @@ class OPC_UA:
         if content.get("Success") is False:
             raise RuntimeError(content.get("ErrorMessage"))
         if content.get("StatusCodes") is None:
-            raise RuntimeError('No status codes returned, might indicate no values written')
+            raise ValueError('No status codes returned, might indicate no values written')
 
         # Use to place successfull write next to each written values as API only returns list. Assumes same index in response as in request.
         for num, row in enumerate(vars):
@@ -411,6 +418,14 @@ class OPC_UA:
         Returns:
             list: The input variable_list extended with "Timestamp", "Value", "ValueType", "StatusCode" and "StatusSymbol" (all defaults to None)
         """
+        # Check if data is in correct order, if wrong fail.
+        for variable in variable_list:
+            if(len(variable.UpdateValues)>1):
+                for num_variable in range(len(variable.UpdateValues) - 1):
+                    if((variable.UpdateValues[num_variable].SourceTimestamp) < variable.UpdateValues[num_variable+1].SourceTimestamp):
+                        continue
+                    else:
+                        raise ValueError("Time for variables not in correct order.")
         # Create a new variable list to remove pydantic models
         vars = self._get_variable_list_as_list(variable_list)
         body = copy.deepcopy(self.body)
@@ -419,20 +434,35 @@ class OPC_UA:
             rest_url=self.rest_url,
             method="POST",
             endpoint="values/historicalwrite",
-            data=json.dumps(body),
+            data=json.dumps(body, default=self.json_serial),
             headers=self.headers,
             extended_timeout=True,
         )
-        # Return if no content from server
-        # if not isinstance(content, list):
-        #     return vars
 
-        # Choose first item and return if not successful
-        content = content[0]
+        # Return if no content from server
+        if not isinstance(content, dict):
+            return None
+        # Crash if success if false
         if content.get("Success") is False:
             raise RuntimeError(content.get("ErrorMessage"))
+        # Crash if history report is missing
+        if content.get("HistoryUpdateResults") is None:
+            raise ValueError('No status codes returned, might indicate no values written')
+        if content.get("HistoryUpdateResults")[0] == {}:
+            # raise ValueError('No status codes returned, might indicate no values written')
+            return content
 
-        return content
+
+        # Use to place successfull write next to each written values as API only returns list. Assumes same index in response as in request.
+        # TODO - Consider adding per write operation
+        for num_var, variable_row in enumerate(vars):
+            vars[num_var]["WriteSuccess"]=(lambda x : True if(x == 0) else False)(content["HistoryUpdateResults"][num_var]['StatusCode'].get("Code"))
+            # Second level for operation result doesn't seem to be implemented in API.
+            # TODO - Check if implemented
+            # for num_values, value_row in enumerate(variable_row["UpdateValues"]):
+            #    vars[num_var]["UpdateValues"][num_values]["WriteSuccess"]=(lambda x : True if(x == 0) else False)(content["HistoryUpdateResults"][num_var]['OperationResults'][num_values].get("Code"))
+
+        return vars
 
 
 TYPE_LIST = [
