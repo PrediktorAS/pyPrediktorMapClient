@@ -4,6 +4,7 @@ import logging
 import datetime
 import copy
 import pandas as pd
+from datetime import date, datetime
 from typing import Dict, List, Union, Optional
 from pydantic import BaseModel, HttpUrl, AnyUrl, validate_arguments
 from pyprediktormapclient.shared import request_from_api
@@ -74,9 +75,9 @@ class Value(BaseModel):
         TODO: Properly describe variables
     """
     Value: SubValue
-    SourceTimestamp: datetime.datetime
+    SourceTimestamp: datetime
     SourcePicoseconds: Optional[int]
-    ServerTimestamp: Optional[datetime.datetime]
+    ServerTimestamp: Optional[datetime]
     ServerPicoseconds: Optional[int]
     StatusCode: Optional[StatusCode]
 
@@ -166,10 +167,10 @@ class OPC_UA:
         if namespaces:
             self.body["ClientNamespaces"] = namespaces
 
-    def json_serial(obj):
+    def json_serial(self, obj):
         """JSON serializer for objects not serializable by default json code"""
 
-        if isinstance(obj, (datetime.datetime, datetime.date)):
+        if isinstance(obj, (datetime, date)):
             return obj.isoformat()
         raise TypeError ("Type %s not serializable" % type(obj))
 
@@ -268,8 +269,8 @@ class OPC_UA:
     @validate_arguments
     def get_historical_aggregated_values(
         self,
-        start_time: datetime.datetime,
-        end_time: datetime.datetime,
+        start_time: datetime,
+        end_time: datetime,
         pro_interval: int,
         agg_name: str,
         variable_list: List[Variables],
@@ -422,9 +423,7 @@ class OPC_UA:
         for variable in variable_list:
             if(len(variable.UpdateValues)>1):
                 for num_variable in range(len(variable.UpdateValues) - 1):
-                    if((variable.UpdateValues[num_variable].SourceTimestamp) < variable.UpdateValues[num_variable+1].SourceTimestamp):
-                        continue
-                    else:
+                    if not((variable.UpdateValues[num_variable].SourceTimestamp) < variable.UpdateValues[num_variable+1].SourceTimestamp):
                         raise ValueError("Time for variables not in correct order.")
         # Create a new variable list to remove pydantic models
         vars = self._get_variable_list_as_list(variable_list)
@@ -448,15 +447,15 @@ class OPC_UA:
         # Crash if history report is missing
         if content.get("HistoryUpdateResults") is None:
             raise ValueError('No status codes returned, might indicate no values written')
-        if content.get("HistoryUpdateResults")[0] == {}:
-            # raise ValueError('No status codes returned, might indicate no values written')
-            return content
+        # if content.get("HistoryUpdateResults")[0] == {}:
+        #     # raise ValueError('No status codes returned, might indicate no values written')
+        #     return content
 
 
-        # Use to place successfull write next to each written values as API only returns list. Assumes same index in response as in request.
-        # TODO - Consider adding per write operation
+        # Check if there are per history update error codes returned
         for num_var, variable_row in enumerate(vars):
-            vars[num_var]["WriteSuccess"]=(lambda x : True if(x == 0) else False)(content["HistoryUpdateResults"][num_var]['StatusCode'].get("Code"))
+            # Use to place successfull write next to each written values as API only returns list. Assumes same index in response as in request.
+            vars[num_var]["WriteSuccess"]=(lambda x : True if(x == {}) else False)(content["HistoryUpdateResults"][num_var])
             # Second level for operation result doesn't seem to be implemented in API.
             # TODO - Check if implemented
             # for num_values, value_row in enumerate(variable_row["UpdateValues"]):
