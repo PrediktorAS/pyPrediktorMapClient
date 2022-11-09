@@ -371,7 +371,7 @@ class OPC_UA:
         """Request to write realtime values to the OPC UA server
 
         Args:
-            variable_list (list): A list of variables you want, containing keys "Id", "Namespace", "Values" and "IdType".
+            variable_list (list): A list of variables you want to write to with the value, timestamp and quality, containing keys "Id", "Namespace", "Values" and "IdType".
         Returns:
             list: The input variable_list extended with "Timestamp", "Value", "ValueType", "StatusCode" and "StatusSymbol" (all defaults to None)
         """
@@ -388,10 +388,15 @@ class OPC_UA:
             extended_timeout=True,
         )
 
+        # Return if no content from server
+        if not isinstance(content, dict):
+            return None
         if content.get("Success") is False:
             raise RuntimeError(content.get("ErrorMessage"))
+        if content.get("StatusCodes") is None:
+            raise RuntimeError('No status codes returned, might indicate no values written')
 
-        # Use .get from one dict to the other to ensure None values if something is missing
+        # Use to place successfull write next to each written values as API only returns list. Assumes same index in response as in request.
         for num, row in enumerate(vars):
             vars[num]["WriteSuccess"]=(lambda x : True if(x == 0) else False)(content['StatusCodes'][num].get("Code"))
 

@@ -279,9 +279,9 @@ def no_write_mocked_requests(*args, **kwargs):
 def unsuccessful_write_mocked_requests(*args, **kwargs):
     if args[0] == f"{URL}values/set":
         # Set Success to False
-        unsuc = deepcopy(successful_write_live_response[0])
+        unsuc = deepcopy(successful_write_live_response)
         unsuc["Success"] = False
-        return MockResponse([unsuc], 200)
+        return MockResponse(unsuc, 200)
 
     return MockResponse(None, 404)
 
@@ -289,9 +289,9 @@ def unsuccessful_write_mocked_requests(*args, **kwargs):
 def no_status_code_write_mocked_requests(*args, **kwargs):
     if args[0] == f"{URL}values/set":
         # Set Success to False
-        nostats = deepcopy(successful_write_live_response[0])
-        nostats["Values"][0].pop("StatusCode")
-        return MockResponse([nostats], 200)
+        nostats = deepcopy(successful_write_live_response)
+        nostats["StatusCodes"][0].pop("Code")
+        return MockResponse(nostats, 200)
 
     return MockResponse(None, 404)
 
@@ -299,9 +299,9 @@ def no_status_code_write_mocked_requests(*args, **kwargs):
 def empty_write_mocked_requests(*args, **kwargs):
     if args[0] == f"{URL}values/set":
         # Remove values from the dict
-        empty = deepcopy(successful_write_live_response[0])
-        empty.pop("Values")
-        return MockResponse([empty], 200)
+        empty = deepcopy(successful_write_live_response)
+        empty.pop("StatusCodes")
+        return MockResponse(empty, 200)
 
     return MockResponse(None, 404)
 
@@ -318,7 +318,6 @@ def unsuccessful_mocked_requests(*args, **kwargs):
     if args[0] == f"{URL}values/get":
         # Set Success to False
         unsuc = deepcopy(successful_live_response[0])
-        unsuc["Success"] = False
         unsuc["Success"] = False
         return MockResponse([unsuc], 200)
 
@@ -534,25 +533,20 @@ class OPCUATestCase(unittest.TestCase):
     def test_get_write_live_values_no_response(self, mock_get):
         tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
         result = tsdata.write_values(list_of_write_values)
-        assert result[0]["Timestamp"] == None
+        assert result is None
 
     @mock.patch("requests.post", side_effect=unsuccessful_write_mocked_requests)
     def test_get_write_live_values_unsuccessful(self, mock_get):
         tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
         with pytest.raises(RuntimeError):
-            result = tsdata.write_values(list_of_write_values)
+           result = tsdata.write_values(list_of_write_values) 
 
     @mock.patch("requests.post", side_effect=empty_write_mocked_requests)
     def test_get_write_live_values_empty(self, mock_get):
         tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
-        result = tsdata.write_values(list_of_write_values)
-        assert result[0]["Timestamp"] == None
+        with pytest.raises(RuntimeError):
+            result = tsdata.write_values(list_of_write_values)
 
-    @mock.patch("requests.post", side_effect=no_status_code_write_mocked_requests)
-    def test_get_write_live_values_no_status_code(self, mock_get):
-        tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
-        result = tsdata.write_values(list_of_write_values)
-        assert result[0]["StatusCode"] == None
 
 if __name__ == "__main__":
     unittest.main()
