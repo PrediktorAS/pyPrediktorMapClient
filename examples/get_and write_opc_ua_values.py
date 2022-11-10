@@ -11,21 +11,8 @@ def main():
 
     # Initate the OPC UA API with a fixed namespace list
     tsdata = OPC_UA(rest_url=opcua_rest_url, opcua_url=opcua_server_url, namespaces=namespace_list)
-    # Live value data of trackers
-    # live_value = tsdata.get_values(
-    #     [
-    #         {
-    #             'Id': 'SSO.JO-GL.Signals.Weather.Albedo',
-    #             'Namespace': 4,
-    #             'IdType': 1
-    #         },
-    #         {
-    #             'Id': 'SSO.EG-AS.Signals.Weather.Albedo',
-    #             'Namespace': 4,
-    #             'IdType': 1
-    #         }
-    #     ]
-    # )
+
+    # Setup variables to fetch
     variable_1 = Variables(Id='SSO.JO-GL.Signals.Weather.Albedo', Namespace=4, IdType=1)
     variable_2 = Variables(Id='SSO.EG-AS.Signals.Weather.Albedo', Namespace=4, IdType=1)
     variables = [variable_1, variable_2]
@@ -33,7 +20,7 @@ def main():
     print(live_values)
 
 
-
+    # Example write using json.
     # write_values = tsdata.write_values(
     #     [
     #         {
@@ -55,6 +42,8 @@ def main():
     #         }
     #     ]
     # )
+
+    #Example using classes from OPC UA class, writing to the same variables fetched above.
     sub_value = SubValue(Type=10, Body="3.3")
     values = Value(Value=sub_value, SourceTimestamp="2022-01-01T12:00:00Z", ServerTimestamp="2022-01-01T12:00:00Z")
     write_variables = WriteVariables(NodeId=variable_1, Value=values)
