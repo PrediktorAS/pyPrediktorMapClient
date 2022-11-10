@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pyprediktormapclient.model_index &mdash; pyPrediktorMapClient 0.2.1 documentation</title>
+  <title>pyprediktormapclient.model_index &mdash; pyPrediktorMapClient 0.3.0 documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -29,7 +29,7 @@
             <a href="../../index.html" class="icon icon-home"> pyPrediktorMapClient
           </a>
               <div class="version">
-                0.2.1
+                0.3.0
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -61,9 +61,9 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
-          <li><a href="../index.html">Module code</a> &raquo;</li>
-      <li>pyprediktormapclient.model_index</li>
+      <li><a href="../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pyprediktormapclient.model_index</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -74,9 +74,14 @@
              
   <h1>Source code for pyprediktormapclient.model_index</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
-<span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">HttpUrl</span><span class="p">,</span> <span class="n">validate_arguments</span><span class="p">,</span> <span class="n">ValidationError</span>
+<span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">HttpUrl</span><span class="p">,</span> <span class="n">validate_arguments</span>
 <span class="kn">from</span> <span class="nn">pyprediktormapclient.shared</span> <span class="kn">import</span> <span class="n">request_from_api</span>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">NullHandler</span><span class="p">())</span>
 
 
 <div class="viewcode-block" id="ModelIndex"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.model_index.ModelIndex">[docs]</a><span class="k">class</span> <span class="nc">ModelIndex</span><span class="p">:</span>
@@ -86,7 +91,6 @@
 <span class="sd">        url (str): The URL of the ModelIndex server with the trailing slash</span>
 
 <span class="sd">    Todo:</span>
-<span class="sd">        * Add logging</span>
 <span class="sd">        * Validate combination of url and endpoint</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
