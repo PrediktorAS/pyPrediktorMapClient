@@ -2,6 +2,20 @@
 Changelog
 =========
 
+version 0.3.0
+===========
+
+- Added OPC UA Write support
+- Cleaned up the logger to support setup from package importer
+- Removed unused imports and code refactoring
+
+
+version 0.2.0
+===========
+
+- Removed all dataframe input to functions in OPC UA
+- Adding pydantic support to shared, ModelIndex and AnalyticsHelper
+
 version 0.1.0
 ===========
 
