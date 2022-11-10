@@ -239,8 +239,7 @@ successful_write_live_response = {
     "StatusCodes": [
       {
         "Code": 0,
-        "Symbol": "Good",
-        "WriteSuccess": True
+        "Symbol": "Good"
       }
     ]
   }
@@ -279,10 +278,6 @@ unsuccessful_write_historical_response = {
   "ErrorCode": 0,
   "ServerNamespaces": [
     "string"
-  ],
-  "HistoryUpdateResults": [
-    {
-    }
   ]
 }
 
@@ -295,10 +290,7 @@ successfull_write_historical_response_with_errors = {
   ],
   "HistoryUpdateResults": [
       {
-        "Code": 0,
-        "Symbol": "Good",
-        "WriteSuccess": False,
-        "WriteError": {
+        "StatusCode": {
             'Code': 2158690304,
             'Symbol': 'BadInvalidArgument'
         }
@@ -399,7 +391,6 @@ def no_write_mocked_historical_requests(*args, **kwargs):
 
 def successful_write_historical_with_errors_mocked_requests(*args, **kwargs):
     if args[0] == f"{URL}values/historicalwrite":
-        # Set Success to False
         suce = deepcopy(successfull_write_historical_response_with_errors)
         return MockResponse(suce, 200)
 
@@ -711,9 +702,8 @@ class OPCUATestCase(unittest.TestCase):
     def test_get_write_historical_values_successful_with_error_codes(self, mock_get):
         tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
         result = tsdata.write_historical_values(list_of_historical_values_wrong_type_and_value)
-        assert result[0]["WriteSuccess"] == successfull_write_historical_response_with_errors["HistoryUpdateResults"][0]["WriteSuccess"]
-        assert result[0]["WriteError"]["Code"] == successfull_write_historical_response_with_errors["HistoryUpdateResults"][0]["WriteError"]["Code"]
-        assert result[0]["WriteError"]["Code"] == successfull_write_historical_response_with_errors["HistoryUpdateResults"][0]["WriteError"]["Symbol"]
+        assert result[0]["WriteError"]["Code"] == successfull_write_historical_response_with_errors["HistoryUpdateResults"][0]["StatusCode"]["Code"]
+        assert result[0]["WriteError"]["Symbol"] == successfull_write_historical_response_with_errors["HistoryUpdateResults"][0]["StatusCode"]["Symbol"]
 
 if __name__ == "__main__":
     unittest.main()

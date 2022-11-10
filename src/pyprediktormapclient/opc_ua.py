@@ -456,11 +456,6 @@ class OPC_UA:
             else:
                 vars[num_var]["WriteSuccess"] = False
                 vars[num_var]["WriteError"] = content["HistoryUpdateResults"][num_var].get("StatusCode")
-            # vars[num_var]["WriteSuccess"]=(lambda x : True if(x == {}) else False)(content["HistoryUpdateResults"][num_var])
-            # Second level for operation result doesn't seem to be implemented in API.
-            # TODO - Check if implemented
-            # for num_values, value_row in enumerate(variable_row["UpdateValues"]):
-            #    vars[num_var]["UpdateValues"][num_values]["WriteSuccess"]=(lambda x : True if(x == 0) else False)(content["HistoryUpdateResults"][num_var]['OperationResults'][num_values].get("Code"))
 
         return vars
 
