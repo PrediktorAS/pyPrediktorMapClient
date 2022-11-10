@@ -15,13 +15,12 @@ logger.addHandler(logging.NullHandler())
 
 class Variables(BaseModel):
     """Helper class to parse all values api's.
+    Variables are described in https://reference.opcfoundation.org/v104/Core/docs/Part3/8.2.1/
 
         Variables:
-            Id: str
-            Namespace: int
-            IdType: int
-            
-        TODO: Properly describe variables
+            Id: str - Id of the signal, e.g. SSO.EG-AS.WeatherSymbol
+            Namespace: int - Namespace on the signal, e.g. 2.
+            IdType: int - IdTypes described in https://reference.opcfoundation.org/v104/Core/docs/Part3/8.2.3/.
     """
     Id: str
     Namespace: int
@@ -31,10 +30,8 @@ class SubValue(BaseModel):
     """Helper class to parse all values api's.
 
         Variables:
-            Type: int
-            Body: Union[str, float, int, bool]
-            
-        TODO: Properly describe variables
+            Type: int - Type of variable, e.g. 12. string, 11. float, etc. list of types described in https://reference.opcfoundation.org/Core/Part6/v104/5.1.2/ 
+            Body: Union[str, float, int, bool] - The value of the varible, should match type.
     """
     Type: int
     Body: Union[str, float, int, bool]
@@ -43,9 +40,7 @@ class HistoryValue(BaseModel):
     """Helper class to parse all values api's.
 
         Variables:
-            Value: SubValue
-            
-        TODO: Properly describe variables
+            Value: SubValue - Containing Type and Body (value) of the variable. Described in SubValue class.
     """
     Value: SubValue
 
@@ -53,10 +48,8 @@ class StatusCode(BaseModel):
     """Helper class to parse all values api's.
 
         Variables:
-            Code: Optional[int]
-            Symbol: Optional[str]
-            
-        TODO: Properly describe variables
+            Code: Optional[int] - Status code, described in https://reference.opcfoundation.org/v104/Core/docs/Part8/A.4.3/
+            Symbol: Optional[str] - String value for status code, described in https://reference.opcfoundation.org/v104/Core/docs/Part8/A.4.3/
     """
     Code: Optional[int]
     Symbol: Optional[str]
@@ -65,14 +58,12 @@ class Value(BaseModel):
     """Helper class to parse all values api's.
 
         Variables:
-            Value: SubValue
-            SourceTimestamp: str
-            SourcePicoseconds: Optional[int]
-            ServerTimestamp: Optional[str]
-            ServerPicoseconds: Optional[int]
-            StatusCode: StatusCode
-            
-        TODO: Properly describe variables
+            Value: SubValue - Containing Type and Body (value) of the variable. Described in SubValue class.
+            SourceTimestamp: str - Timestamp of the source, e.g. when coming from an API the timestamp returned from the API for the varaible is the sourcetimestamp.
+            SourcePicoseconds: Optional[int] - Picoseconds for the timestamp of the source if there is a need for a finer granularity, e.g. if samples are sampled in picosecond level or more precision is needed.
+            ServerTimestamp: Optional[str] - Timestamp for the server, normally this is assigned by the server.
+            ServerPicoseconds: Optional[int] - Picoseconds for the timestamp on the server, normally this is assigned by the server.
+            StatusCode: StatusCode - Status code, described in https://reference.opcfoundation.org/v104/Core/docs/Part8/A.4.3/
     """
     Value: SubValue
     SourceTimestamp: datetime
@@ -85,10 +76,8 @@ class WriteVariables(BaseModel):
     """Helper class for write values api.
 
         Variables:
-            NodeId (str): The complete node'id for the variable
-            Value (Value): The value to update for the node'id.
-            
-        TODO: Properly describe variables
+                NodeId: Variables - The complete node'id for the variable
+                Value: Value - The value to update for the node'id.
     """
     NodeId: Variables
     Value: Value
@@ -100,8 +89,6 @@ class WriteHistoricalVariables(BaseModel):
             NodeId (str): The complete node'id for the variable
             PerformInsertReplace (int): Historical insertion method 1. Insert, 2. Replace 3. Update, 4. Remove
             UpdateValues (list): List of values to update for the node'id. Time must be in descending order.
-
-        TODO: Properly describe variables
     """
     NodeId: Variables
     PerformInsertReplace: int
@@ -111,9 +98,7 @@ class WriteVariablesResponse(BaseModel):
     """Helper class for write historical values api.
 
         Variables:
-            SymbolCodes: List[StatusCode]
-
-        TODO: Properly describe variables
+            SymbolCodes: List[StatusCode] - A list of class StatusCode, described in StatusCode class.
     """
     SymbolCodes: List[StatusCode]
 
@@ -121,8 +106,10 @@ class WriteReturn(BaseModel):
     """Helper class to collect API output with API input to see successfull writes for nodes.
 
         Variables:
-            NodeId: str - The node id
-            Success: str - If the write was a success.
+            Id: str - The Id of the signal
+            Value: str - The written value of the signal
+            TimeStamp: str - THe SourceTimestamp of the written signal
+            Success: bool - Success flag for the write operation
     """
     Id: str
     Value: str
