@@ -9,6 +9,7 @@ def request_from_api(
     method: Literal["GET", "POST"],
     endpoint: str,
     data: str = None,
+    params: dict = None,
     headers: dict = None,
     extended_timeout: bool = False,
 ) -> str:
@@ -25,11 +26,11 @@ def request_from_api(
     """
     request_timeout = (3, 300 if extended_timeout else 27)
     if method == "GET":
-        result = requests.get(rest_url + endpoint, timeout=request_timeout)
+        result = requests.get(rest_url + endpoint, timeout=request_timeout, params=params, headers=headers)
 
     if method == "POST":
         result = requests.post(
-            rest_url + endpoint, data=data, headers=headers, timeout=request_timeout
+            rest_url + endpoint, data=data, headers=headers, timeout=request_timeout, params=params
         )
 
     result.raise_for_status()

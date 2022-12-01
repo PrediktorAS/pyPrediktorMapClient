@@ -26,51 +26,6 @@ def main():
     )
     print(live_value)
 
-    # Example write using json.
-    # write_values = tsdata.write_historical_values(
-    #     [
-    #         {
-    #             "NodeId": {
-    #                 "Id": "SSO.JO-GL.Signals.Weather.Albedo",
-    #                 "Namespace": 4,
-    #                 "IdType": 1
-    #             },
-    #             "PerformInsertReplace": 1,
-    #             "UpdateValues": [
-    #                 {
-    #                     "Value": {
-    #                         "Type": 10,
-    #                         "Body": 1.1
-    #                     },
-    #                     "SourceTimestamp": "2022-11-03T12:00:00Z",
-    #                     "StatusCode": {
-    #                         "Code": 0
-    #                     }
-    #                 },
-    #                 {
-    #                     "Value": {
-    #                         "Type": 10,
-    #                         "Body": 2.1
-    #                     },
-    #                     "SourceTimestamp": "2022-11-03T13:00:00Z",
-    #                     "StatusCode": {
-    #                         "Code": 0
-    #                     }
-    #                 }
-    #             ]
-    #         }
-    #     ]
-    # )
-    value_1_1 = Value(Value=SubValue(Type=10, Body=1.1), SourceTimestamp=datetime.datetime.now() - datetime.timedelta(1))
-    value_1_2 = Value(Value=SubValue(Type=10, Body=2.1), SourceTimestamp=datetime.datetime.now())
-    update_values_1 = [value_1_1, value_1_2]
-    value_2_1 = Value(Value=SubValue(Type=10, Body=11.1), SourceTimestamp="2022-11-01T12:00:00")
-    value_2_2 = Value(Value=SubValue(Type=10, Body=22.1), SourceTimestamp="2022-11-01T13:00:00")
-    update_values_2 = [value_2_1, value_2_2]
-    write_variable_1 = WriteHistoricalVariables(NodeId=variable_1, PerformInsertReplace=1, UpdateValues=update_values_1)
-    write_variable_2 = WriteHistoricalVariables(NodeId=variable_2, PerformInsertReplace=1, UpdateValues=update_values_2)
-    write_historical_data = tsdata.write_historical_values([write_variable_1, write_variable_2])
-    print(write_historical_data)
 
 if __name__ == "__main__":
     main()

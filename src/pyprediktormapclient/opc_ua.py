@@ -8,6 +8,7 @@ from datetime import date, datetime
 from typing import Dict, List, Union, Optional
 from pydantic import BaseModel, HttpUrl, AnyUrl, validate_arguments
 from pyprediktormapclient.shared import request_from_api
+from pyprediktormapclient.ory_client import ORY_CLIENT
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -132,9 +133,12 @@ class OPC_UA:
         * Better session handling with aiohttp
         * Make sure that time convertions are with timezone
     """
+    class Config:
+        arbitrary_types_allowed = True
+
 
     @validate_arguments
-    def __init__(self, rest_url: HttpUrl, opcua_url: AnyUrl, namespaces: List = None):
+    def __init__(self, rest_url: HttpUrl, opcua_url: AnyUrl, namespaces: List = None, ory_client: object = None):
         """Class initializer
 
         Args:
@@ -147,6 +151,9 @@ class OPC_UA:
         self.rest_url = rest_url
         self.opcua_url = opcua_url
         self.headers = {"Content-Type": "application/json"}
+        self.ory_client = ory_client
+        if self.ory_client is not None:
+            self.headers["Authorization"] = f"Bearer {self.ory_client.session_token}"
         self.body = {"Connection": {"Url": self.opcua_url, "AuthenticationType": 1}}
         if namespaces:
             self.body["ClientNamespaces"] = namespaces
@@ -156,7 +163,17 @@ class OPC_UA:
 
         if isinstance(obj, (datetime, date)):
             return obj.isoformat()
-        raise TypeError ("Type %s not serializable" % type(obj))
+        raise TypeError (f"Type {type(obj)} not serializable")
+
+    def check_ory_client(self, content):
+        if self.ory_client is None:
+            raise Exception("ORY_CLIENT not set")
+        if (content.status == 410 or 
+            (content.status == 500 and content.get("ErrorMessage").get("id") == "self_service_flow_expired")):
+            self.ory_client.refresh_token()
+            self.headers["Authorization"] = f"Bearer {self.ory_client.session_token}"
+        else:
+            raise RuntimeError(content.get("ErrorMessage"))
 
     @validate_arguments
     def _get_value_type(self, id: int) -> Dict:
@@ -202,6 +219,7 @@ class OPC_UA:
         # Create a new variable list to remove pydantic models
         vars = self._get_variable_list_as_list(variable_list)
         body = copy.deepcopy(self.body)
+        print(str(json.dumps([body])))
         body["NodeIds"] = vars
         content = request_from_api(
             rest_url=self.rest_url,
@@ -227,7 +245,10 @@ class OPC_UA:
         # Choose first item and return if not successful
         content = content[0]
         if content.get("Success") is False:
-            raise RuntimeError(content.get("ErrorMessage"))
+            if self.ory_client is not None:
+                self.check_ory_client(content)
+            else:
+                raise RuntimeError(content.get("ErrorMessage"))
 
         # Return if missing values
         if not content.get("Values"):
@@ -296,13 +317,17 @@ class OPC_UA:
             extended_timeout=True,
         )
 
+
         # Return if no content from server
         if not isinstance(content, dict):
             raise RuntimeError("No content returned from the server")
 
         # Return if not successful
         if content.get("Success") is False:
-            raise RuntimeError(content.get("ErrorMessage"))
+            if self.ory_client is not None:
+                self.check_ory_client(content)
+            else:
+                raise RuntimeError(content.get("ErrorMessage"))
 
         # Check for HistoryReadResults
         if not "HistoryReadResults" in content:
@@ -442,6 +467,15 @@ class OPC_UA:
                 vars[num_var]["WriteError"] = content["HistoryUpdateResults"][num_var].get("StatusCode")
 
         return vars
+
+    def check_if_ory_session_token_is_valid_refresh(self):
+        """Check if the session token is still valid
+
+        Returns:
+            bool: True if valid, False if not
+        """
+        if self.ory_client.check_if_token_has_expired():
+            self.ory_client.refresh_token()
 
 
 TYPE_LIST = [

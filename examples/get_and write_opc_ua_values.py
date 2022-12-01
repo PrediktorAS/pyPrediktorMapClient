@@ -16,6 +16,7 @@ def main():
     variable_1 = Variables(Id='SSO.JO-GL.Signals.Weather.Albedo', Namespace=4, IdType=1)
     variable_2 = Variables(Id='SSO.EG-AS.Signals.Weather.Albedo', Namespace=4, IdType=1)
     variables = [variable_1, variable_2]
+    print(variables)
     live_values = tsdata.get_values(variables)
     print(live_values)
 
