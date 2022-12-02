@@ -168,8 +168,6 @@ class OPC_UA:
         raise TypeError (f"Type {type(obj)} not serializable")
 
     def check_ory_client(self, content):
-        if self.ory_client is None:
-            raise Exception("ORY_CLIENT not set")
         if (content.get('error').get('code') == 404):
             self.ory_client.request_new_ory_token()
             self.headers["Authorization"] = f"Bearer {self.ory_client.token.access_token}"
@@ -432,7 +430,6 @@ class OPC_UA:
                 extended_timeout=True,
             )
         except HTTPError as e:
-            # print(.get('error').get('code'))
             if self.ory_client is not None:
                 self.check_ory_client(json.loads(e.response.content))
             else:
