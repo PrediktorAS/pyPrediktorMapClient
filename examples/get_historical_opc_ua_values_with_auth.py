@@ -1,12 +1,10 @@
 # Import the required packeages
 import datetime
-import http.cookies
 import json
 from urllib.parse import urlparse
-import requests
 # Import OPC UA functions
-from pyprediktormapclient.opc_ua import OPC_UA, Variables, WriteHistoricalVariables, Value, SubValue
-from pyprediktormapclient.ory_client import ORY_CLIENT, Token
+from pyprediktormapclient.opc_ua import OPC_UA, Variables
+from pyprediktormapclient.ory_client import ORY_CLIENT
 
 def main():
     namespace_list = []
