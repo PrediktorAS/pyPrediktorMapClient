@@ -13,10 +13,10 @@ def main():
 
     # Initate the OPC UA API with a fixed namespace list
     tsdata = OPC_UA(rest_url=opcua_rest_url, opcua_url=opcua_server_url, namespaces=namespace_list)
-    variable_1 = Variables(Id='SSO.JO-GL.Signals.Weather.Albedo', Namespace=4, IdType=1)
-    variable_2 = Variables(Id='SSO.EG-AS.Signals.Weather.Albedo', Namespace=4, IdType=1)
+    variable_1 = Variables(Id='SSO.JO-GL.Signals.Weather.Albedo', Namespace=5, IdType=1)
+    variable_2 = Variables(Id='SSO.EG-AS.Signals.Weather.Albedo', Namespace=3, IdType=1)
     variables = [variable_1, variable_2]
-    # Live value data of trackers
+
     live_value = tsdata.get_historical_aggregated_values(
         start_time=(datetime.datetime.now() - datetime.timedelta(1)),
         end_time=(datetime.datetime.now()),
@@ -26,41 +26,6 @@ def main():
     )
     print(live_value)
 
-    # Example write using json.
-    # write_values = tsdata.write_historical_values(
-    #     [
-    #         {
-    #             "NodeId": {
-    #                 "Id": "SSO.JO-GL.Signals.Weather.Albedo",
-    #                 "Namespace": 4,
-    #                 "IdType": 1
-    #             },
-    #             "PerformInsertReplace": 1,
-    #             "UpdateValues": [
-    #                 {
-    #                     "Value": {
-    #                         "Type": 10,
-    #                         "Body": 1.1
-    #                     },
-    #                     "SourceTimestamp": "2022-11-03T12:00:00Z",
-    #                     "StatusCode": {
-    #                         "Code": 0
-    #                     }
-    #                 },
-    #                 {
-    #                     "Value": {
-    #                         "Type": 10,
-    #                         "Body": 2.1
-    #                     },
-    #                     "SourceTimestamp": "2022-11-03T13:00:00Z",
-    #                     "StatusCode": {
-    #                         "Code": 0
-    #                     }
-    #                 }
-    #             ]
-    #         }
-    #     ]
-    # )
     value_1_1 = Value(Value=SubValue(Type=10, Body=1.1), SourceTimestamp=datetime.datetime.now() - datetime.timedelta(1))
     value_1_2 = Value(Value=SubValue(Type=10, Body=2.1), SourceTimestamp=datetime.datetime.now())
     update_values_1 = [value_1_1, value_1_2]

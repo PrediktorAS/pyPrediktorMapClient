@@ -8,6 +8,7 @@ from datetime import date, datetime
 from typing import Dict, List, Union, Optional
 from pydantic import BaseModel, HttpUrl, AnyUrl, validate_arguments
 from pyprediktormapclient.shared import request_from_api
+from requests import HTTPError
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -132,9 +133,12 @@ class OPC_UA:
         * Better session handling with aiohttp
         * Make sure that time convertions are with timezone
     """
+    class Config:
+        arbitrary_types_allowed = True
+
 
     @validate_arguments
-    def __init__(self, rest_url: HttpUrl, opcua_url: AnyUrl, namespaces: List = None):
+    def __init__(self, rest_url: HttpUrl, opcua_url: AnyUrl, namespaces: List = None, auth_client: object = None):
         """Class initializer
 
         Args:
@@ -147,6 +151,10 @@ class OPC_UA:
         self.rest_url = rest_url
         self.opcua_url = opcua_url
         self.headers = {"Content-Type": "application/json"}
+        self.auth_client = auth_client
+        if self.auth_client is not None:
+            if self.auth_client.token is not None:
+                self.headers["Authorization"] = f"Bearer {self.auth_client.token.access_token}"
         self.body = {"Connection": {"Url": self.opcua_url, "AuthenticationType": 1}}
         if namespaces:
             self.body["ClientNamespaces"] = namespaces
@@ -156,7 +164,14 @@ class OPC_UA:
 
         if isinstance(obj, (datetime, date)):
             return obj.isoformat()
-        raise TypeError ("Type %s not serializable" % type(obj))
+        raise TypeError (f"Type {type(obj)} not serializable")
+
+    def check_auth_client(self, content):
+        if (content.get('error').get('code') == 404):
+            self.auth_client.request_new_ory_token()
+            self.headers["Authorization"] = f"Bearer {self.auth_client.token.access_token}"
+        else:
+            raise RuntimeError(content.get("ErrorMessage"))
 
     @validate_arguments
     def _get_value_type(self, id: int) -> Dict:
@@ -203,14 +218,30 @@ class OPC_UA:
         vars = self._get_variable_list_as_list(variable_list)
         body = copy.deepcopy(self.body)
         body["NodeIds"] = vars
-        content = request_from_api(
-            rest_url=self.rest_url,
-            method="POST",
-            endpoint="values/get",
-            data=json.dumps([body], default=self.json_serial),
-            headers=self.headers,
-            extended_timeout=True,
-        )
+        try:
+            content = request_from_api(
+                rest_url=self.rest_url,
+                method="POST",
+                endpoint="values/get",
+                data=json.dumps([body], default=self.json_serial),
+                headers=self.headers,
+                extended_timeout=True,
+            )
+        except HTTPError as e:
+            # print(.get('error').get('code'))
+            if self.auth_client is not None:
+                self.check_auth_client(json.loads(e.response.content))
+            else:
+                raise RuntimeError(f'Error message {e}')
+        finally:
+            content = request_from_api(
+                rest_url=self.rest_url,
+                method="POST",
+                endpoint="values/get",
+                data=json.dumps([body], default=self.json_serial),
+                headers=self.headers,
+                extended_timeout=True,
+            )
 
         for var in vars:
             # Add default None values
@@ -287,20 +318,36 @@ class OPC_UA:
         body["ProcessingInterval"] = pro_interval
         body["ReadValueIds"] = extended_variables
         body["AggregateName"] = agg_name
-        content = request_from_api(
-            rest_url=self.rest_url,
-            method="POST",
-            endpoint="values/historicalaggregated",
-            data=json.dumps(body, default=self.json_serial),
-            headers=self.headers,
-            extended_timeout=True,
-        )
+        try:
+            #Try making the request, if failes check if it is due to ory client
+            content = request_from_api(
+                rest_url=self.rest_url,
+                method="POST",
+                endpoint="values/historicalaggregated",
+                data=json.dumps(body, default=self.json_serial),
+                headers=self.headers,
+                extended_timeout=True,
+            )
+        except HTTPError as e:
+            if self.auth_client is not None:
+                self.check_auth_client(json.loads(e.response.content))
+            else:
+                raise RuntimeError(f'Error message {e}')
+        finally:
+            content = request_from_api(
+                rest_url=self.rest_url,
+                method="POST",
+                endpoint="values/historicalaggregated",
+                data=json.dumps(body, default=self.json_serial),
+                headers=self.headers,
+                extended_timeout=True,
+            )
 
         # Return if no content from server
         if not isinstance(content, dict):
             raise RuntimeError("No content returned from the server")
 
-        # Return if not successful
+        # Return if not successful, but check ory status id ory is enabled
         if content.get("Success") is False:
             raise RuntimeError(content.get("ErrorMessage"))
 
@@ -371,15 +418,29 @@ class OPC_UA:
         vars = self._get_variable_list_as_list(variable_list)
         body = copy.deepcopy(self.body)
         body["WriteValues"] = vars
-        content = request_from_api(
-            rest_url=self.rest_url,
-            method="POST",
-            endpoint="values/set",
-            data=json.dumps([body], default=self.json_serial),
-            headers=self.headers,
-            extended_timeout=True,
-        )
-
+        try:
+            content = request_from_api(
+                rest_url=self.rest_url,
+                method="POST",
+                endpoint="values/set",
+                data=json.dumps([body], default=self.json_serial),
+                headers=self.headers,
+                extended_timeout=True,
+            )
+        except HTTPError as e:
+            if self.auth_client is not None:
+                self.check_auth_client(json.loads(e.response.content))
+            else:
+                raise RuntimeError(f'Error message {e}')
+        finally:
+            content = request_from_api(
+                rest_url=self.rest_url,
+                method="POST",
+                endpoint="values/set",
+                data=json.dumps([body], default=self.json_serial),
+                headers=self.headers,
+                extended_timeout=True,
+            )
         # Return if no content from server
         if not isinstance(content, dict):
             return None
@@ -413,15 +474,29 @@ class OPC_UA:
         vars = self._get_variable_list_as_list(variable_list)
         body = copy.deepcopy(self.body)
         body["UpdateDataDetails"] = vars
-        content = request_from_api(
-            rest_url=self.rest_url,
-            method="POST",
-            endpoint="values/historicalwrite",
-            data=json.dumps(body, default=self.json_serial),
-            headers=self.headers,
-            extended_timeout=True,
-        )
-
+        try:
+            content = request_from_api(
+                rest_url=self.rest_url,
+                method="POST",
+                endpoint="values/historicalwrite",
+                data=json.dumps(body, default=self.json_serial),
+                headers=self.headers,
+                extended_timeout=True,
+            )
+        except HTTPError as e:
+            if self.auth_client is not None:
+                self.check_auth_client(json.loads(e.response.content))
+            else:
+                raise RuntimeError(f'Error message {e}')
+        finally:
+            content = request_from_api(
+                rest_url=self.rest_url,
+                method="POST",
+                endpoint="values/historicalwrite",
+                data=json.dumps(body, default=self.json_serial),
+                headers=self.headers,
+                extended_timeout=True,
+            )
         # Return if no content from server
         if not isinstance(content, dict):
             return None
@@ -442,6 +517,13 @@ class OPC_UA:
                 vars[num_var]["WriteError"] = content["HistoryUpdateResults"][num_var].get("StatusCode")
 
         return vars
+
+    def check_if_ory_session_token_is_valid_refresh(self):
+        """Check if the session token is still valid
+
+        """
+        if self.auth_client.check_if_token_has_expired():
+            self.auth_client.refresh_token()
 
 
 TYPE_LIST = [
