@@ -13,10 +13,10 @@ def main():
 
     # Initate the OPC UA API with a fixed namespace list
     tsdata = OPC_UA(rest_url=opcua_rest_url, opcua_url=opcua_server_url, namespaces=namespace_list)
-    variable_1 = Variables(Id='SSO.JO-GL.Signals.Weather.Albedo', Namespace=4, IdType=1)
-    variable_2 = Variables(Id='SSO.EG-AS.Signals.Weather.Albedo', Namespace=4, IdType=1)
+    variable_1 = Variables(Id='SSO.JO-GL.Signals.Weather.Albedo', Namespace=5, IdType=1)
+    variable_2 = Variables(Id='SSO.EG-AS.Signals.Weather.Albedo', Namespace=3, IdType=1)
     variables = [variable_1, variable_2]
-    # Live value data of trackers
+
     live_value = tsdata.get_historical_aggregated_values(
         start_time=(datetime.datetime.now() - datetime.timedelta(1)),
         end_time=(datetime.datetime.now()),
