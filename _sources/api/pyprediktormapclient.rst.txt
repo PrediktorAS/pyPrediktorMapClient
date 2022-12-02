@@ -12,6 +12,14 @@ pyprediktormapclient.analytics\_helper module
    :undoc-members:
    :show-inheritance:
 
+pyprediktormapclient.auth\_client module
+----------------------------------------
+
+.. automodule:: pyprediktormapclient.auth_client
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 pyprediktormapclient.model\_index module
 ----------------------------------------
 
