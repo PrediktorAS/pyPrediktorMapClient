@@ -218,7 +218,6 @@ class OPC_UA:
         # Create a new variable list to remove pydantic models
         vars = self._get_variable_list_as_list(variable_list)
         body = copy.deepcopy(self.body)
-        print(str(json.dumps([body])))
         body["NodeIds"] = vars
         try:
             content = request_from_api(
