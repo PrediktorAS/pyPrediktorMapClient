@@ -21,8 +21,7 @@ def main():
     ory_url = api_config.get('ory_url')
 
     ory_client = ORY_CLIENT(rest_url=ory_url, username=api_config.get("username"), password=api_config.get("password"))
-    ory_client.token = Token(access_token="4NqMh7uLBf25dCKuTmEzcXEJo3zJIQ5l", expires_at="2022-12-01T07:31:28.767407252Z")
-    # ory_client.request_new_ory_token()
+    ory_client.request_new_ory_token()
 
 
     # Initate the OPC UA API with a fixed namespace list
