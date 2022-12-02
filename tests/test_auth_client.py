@@ -5,15 +5,15 @@ from pydantic import ValidationError
 from copy import deepcopy
 import datetime
 
-from pyprediktormapclient.ory_client import ORY_CLIENT, Token
+from pyprediktormapclient.auth_client import AUTH_CLIENT, Token
 
 URL = "http://someserver.somedomain.com/v1/"
 username = "some@user.com"
 password = "somepassword"
-ory_id = "0b518533-fb09-4bb7-a51f-166d3453685e"
-ory_session_id = "qlZULxcaNc6xVdXQfqPxwix5v3tuCLaO"
-ory_expires_at = "2022-12-04T07:31:28.767407252Z"
-ory_expires_at_2hrs_ago = "2022-12-04T05:31:28.767407252Z"
+auth_id = "0b518533-fb09-4bb7-a51f-166d3453685e"
+auth_session_id = "qlZULxcaNc6xVdXQfqPxwix5v3tuCLaO"
+auth_expires_at = "2022-12-04T07:31:28.767407252Z"
+auth_expires_at_2hrs_ago = "2022-12-04T05:31:28.767407252Z"
 
 successful_self_service_login_token_mocked_response = {
                             "Success": True,
@@ -37,7 +37,7 @@ successful_self_service_login_token_mocked_response = {
                                 "identity": {
                                     "id": "24f9466f-4e81-42d8-8a40-1f46f2203c19",
                                     "schema_id": "preset://email",
-                                    "schema_url": "https://oryauth.blabla.io/schemas/cHJlc2V0Oi8vZW1haWw",
+                                    "schema_url": "https://authauth.blabla.io/schemas/cHJlc2V0Oi8vZW1haWw",
                                     "state": "active",
                                     "state_changed_at": "2022-08-15T12:43:28.623721Z",
                                     "traits": {
@@ -103,9 +103,9 @@ successfull_self_service_login_response ={
                                 "type": "api",
                                 "expires_at": "2022-11-24T15:37:59.690422428Z",
                                 "issued_at": "2022-11-24T14:37:59.690422428Z",
-                                "request_url": "https://oryauth.blabla.io/self-service/login/api",
+                                "request_url": "https://authauth.blabla.io/self-service/login/api",
                                 "ui": {
-                                    "action": "https://oryauth.blabla.io/self-service/login?flow=0b518533-fb09-4bb7-a51f-166d3453685e",
+                                    "action": "https://authauth.blabla.io/self-service/login?flow=0b518533-fb09-4bb7-a51f-166d3453685e",
                                     "method": "POST",
                                     "nodes": [
                                         {
@@ -197,7 +197,7 @@ empty_self_service_login_response = {
                                 "type": "api",
                                 "expires_at": "2022-11-24T15:37:59.690422428Z",
                                 "issued_at": "2022-11-24T14:37:59.690422428Z",
-                                "request_url": "https://oryauth.blabla.io/self-service/login/api",
+                                "request_url": "https://authauth.blabla.io/self-service/login/api",
                                 "ui": {
                                     "method": "POST",
                                     "nodes": [
@@ -358,67 +358,67 @@ class OPCUATestCase(unittest.TestCase):
 
     def test_malformed_rest_url(self):
         with pytest.raises(ValidationError):
-            ory_client = ORY_CLIENT(rest_url="htio/dsadsadsa", username=username, password=password)
+            auth_client = AUTH_CLIENT(rest_url="htio/dsadsadsa", username=username, password=password)
 
     @mock.patch("requests.get", side_effect=successful_self_service_mocked_requests)
     def test_get_self_service_login_id_successful(self, mock_get):
-        ory_client = ORY_CLIENT(rest_url=URL, username=username, password=password)
-        ory_client.get_login_id()
-        assert ory_client.id == ory_id
+        auth_client = AUTH_CLIENT(rest_url=URL, username=username, password=password)
+        auth_client.get_login_id()
+        assert auth_client.id == auth_id
 
     @mock.patch("requests.get", side_effect=unsuccessful_self_service_login_mocked_requests)
     def test_get_self_service_login_id_successful(self, mock_get):
-        ory_client = ORY_CLIENT(rest_url=URL, username=username, password=password)
+        auth_client = AUTH_CLIENT(rest_url=URL, username=username, password=password)
         with pytest.raises(RuntimeError):
-            ory_client.get_login_id()
+            auth_client.get_login_id()
 
     @mock.patch("requests.get", side_effect=empty_self_service_mocked_requests)
     def test_get_self_service_login_id_empty(self, mock_get):
-        ory_client = ORY_CLIENT(rest_url=URL, username=username, password=password)
+        auth_client = AUTH_CLIENT(rest_url=URL, username=username, password=password)
         with pytest.raises(RuntimeError):
-            ory_client.get_login_id()
+            auth_client.get_login_id()
 
     @mock.patch("requests.get", side_effect=wrong_id_self_service_mocked_requests)
     def test_get_self_service_login_id_wrong_id(self, mock_get):
-        ory_client = ORY_CLIENT(rest_url=URL, username=username, password=password)
+        auth_client = AUTH_CLIENT(rest_url=URL, username=username, password=password)
         with pytest.raises(RuntimeError):
-            ory_client.get_login_id()
+            auth_client.get_login_id()
 
     @mock.patch("requests.post", side_effect=empty_self_service_login_token_mocked_requests)
     def test_get_self_service_login_token_empty(self, mock_get):
-        ory_client = ORY_CLIENT(rest_url=URL, username=username, password=password)
-        ory_client.id = ory_id
+        auth_client = AUTH_CLIENT(rest_url=URL, username=username, password=password)
+        auth_client.id = auth_id
         with pytest.raises(RuntimeError):
-            ory_client.get_login_token()
+            auth_client.get_login_token()
 
     @mock.patch("requests.post", side_effect=successful_self_service_login_token_mocked_requests)
     def test_get_self_service_login_token_successful(self, mock_get):
-        ory_client = ORY_CLIENT(rest_url=URL, username=username, password=password)
-        ory_client.id = ory_id
-        ory_client.get_login_token()
-        test_token = Token(access_token=ory_session_id, expires_at=ory_expires_at)
-        assert ory_client.token.access_token == test_token.access_token
-        assert ory_client.token.expires_at == test_token.expires_at
+        auth_client = AUTH_CLIENT(rest_url=URL, username=username, password=password)
+        auth_client.id = auth_id
+        auth_client.get_login_token()
+        test_token = Token(access_token=auth_session_id, expires_at=auth_expires_at)
+        assert auth_client.token.access_token == test_token.access_token
+        assert auth_client.token.expires_at == test_token.expires_at
 
     @mock.patch("requests.post", side_effect=unsuccessful_self_service_login_token_mocked_requests)
     def test_get_self_service_login_token_unsuccessful(self, mock_get):
-        ory_client = ORY_CLIENT(rest_url=URL, username=username, password=password)
-        ory_client.id = ory_id
+        auth_client = AUTH_CLIENT(rest_url=URL, username=username, password=password)
+        auth_client.id = auth_id
         with pytest.raises(RuntimeError):
-            ory_client.get_login_token()
+            auth_client.get_login_token()
 
 
     def test_get_self_service_token_expired(self):
-        ory_client = ORY_CLIENT(rest_url=URL, username=username, password=password)
-        ory_client.token = Token(access_token=ory_session_id, expires_at=ory_expires_at_2hrs_ago)
-        ory_client.token.expires_at = datetime.datetime.now() - datetime.timedelta(hours=2)
-        token_expired = ory_client.check_if_token_has_expired()
+        auth_client = AUTH_CLIENT(rest_url=URL, username=username, password=password)
+        auth_client.token = Token(access_token=auth_session_id, expires_at=auth_expires_at_2hrs_ago)
+        auth_client.token.expires_at = datetime.datetime.now() - datetime.timedelta(hours=2)
+        token_expired = auth_client.check_if_token_has_expired()
         assert token_expired == True
 
     def test_get_self_service_token_expired_none(self):
-        ory_client = ORY_CLIENT(rest_url=URL, username=username, password=password)
-        ory_client.token = Token(access_token=ory_session_id, expires_at=None)
-        token_expired = ory_client.check_if_token_has_expired()
+        auth_client = AUTH_CLIENT(rest_url=URL, username=username, password=password)
+        auth_client.token = Token(access_token=auth_session_id, expires_at=None)
+        token_expired = auth_client.check_if_token_has_expired()
         assert token_expired == False
 
 if __name__ == "__main__":

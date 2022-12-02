@@ -8,7 +8,6 @@ from datetime import date, datetime
 from typing import Dict, List, Union, Optional
 from pydantic import BaseModel, HttpUrl, AnyUrl, validate_arguments
 from pyprediktormapclient.shared import request_from_api
-from pyprediktormapclient.ory_client import ORY_CLIENT
 from requests import HTTPError
 
 logger = logging.getLogger(__name__)
@@ -139,7 +138,7 @@ class OPC_UA:
 
 
     @validate_arguments
-    def __init__(self, rest_url: HttpUrl, opcua_url: AnyUrl, namespaces: List = None, ory_client: object = None):
+    def __init__(self, rest_url: HttpUrl, opcua_url: AnyUrl, namespaces: List = None, auth_client: object = None):
         """Class initializer
 
         Args:
@@ -152,10 +151,10 @@ class OPC_UA:
         self.rest_url = rest_url
         self.opcua_url = opcua_url
         self.headers = {"Content-Type": "application/json"}
-        self.ory_client = ory_client
-        if self.ory_client is not None:
-            if self.ory_client.token is not None:
-                self.headers["Authorization"] = f"Bearer {self.ory_client.token.access_token}"
+        self.auth_client = auth_client
+        if self.auth_client is not None:
+            if self.auth_client.token is not None:
+                self.headers["Authorization"] = f"Bearer {self.auth_client.token.access_token}"
         self.body = {"Connection": {"Url": self.opcua_url, "AuthenticationType": 1}}
         if namespaces:
             self.body["ClientNamespaces"] = namespaces
@@ -167,10 +166,10 @@ class OPC_UA:
             return obj.isoformat()
         raise TypeError (f"Type {type(obj)} not serializable")
 
-    def check_ory_client(self, content):
+    def check_auth_client(self, content):
         if (content.get('error').get('code') == 404):
-            self.ory_client.request_new_ory_token()
-            self.headers["Authorization"] = f"Bearer {self.ory_client.token.access_token}"
+            self.auth_client.request_new_ory_token()
+            self.headers["Authorization"] = f"Bearer {self.auth_client.token.access_token}"
         else:
             raise RuntimeError(content.get("ErrorMessage"))
 
@@ -230,8 +229,8 @@ class OPC_UA:
             )
         except HTTPError as e:
             # print(.get('error').get('code'))
-            if self.ory_client is not None:
-                self.check_ory_client(json.loads(e.response.content))
+            if self.auth_client is not None:
+                self.check_auth_client(json.loads(e.response.content))
             else:
                 raise RuntimeError(f'Error message {e}')
         finally:
@@ -330,8 +329,8 @@ class OPC_UA:
                 extended_timeout=True,
             )
         except HTTPError as e:
-            if self.ory_client is not None:
-                self.check_ory_client(json.loads(e.response.content))
+            if self.auth_client is not None:
+                self.check_auth_client(json.loads(e.response.content))
             else:
                 raise RuntimeError(f'Error message {e}')
         finally:
@@ -429,8 +428,8 @@ class OPC_UA:
                 extended_timeout=True,
             )
         except HTTPError as e:
-            if self.ory_client is not None:
-                self.check_ory_client(json.loads(e.response.content))
+            if self.auth_client is not None:
+                self.check_auth_client(json.loads(e.response.content))
             else:
                 raise RuntimeError(f'Error message {e}')
         finally:
@@ -485,8 +484,8 @@ class OPC_UA:
                 extended_timeout=True,
             )
         except HTTPError as e:
-            if self.ory_client is not None:
-                self.check_ory_client(json.loads(e.response.content))
+            if self.auth_client is not None:
+                self.check_auth_client(json.loads(e.response.content))
             else:
                 raise RuntimeError(f'Error message {e}')
         finally:
@@ -523,8 +522,8 @@ class OPC_UA:
         """Check if the session token is still valid
 
         """
-        if self.ory_client.check_if_token_has_expired():
-            self.ory_client.refresh_token()
+        if self.auth_client.check_if_token_has_expired():
+            self.auth_client.refresh_token()
 
 
 TYPE_LIST = [

@@ -4,7 +4,7 @@ import json
 from urllib.parse import urlparse
 # Import OPC UA functions
 from pyprediktormapclient.opc_ua import OPC_UA, Variables
-from pyprediktormapclient.ory_client import ORY_CLIENT
+from pyprediktormapclient.auth_client import AUTH_CLIENT
 
 def main():
     namespace_list = []
@@ -18,12 +18,12 @@ def main():
     opcua_server_url = api_config.get('opcua_server_url')
     ory_url = api_config.get('ory_url')
 
-    ory_client = ORY_CLIENT(rest_url=ory_url, username=api_config.get("username"), password=api_config.get("password"))
-    ory_client.request_new_ory_token()
+    auth_client = AUTH_CLIENT(rest_url=ory_url, username=api_config.get("username"), password=api_config.get("password"))
+    auth_client.request_new_ory_token()
 
 
     # Initate the OPC UA API with a fixed namespace list
-    tsdata = OPC_UA(rest_url=opcua_rest_url, opcua_url=opcua_server_url, namespaces=namespace_list, ory_client=ory_client)
+    tsdata = OPC_UA(rest_url=opcua_rest_url, opcua_url=opcua_server_url, namespaces=namespace_list, auth_client=auth_client)
     variable_1 = Variables(Id='V|ZA-HE-SWS-QoS.ActivePower', Namespace=2, IdType=1)
     variables = [variable_1]
     # Live value data of trackers

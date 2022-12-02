@@ -13,7 +13,7 @@ class Token(BaseModel):
     expires_at: datetime.datetime = None
     expired: bool = None
 
-class ORY_CLIENT:
+class AUTH_CLIENT:
     """Helper functions to authenticate with Ory
 
     Args:
@@ -25,10 +25,6 @@ class ORY_CLIENT:
         Object
 
     """
-    class Config:
-        arbitrary_types_allowed = True
-
-
     @validate_arguments
     def __init__(self, rest_url: HttpUrl, username: str, password: str):
         """Class initializer
