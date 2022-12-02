@@ -2,19 +2,21 @@ import requests
 import unittest
 from unittest import mock
 import pytest
-from pydantic import ValidationError
+from pydantic import ValidationError, BaseModel
 from copy import deepcopy
 import datetime
 import pandas as pd
 import pandas.api.types as ptypes
 
-from pyprediktormapclient.opc_ua import ORY_CLIENT
+from pyprediktormapclient.ory_client import ORY_CLIENT, Token
 
 URL = "http://someserver.somedomain.com/v1/"
 username = "some@user.com"
 password = "somepassword"
 ory_id = "0b518533-fb09-4bb7-a51f-166d3453685e"
 ory_session_id = "qlZULxcaNc6xVdXQfqPxwix5v3tuCLaO"
+ory_expires_at = "2022-12-04T07:31:28.767407252Z"
+ory_expires_at_2hrs_ago = "2022-12-04T05:31:28.767407252Z"
 
 successful_self_service_login_token_mocked_response = {
                             "Success": True,
@@ -79,6 +81,7 @@ successful_self_service_login_token_mocked_response = {
                             }
                         }
 
+# TODO handle old id to get new token, use use_flow_id, investigate if this works
 expired_self_service_logon_response = {
                             "error": {
                                 "id": "self_service_flow_expired",
@@ -308,7 +311,6 @@ def empty_self_service_mocked_requests(*args, **kwargs):
 def unsuccessful_self_service_login_mocked_requests(*args, **kwargs):
     if args[0] == f"{URL}self-service/login/api":
         # Set Success to False
-        # Set Success to False
         unsuc = deepcopy(successfull_self_service_login_response)
         unsuc["Success"] = False
         return MockResponse(unsuc, 200)
@@ -359,11 +361,11 @@ class OPCUATestCase(unittest.TestCase):
 
     def test_malformed_rest_url(self):
         with pytest.raises(ValidationError):
-            ory_client = ORY_CLIENT(rest_url="htio/dsadsadsa", username="test", password="someuser")
+            ory_client = ORY_CLIENT(rest_url="htio/dsadsadsa", username=username, password=password)
 
     @mock.patch("requests.get", side_effect=successful_self_service_mocked_requests)
     def test_get_self_service_login_id_successful(self, mock_get):
-        ory_client = ORY_CLIENT(rest_url=URL, username="test", password="someuser")
+        ory_client = ORY_CLIENT(rest_url=URL, username=username, password=password)
         ory_client.get_login_id()
         assert ory_client.id == ory_id
 
@@ -397,7 +399,9 @@ class OPCUATestCase(unittest.TestCase):
         ory_client = ORY_CLIENT(rest_url=URL, username=username, password=password)
         ory_client.id = ory_id
         ory_client.get_login_token()
-        assert ory_client.session_token == ory_session_id
+        test_token = Token(access_token=ory_session_id, expires_at=ory_expires_at)
+        assert ory_client.token.access_token == test_token.access_token
+        assert ory_client.token.expires_at == test_token.expires_at
 
     @mock.patch("requests.post", side_effect=unsuccessful_self_service_login_token_mocked_requests)
     def test_get_self_service_login_token_unsuccessful(self, mock_get):
@@ -409,21 +413,16 @@ class OPCUATestCase(unittest.TestCase):
 
     def test_get_self_service_token_expired(self):
         ory_client = ORY_CLIENT(rest_url=URL, username=username, password=password)
-        ory_client.token_expires_at = datetime.datetime.now() - datetime.timedelta(hours=2)
+        ory_client.token = Token(access_token=ory_session_id, expires_at=ory_expires_at_2hrs_ago)
+        ory_client.token.expires_at = datetime.datetime.now() - datetime.timedelta(hours=2)
         token_expired = ory_client.check_if_token_has_expired()
         assert token_expired == True
 
     def test_get_self_service_token_expired_none(self):
         ory_client = ORY_CLIENT(rest_url=URL, username=username, password=password)
-        ory_client.token_expires_at = None
+        ory_client.token = Token(access_token=ory_session_id, expires_at=None)
         token_expired = ory_client.check_if_token_has_expired()
         assert token_expired == False
-
-    def test_get_self_service_datetime_format(self):
-        ory_client = ORY_CLIENT(rest_url=URL, username=username, password=password)
-        date_now = datetime.datetime.now()
-        date_now_iso = f'{date_now.isoformat()}Z'
-        assert date_now == ory_client.format_datestring_to_datetime(date_now_iso)
 
 if __name__ == "__main__":
     unittest.main()

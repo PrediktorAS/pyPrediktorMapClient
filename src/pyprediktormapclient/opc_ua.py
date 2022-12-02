@@ -9,6 +9,7 @@ from typing import Dict, List, Union, Optional
 from pydantic import BaseModel, HttpUrl, AnyUrl, validate_arguments
 from pyprediktormapclient.shared import request_from_api
 from pyprediktormapclient.ory_client import ORY_CLIENT
+from requests import HTTPError
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -153,7 +154,8 @@ class OPC_UA:
         self.headers = {"Content-Type": "application/json"}
         self.ory_client = ory_client
         if self.ory_client is not None:
-            self.headers["Authorization"] = f"Bearer {self.ory_client.session_token}"
+            if self.ory_client.token is not None:
+                self.headers["Authorization"] = f"Bearer {self.ory_client.token.access_token}"
         self.body = {"Connection": {"Url": self.opcua_url, "AuthenticationType": 1}}
         if namespaces:
             self.body["ClientNamespaces"] = namespaces
@@ -168,10 +170,9 @@ class OPC_UA:
     def check_ory_client(self, content):
         if self.ory_client is None:
             raise Exception("ORY_CLIENT not set")
-        if (content.status == 410 or 
-            (content.status == 500 and content.get("ErrorMessage").get("id") == "self_service_flow_expired")):
-            self.ory_client.refresh_token()
-            self.headers["Authorization"] = f"Bearer {self.ory_client.session_token}"
+        if (content.get('error').get('code') == 404):
+            self.ory_client.request_new_ory_token()
+            self.headers["Authorization"] = f"Bearer {self.ory_client.token.access_token}"
         else:
             raise RuntimeError(content.get("ErrorMessage"))
 
@@ -221,14 +222,30 @@ class OPC_UA:
         body = copy.deepcopy(self.body)
         print(str(json.dumps([body])))
         body["NodeIds"] = vars
-        content = request_from_api(
-            rest_url=self.rest_url,
-            method="POST",
-            endpoint="values/get",
-            data=json.dumps([body], default=self.json_serial),
-            headers=self.headers,
-            extended_timeout=True,
-        )
+        try:
+            content = request_from_api(
+                rest_url=self.rest_url,
+                method="POST",
+                endpoint="values/get",
+                data=json.dumps([body], default=self.json_serial),
+                headers=self.headers,
+                extended_timeout=True,
+            )
+        except HTTPError as e:
+            # print(.get('error').get('code'))
+            if self.ory_client is not None:
+                self.check_ory_client(json.loads(e.response.content))
+            else:
+                raise RuntimeError(f'Error message {e}')
+        finally:
+            content = request_from_api(
+                rest_url=self.rest_url,
+                method="POST",
+                endpoint="values/get",
+                data=json.dumps([body], default=self.json_serial),
+                headers=self.headers,
+                extended_timeout=True,
+            )
 
         for var in vars:
             # Add default None values
@@ -245,10 +262,7 @@ class OPC_UA:
         # Choose first item and return if not successful
         content = content[0]
         if content.get("Success") is False:
-            if self.ory_client is not None:
-                self.check_ory_client(content)
-            else:
-                raise RuntimeError(content.get("ErrorMessage"))
+            raise RuntimeError(content.get("ErrorMessage"))
 
         # Return if missing values
         if not content.get("Values"):
@@ -308,26 +322,38 @@ class OPC_UA:
         body["ProcessingInterval"] = pro_interval
         body["ReadValueIds"] = extended_variables
         body["AggregateName"] = agg_name
-        content = request_from_api(
-            rest_url=self.rest_url,
-            method="POST",
-            endpoint="values/historicalaggregated",
-            data=json.dumps(body, default=self.json_serial),
-            headers=self.headers,
-            extended_timeout=True,
-        )
-
+        try:
+            #Try making the request, if failes check if it is due to ory client
+            content = request_from_api(
+                rest_url=self.rest_url,
+                method="POST",
+                endpoint="values/historicalaggregated",
+                data=json.dumps(body, default=self.json_serial),
+                headers=self.headers,
+                extended_timeout=True,
+            )
+        except HTTPError as e:
+            if self.ory_client is not None:
+                self.check_ory_client(json.loads(e.response.content))
+            else:
+                raise RuntimeError(f'Error message {e}')
+        finally:
+            content = request_from_api(
+                rest_url=self.rest_url,
+                method="POST",
+                endpoint="values/historicalaggregated",
+                data=json.dumps(body, default=self.json_serial),
+                headers=self.headers,
+                extended_timeout=True,
+            )
 
         # Return if no content from server
         if not isinstance(content, dict):
             raise RuntimeError("No content returned from the server")
 
-        # Return if not successful
+        # Return if not successful, but check ory status id ory is enabled
         if content.get("Success") is False:
-            if self.ory_client is not None:
-                self.check_ory_client(content)
-            else:
-                raise RuntimeError(content.get("ErrorMessage"))
+            raise RuntimeError(content.get("ErrorMessage"))
 
         # Check for HistoryReadResults
         if not "HistoryReadResults" in content:
@@ -396,15 +422,30 @@ class OPC_UA:
         vars = self._get_variable_list_as_list(variable_list)
         body = copy.deepcopy(self.body)
         body["WriteValues"] = vars
-        content = request_from_api(
-            rest_url=self.rest_url,
-            method="POST",
-            endpoint="values/set",
-            data=json.dumps([body], default=self.json_serial),
-            headers=self.headers,
-            extended_timeout=True,
-        )
-
+        try:
+            content = request_from_api(
+                rest_url=self.rest_url,
+                method="POST",
+                endpoint="values/set",
+                data=json.dumps([body], default=self.json_serial),
+                headers=self.headers,
+                extended_timeout=True,
+            )
+        except HTTPError as e:
+            # print(.get('error').get('code'))
+            if self.ory_client is not None:
+                self.check_ory_client(json.loads(e.response.content))
+            else:
+                raise RuntimeError(f'Error message {e}')
+        finally:
+            content = request_from_api(
+                rest_url=self.rest_url,
+                method="POST",
+                endpoint="values/set",
+                data=json.dumps([body], default=self.json_serial),
+                headers=self.headers,
+                extended_timeout=True,
+            )
         # Return if no content from server
         if not isinstance(content, dict):
             return None
@@ -438,15 +479,29 @@ class OPC_UA:
         vars = self._get_variable_list_as_list(variable_list)
         body = copy.deepcopy(self.body)
         body["UpdateDataDetails"] = vars
-        content = request_from_api(
-            rest_url=self.rest_url,
-            method="POST",
-            endpoint="values/historicalwrite",
-            data=json.dumps(body, default=self.json_serial),
-            headers=self.headers,
-            extended_timeout=True,
-        )
-
+        try:
+            content = request_from_api(
+                rest_url=self.rest_url,
+                method="POST",
+                endpoint="values/historicalwrite",
+                data=json.dumps(body, default=self.json_serial),
+                headers=self.headers,
+                extended_timeout=True,
+            )
+        except HTTPError as e:
+            if self.ory_client is not None:
+                self.check_ory_client(json.loads(e.response.content))
+            else:
+                raise RuntimeError(f'Error message {e}')
+        finally:
+            content = request_from_api(
+                rest_url=self.rest_url,
+                method="POST",
+                endpoint="values/historicalwrite",
+                data=json.dumps(body, default=self.json_serial),
+                headers=self.headers,
+                extended_timeout=True,
+            )
         # Return if no content from server
         if not isinstance(content, dict):
             return None
@@ -471,8 +526,6 @@ class OPC_UA:
     def check_if_ory_session_token_is_valid_refresh(self):
         """Check if the session token is still valid
 
-        Returns:
-            bool: True if valid, False if not
         """
         if self.ory_client.check_if_token_has_expired():
             self.ory_client.refresh_token()

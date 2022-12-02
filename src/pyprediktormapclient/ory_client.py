@@ -8,6 +8,10 @@ class Ory_Login_Structure(BaseModel):
     identifier: str
     password: str
 
+class Token(BaseModel):
+    access_token: str
+    expires_at: datetime.datetime = None
+    expired: bool = None
 
 class ORY_CLIENT:
     """Helper functions to authenticate with Ory
@@ -39,17 +43,9 @@ class ORY_CLIENT:
         self.rest_url = rest_url
         self.username = username
         self.password = password
-        self.cookies = None
-        self.session_token = None
         self.id = None
-        self.token_expired = None
+        self.token = None
         self.headers = {"Content-Type": "application/json"}
-        # self.request_new_ory_token()
-
-    def format_datestring_to_datetime(self, datestring) -> datetime:
-        """Format datestring to datetime
-        """
-        return datetime.datetime.strptime(datestring, "%Y-%m-%dT%H:%M:%S.%fZ")
 
     @validate_arguments
     def get_login_id(self) -> None:
@@ -93,25 +89,24 @@ class ORY_CLIENT:
         # Return if no content from server
         if not isinstance(content.get("session_token"), str):
             raise RuntimeError(content.get("ErrorMessage"))
-        self.session_token = content.get("session_token")
+        self.token = Token(access_token=content.get("session_token"))
 
         # Check if token has expiry date, save it if it does
         if isinstance(content.get("session").get("expires_at"), str):
-            expires_at = content.get("session").get("expires_at")
             # String returned from ory has to many chars in microsec. Remove them
             try:
-                self.token_expires_at = self.format_datestring_to_datetime(expires_at[:26] + expires_at[-1])
+                self.token = Token(access_token=self.token.access_token, expires_at=content.get("session").get("expires_at"), expired=None)
             except Exception:
                 # If string returned from Ory cant be parsed, still should be possible to use Ory,
                 #  might be a setting in Ory to not return expiry date
-                self.token_expires_at = None
+                self.token = Token(access_token=self.token.access_token, expires_at=None, expired=None)
 
     def check_if_token_has_expired(self) -> bool:
         """Check if token has expired
         """
-        if self.token_expires_at is None:
+        if self.token.expires_at is None:
             return False
-        return datetime.datetime.utcnow() > self.token_expires_at
+        return datetime.datetime.utcnow() > self.token.expires_at
 
     def request_new_ory_token(self) -> None:
         """Request Ory token

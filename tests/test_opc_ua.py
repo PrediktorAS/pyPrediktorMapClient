@@ -9,9 +9,15 @@ import pandas as pd
 import pandas.api.types as ptypes
 
 from pyprediktormapclient.opc_ua import OPC_UA, Variables
+from pyprediktormapclient.ory_client import ORY_CLIENT, Token
 
 URL = "http://someserver.somedomain.com/v1/"
 OPC_URL = "opc.tcp://nosuchserver.nosuchdomain.com"
+username = "some@user.com"
+password = "somepassword"
+ory_id = "0b518533-fb09-4bb7-a51f-166d3453685e"
+ory_session_id = "qlZULxcaNc6xVdXQfqPxwix5v3tuCLaO"
+ory_expires_at = "2022-12-04T07:31:28.767407252Z"
 
 list_of_ids = [
     {"Id": "SOMEID", "Namespace": 1, "IdType": 2},
@@ -536,9 +542,46 @@ class OPCUATestCase(unittest.TestCase):
         assert "Id" in result[0]
         assert result[0]["Id"] == "ID"
 
+    def test_check_ory_client_is_none(self):
+        opc = OPC_UA(rest_url=URL, opcua_url=OPC_URL, ory_client=None)
+        with pytest.raises(Exception):
+            opc.check_ory_client()
+
+
     @mock.patch("requests.post", side_effect=successful_mocked_requests)
     def test_get_live_values_successful(self, mock_get):
         tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
+        result = tsdata.get_values(list_of_ids)
+        for num, row in enumerate(list_of_ids):
+            assert result[num]["Id"] == list_of_ids[num]["Id"]
+            assert (
+                result[num]["Timestamp"]
+                == successful_live_response[0]["Values"][num]["ServerTimestamp"]
+            )
+            assert (
+                result[num]["Value"]
+                == successful_live_response[0]["Values"][num]["Value"]["Body"]
+            )
+            assert (
+                result[num]["ValueType"]
+                == tsdata._get_value_type(
+                    successful_live_response[0]["Values"][num]["Value"]["Type"]
+                )["type"]
+            )
+            assert (
+                result[num]["StatusCode"]
+                == successful_live_response[0]["Values"][num]["StatusCode"]["Code"]
+            )
+            assert (
+                result[num]["StatusSymbol"]
+                == successful_live_response[0]["Values"][num]["StatusCode"]["Symbol"]
+            )
+
+    @mock.patch("requests.post", side_effect=successful_mocked_requests)
+    def test_get_live_values_successful_with_ory(self, mock_get):
+        ory_client = ORY_CLIENT(rest_url=URL, username=username, password=password)
+        ory_client.token = Token(access_token=ory_session_id, expires_at=ory_expires_at)
+        tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL, ory_client=ory_client)
         result = tsdata.get_values(list_of_ids)
         for num, row in enumerate(list_of_ids):
             assert result[num]["Id"] == list_of_ids[num]["Id"]
