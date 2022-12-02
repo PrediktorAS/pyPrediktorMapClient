@@ -1,12 +1,9 @@
-import requests
 import unittest
 from unittest import mock
 import pytest
-from pydantic import ValidationError, BaseModel
+from pydantic import ValidationError
 from copy import deepcopy
 import datetime
-import pandas as pd
-import pandas.api.types as ptypes
 
 from pyprediktormapclient.ory_client import ORY_CLIENT, Token
 
