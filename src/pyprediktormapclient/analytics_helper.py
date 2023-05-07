@@ -263,15 +263,15 @@ class AnalyticsHelper:
         variables_frame = self.dataframe.explode("Vars")
         # Remove the Props column
         variables_frame.drop(columns=["Props"], inplace=True)
+
         # Add new columns
-        variables_frame["VariableId"] = ""
-        variables_frame["VariableName"] = ""
-        variables_frame["VariableIdSplit"] = ""
-        # Iterate over the rows and add to the new columns
-        for index, row in variables_frame.iterrows():
-            row["VariableId"] = row["Vars"]["Id"]
-            row["VariableName"] = row["Vars"]["DisplayName"]
-            row["VariableIdSplit"] = self.split_id(row["Vars"]["Id"])
+        variables_frame[['VariableId', 'VariableName', 'VariableIdSplit']] =\
+            variables_frame['Vars'].apply(lambda x: pd.Series({
+                'VariableId': x['Id'],
+                'VariableName': x['DisplayName'],
+                'VariableIdSplit': self.split_id(x['Id'])
+            }))
+
         # Remove the original Vars column
         variables_frame.drop(columns=["Vars"], inplace=True)
 
