@@ -229,10 +229,14 @@ class AnalyticsHelper:
         # Add Property and Value vcolumns
         propery_frame["Property"] = ""
         propery_frame["Value"] = ""
-        # Iterate over the rows and add to the new columns
-        for index, row in propery_frame.iterrows():
-            row["Property"] = row["Props"]["DisplayName"]
-            row["Value"] = row["Props"]["Value"]
+
+        # Add new columns
+        propery_frame[['Property', 'Value']] =\
+            propery_frame['Props'].apply(lambda x: pd.Series({
+                'Property': x['DisplayName'],
+                'Value': x['DisplayName']
+            }))
+
         # Remove original Props column
         propery_frame.drop(columns=["Props"], inplace=True)
 
