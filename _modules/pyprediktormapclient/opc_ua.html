@@ -3,17 +3,16 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pyprediktormapclient.opc_ua &mdash; pyPrediktorMapClient 0.4.0 documentation</title>
+  <title>pyprediktormapclient.opc_ua &mdash; pyPrediktorMapClient 0.4.1 documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
         <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/underscore.js"></script>
         <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
         <script src="../../_static/doctools.js"></script>
         <script src="../../_static/sphinx_highlight.js"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -26,14 +25,18 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="../../index.html" class="icon icon-home"> pyPrediktorMapClient
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            pyPrediktorMapClient
           </a>
               <div class="version">
-                0.4.0
+                0.4.1
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -61,7 +64,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../../index.html" class="icon icon-home"></a></li>
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
       <li class="breadcrumb-item active">pyprediktormapclient.opc_ua</li>
       <li class="wy-breadcrumbs-aside">
@@ -90,7 +93,7 @@
 
 
 <div class="viewcode-block" id="Variables"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.Variables">[docs]</a><span class="k">class</span> <span class="nc">Variables</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Helper class to parse all values api&#39;s.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper class to parse all values api&#39;s.</span>
 <span class="sd">    Variables are described in https://reference.opcfoundation.org/v104/Core/docs/Part3/8.2.1/</span>
 
 <span class="sd">        Variables:</span>
@@ -103,7 +106,7 @@
     <span class="n">IdType</span><span class="p">:</span> <span class="nb">int</span></div>
 
 <div class="viewcode-block" id="SubValue"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.SubValue">[docs]</a><span class="k">class</span> <span class="nc">SubValue</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Helper class to parse all values api&#39;s.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper class to parse all values api&#39;s.</span>
 
 <span class="sd">        Variables:</span>
 <span class="sd">            Type: int - Type of variable, e.g. 12. string, 11. float, etc. list of types described in https://reference.opcfoundation.org/Core/Part6/v104/5.1.2/ </span>
@@ -113,7 +116,7 @@
     <span class="n">Body</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]</span></div>
 
 <div class="viewcode-block" id="HistoryValue"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.HistoryValue">[docs]</a><span class="k">class</span> <span class="nc">HistoryValue</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Helper class to parse all values api&#39;s.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper class to parse all values api&#39;s.</span>
 
 <span class="sd">        Variables:</span>
 <span class="sd">            Value: SubValue - Containing Type and Body (value) of the variable. Described in SubValue class.</span>
@@ -121,7 +124,7 @@
     <span class="n">Value</span><span class="p">:</span> <span class="n">SubValue</span></div>
 
 <div class="viewcode-block" id="StatusCode"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.StatusCode">[docs]</a><span class="k">class</span> <span class="nc">StatusCode</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Helper class to parse all values api&#39;s.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper class to parse all values api&#39;s.</span>
 
 <span class="sd">        Variables:</span>
 <span class="sd">            Code: Optional[int] - Status code, described in https://reference.opcfoundation.org/v104/Core/docs/Part8/A.4.3/</span>
@@ -131,7 +134,7 @@
     <span class="n">Symbol</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span></div>
 
 <div class="viewcode-block" id="Value"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.Value">[docs]</a><span class="k">class</span> <span class="nc">Value</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Helper class to parse all values api&#39;s.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper class to parse all values api&#39;s.</span>
 
 <span class="sd">        Variables:</span>
 <span class="sd">            Value: SubValue - Containing Type and Body (value) of the variable. Described in SubValue class.</span>
@@ -149,7 +152,7 @@
     <span class="n">StatusCode</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">StatusCode</span><span class="p">]</span></div>
 
 <div class="viewcode-block" id="WriteVariables"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.WriteVariables">[docs]</a><span class="k">class</span> <span class="nc">WriteVariables</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Helper class for write values api.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper class for write values api.</span>
 
 <span class="sd">        Variables:</span>
 <span class="sd">                NodeId: Variables - The complete node&#39;id for the variable</span>
@@ -159,7 +162,7 @@
     <span class="n">Value</span><span class="p">:</span> <span class="n">Value</span></div>
 
 <div class="viewcode-block" id="WriteHistoricalVariables"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.WriteHistoricalVariables">[docs]</a><span class="k">class</span> <span class="nc">WriteHistoricalVariables</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Helper class for write historical values api.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper class for write historical values api.</span>
 
 <span class="sd">        Variables:</span>
 <span class="sd">            NodeId (str): The complete node&#39;id for the variable</span>
@@ -171,7 +174,7 @@
     <span class="n">UpdateValues</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Value</span><span class="p">]</span></div>
 
 <div class="viewcode-block" id="WriteVariablesResponse"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.WriteVariablesResponse">[docs]</a><span class="k">class</span> <span class="nc">WriteVariablesResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Helper class for write historical values api.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper class for write historical values api.</span>
 
 <span class="sd">        Variables:</span>
 <span class="sd">            SymbolCodes: List[StatusCode] - A list of class StatusCode, described in StatusCode class.</span>
@@ -179,7 +182,7 @@
     <span class="n">SymbolCodes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">StatusCode</span><span class="p">]</span></div>
 
 <div class="viewcode-block" id="WriteReturn"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.WriteReturn">[docs]</a><span class="k">class</span> <span class="nc">WriteReturn</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Helper class to collect API output with API input to see successfull writes for nodes.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper class to collect API output with API input to see successfull writes for nodes.</span>
 
 <span class="sd">        Variables:</span>
 <span class="sd">            Id: str - The Id of the signal</span>
@@ -193,7 +196,7 @@
     <span class="n">Success</span><span class="p">:</span> <span class="nb">bool</span></div>
 
 <div class="viewcode-block" id="OPC_UA"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA">[docs]</a><span class="k">class</span> <span class="nc">OPC_UA</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Helper functions to access the OPC UA REST Values API server</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper functions to access the OPC UA REST Values API server</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        rest_url (str): The complete url of the OPC UA Values REST API. E.g. &quot;http://127.0.0.1:13371/&quot;</span>
@@ -214,7 +217,7 @@
 
     <span class="nd">@validate_arguments</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rest_url</span><span class="p">:</span> <span class="n">HttpUrl</span><span class="p">,</span> <span class="n">opcua_url</span><span class="p">:</span> <span class="n">AnyUrl</span><span class="p">,</span> <span class="n">namespaces</span><span class="p">:</span> <span class="n">List</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">auth_client</span><span class="p">:</span> <span class="nb">object</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Class initializer</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Class initializer</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            rest_url (str): The complete url of the OPC UA Values REST API. E.g. &quot;http://127.0.0.1:13371/&quot;</span>
@@ -235,7 +238,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="p">[</span><span class="s2">&quot;ClientNamespaces&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">namespaces</span>
 
 <div class="viewcode-block" id="OPC_UA.json_serial"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.json_serial">[docs]</a>    <span class="k">def</span> <span class="nf">json_serial</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;JSON serializer for objects not serializable by default json code&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;JSON serializer for objects not serializable by default json code&quot;&quot;&quot;</span>
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="p">(</span><span class="n">datetime</span><span class="p">,</span> <span class="n">date</span><span class="p">)):</span>
             <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
@@ -250,7 +253,7 @@
 
     <span class="nd">@validate_arguments</span>
     <span class="k">def</span> <span class="nf">_get_value_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Internal function to get the type of a value from the OPC UA return,as documentet at</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Internal function to get the type of a value from the OPC UA return,as documentet at</span>
 <span class="sd">        https://docs.prediktor.com/docs/opcuavaluesrestapi/datatypes.html#variant</span>
 
 <span class="sd">        Args:</span>
@@ -264,7 +267,7 @@
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_get_variable_list_as_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable_list</span><span class="p">:</span> <span class="n">List</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Internal function to convert a list of pydantic Variable models to a</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Internal function to convert a list of pydantic Variable models to a</span>
 <span class="sd">        list of dicts</span>
 
 <span class="sd">        Args:</span>
@@ -282,7 +285,7 @@
 
 <div class="viewcode-block" id="OPC_UA.get_values"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.get_values">[docs]</a>    <span class="nd">@validate_arguments</span>
     <span class="k">def</span> <span class="nf">get_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Variables</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Request realtime values from the OPC UA server</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Request realtime values from the OPC UA server</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            variable_list (list): A list of variables you want, containing keys &quot;Id&quot;, &quot;Namespace&quot; and &quot;IdType&quot;</span>
@@ -365,7 +368,7 @@
         <span class="n">agg_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">variable_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Variables</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Request historical aggregated values from the OPC UA server</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Request historical aggregated values from the OPC UA server</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            start_time (datetime.datetime): start time of requested data</span>
@@ -482,7 +485,7 @@
 
 <div class="viewcode-block" id="OPC_UA.write_values"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.write_values">[docs]</a>    <span class="nd">@validate_arguments</span>
     <span class="k">def</span> <span class="nf">write_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">WriteVariables</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Request to write realtime values to the OPC UA server</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Request to write realtime values to the OPC UA server</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            variable_list (list): A list of variables you want to write to with the value, timestamp and quality, containing keys &quot;Id&quot;, &quot;Namespace&quot;, &quot;Values&quot; and &quot;IdType&quot;.</span>
@@ -532,7 +535,7 @@
 
 <div class="viewcode-block" id="OPC_UA.write_historical_values"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.write_historical_values">[docs]</a>    <span class="nd">@validate_arguments</span>
     <span class="k">def</span> <span class="nf">write_historical_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">WriteHistoricalVariables</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Request to write realtime values to the OPC UA server</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Request to write realtime values to the OPC UA server</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            variable_list (list): A list of variables you want, containing keys &quot;Id&quot;, &quot;Namespace&quot;, &quot;Values&quot; and &quot;IdType&quot;. Values must be in descending order of the timestamps.</span>
@@ -594,7 +597,7 @@
         <span class="k">return</span> <span class="nb">vars</span></div>
 
 <div class="viewcode-block" id="OPC_UA.check_if_ory_session_token_is_valid_refresh"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.check_if_ory_session_token_is_valid_refresh">[docs]</a>    <span class="k">def</span> <span class="nf">check_if_ory_session_token_is_valid_refresh</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Check if the session token is still valid</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if the session token is still valid</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_client</span><span class="o">.</span><span class="n">check_if_token_has_expired</span><span class="p">():</span>

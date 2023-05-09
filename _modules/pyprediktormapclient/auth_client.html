@@ -3,17 +3,16 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pyprediktormapclient.auth_client &mdash; pyPrediktorMapClient 0.4.0 documentation</title>
+  <title>pyprediktormapclient.auth_client &mdash; pyPrediktorMapClient 0.4.1 documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
         <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/underscore.js"></script>
         <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
         <script src="../../_static/doctools.js"></script>
         <script src="../../_static/sphinx_highlight.js"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -26,14 +25,18 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="../../index.html" class="icon icon-home"> pyPrediktorMapClient
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            pyPrediktorMapClient
           </a>
               <div class="version">
-                0.4.0
+                0.4.1
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -61,7 +64,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../../index.html" class="icon icon-home"></a></li>
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
       <li class="breadcrumb-item active">pyprediktormapclient.auth_client</li>
       <li class="wy-breadcrumbs-aside">
@@ -89,7 +92,7 @@
     <span class="n">expired</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 <div class="viewcode-block" id="AUTH_CLIENT"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.auth_client.AUTH_CLIENT">[docs]</a><span class="k">class</span> <span class="nc">AUTH_CLIENT</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Helper functions to authenticate with Ory</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper functions to authenticate with Ory</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        rest_url (str): The complete url of the OPC UA Values REST API. E.g. &quot;http://127.0.0.1:13371/&quot;</span>
@@ -102,7 +105,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="nd">@validate_arguments</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rest_url</span><span class="p">:</span> <span class="n">HttpUrl</span><span class="p">,</span> <span class="n">username</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">password</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Class initializer</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Class initializer</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            rest_url (str): The complete url of the Ory server. E.g. &quot;http://127.0.0.1:9099/&quot;</span>
@@ -120,7 +123,7 @@
 
 <div class="viewcode-block" id="AUTH_CLIENT.get_login_id"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.auth_client.AUTH_CLIENT.get_login_id">[docs]</a>    <span class="nd">@validate_arguments</span>
     <span class="k">def</span> <span class="nf">get_login_id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Request login token from Ory</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Request login token from Ory</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">content</span> <span class="o">=</span> <span class="n">request_from_api</span><span class="p">(</span>
             <span class="n">rest_url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rest_url</span><span class="p">,</span>
@@ -140,7 +143,7 @@
 
 <div class="viewcode-block" id="AUTH_CLIENT.get_login_token"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.auth_client.AUTH_CLIENT.get_login_token">[docs]</a>    <span class="nd">@validate_arguments</span>
     <span class="k">def</span> <span class="nf">get_login_token</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Request login token from Ory</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Request login token from Ory</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;flow&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">}</span>
         <span class="n">body</span> <span class="o">=</span> <span class="p">(</span><span class="n">Ory_Login_Structure</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;password&quot;</span><span class="p">,</span> <span class="n">identifier</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">password</span><span class="p">)</span><span class="o">.</span><span class="n">dict</span><span class="p">())</span>
@@ -173,14 +176,14 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">token</span> <span class="o">=</span> <span class="n">Token</span><span class="p">(</span><span class="n">access_token</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">token</span><span class="o">.</span><span class="n">access_token</span><span class="p">,</span> <span class="n">expires_at</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">expired</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="AUTH_CLIENT.check_if_token_has_expired"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.auth_client.AUTH_CLIENT.check_if_token_has_expired">[docs]</a>    <span class="k">def</span> <span class="nf">check_if_token_has_expired</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Check if token has expired</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if token has expired</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">token</span><span class="o">.</span><span class="n">expires_at</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span>
         <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">token</span><span class="o">.</span><span class="n">expires_at</span></div>
 
 <div class="viewcode-block" id="AUTH_CLIENT.request_new_ory_token"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.auth_client.AUTH_CLIENT.request_new_ory_token">[docs]</a>    <span class="k">def</span> <span class="nf">request_new_ory_token</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Request Ory token</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Request Ory token</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">get_login_id</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">get_login_token</span><span class="p">()</span></div></div>
