@@ -4,11 +4,12 @@ import logging
 import datetime
 import copy
 import pandas as pd
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Dict, List, Union, Optional
 from pydantic import BaseModel, HttpUrl, AnyUrl, validate_arguments
 from pyprediktormapclient.shared import request_from_api
 from requests import HTTPError
+
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -403,6 +404,169 @@ class OPC_UA:
         )
 
         return df_result
+
+    ## New Functions
+    @validate_arguments
+    def get_historical_aggregated_values_batched(
+        self,
+        start_time: datetime,
+        end_time: datetime,
+        pro_interval: int,
+        agg_name: str,
+        variable_list: List[Variables],
+        batch_size: int = 1000,
+    ) -> pd.DataFrame:
+        """Request historical aggregated values from the OPC UA server with batching"""
+
+
+        time_batches = self.generate_time_batches(start_time, end_time, pro_interval, batch_size)
+        variable_batches = self.generate_variable_batches(variable_list, batch_size)
+
+        result_list = []
+
+        for time_batch_start, time_batch_end in time_batches:
+            for variable_sublist in variable_batches:
+                batch_response = self.make_api_request(time_batch_start, time_batch_end, pro_interval, agg_name, variable_sublist)
+                batch_result = self.process_api_response(batch_response)
+                result_list.append(batch_result)
+        result_df = pd.concat(result_list, ignore_index=True)
+
+        return result_df
+
+    def generate_time_batches(self, start_time: datetime, end_time: datetime, pro_interval: int, batch_size: int) -> List[tuple]:
+        """Generate time batches based on start time, end time, processing interval, and batch size"""
+
+        total_time_range = end_time - start_time
+        pro_interval_seconds = (pro_interval / 1000)
+        total_data_points = (total_time_range.total_seconds() // pro_interval_seconds) + 1
+
+        total_batches = math.ceil(total_data_points / batch_size)
+        actual_batch_size = math.ceil(total_data_points / total_batches)
+
+        time_batches = [
+            (start_time + timedelta(seconds=(i * actual_batch_size * pro_interval_seconds)),
+            start_time + timedelta(seconds=((i + 1) * actual_batch_size * pro_interval_seconds)) - timedelta(seconds=pro_interval_seconds))
+            for i in range(total_batches)
+        ]
+
+        return time_batches
+
+
+    def generate_variable_batches(self, variable_list: List[Variables], batch_size: int) -> List[List[Variables]]:
+        """Generate variable batches based on the variable list and batch size"""
+
+        variable_batches = [
+            variable_list[i:i + batch_size] for i in range(0, len(variable_list), batch_size)
+        ]
+
+        return variable_batches
+
+
+    def make_api_request(self, start_time: datetime, end_time: datetime, pro_interval: int, agg_name: str, variable_list: List[Variables]) -> dict:
+        """Make API request for the given time range and variable list"""
+
+        # Create a new variable list to remove pydantic models
+        vars = self._get_variable_list_as_list(variable_list)
+
+        extended_variables = []
+        for var in vars:
+            extended_variables.append(
+                {
+                    "NodeId": var,
+                    "AggregateName": agg_name,
+                }
+            )
+
+        body = copy.deepcopy(self.body)
+        body["StartTime"] = start_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+        body["EndTime"] = end_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+        body["ProcessingInterval"] = pro_interval
+        body["ReadValueIds"] = extended_variables
+        body["AggregateName"] = agg_name
+
+        try:
+            # Make API request
+            content = request_from_api(
+                rest_url=self.rest_url,
+                method="POST",
+                endpoint="values/historicalaggregated",
+                data=json.dumps(body, default=self.json_serial),
+                headers=self.headers,
+                extended_timeout=True,
+            )
+        except HTTPError as e:
+            if self.auth_client is not None:
+                self.check_auth_client(json.loads(e.response.content))
+            else:
+                raise RuntimeError(f'Error message {e}')
+
+        return content
+
+
+    def process_api_response(self, response: dict) -> pd.DataFrame:
+        """Process the API response and return the result dataframe"""
+
+        # Return if no content from server
+        if not isinstance(response, dict):
+            raise RuntimeError("No content returned from the server")
+
+        # Return if not successful, but check ory status id ory is enabled
+        if response.get("Success") is False:
+            raise RuntimeError(response.get("ErrorMessage"))
+
+        # Check for HistoryReadResults
+        if "HistoryReadResults" not in response:
+            raise RuntimeError(response.get("ErrorMessage"))
+
+        results_list = []
+        for x in response["HistoryReadResults"]:
+            results_list.append(x)
+
+        df_result = pd.DataFrame(results_list)
+        del df_result["StatusCode"]
+        df_result = pd.concat(
+            [df_result["NodeId"].apply(pd.Series), df_result.drop(["NodeId"], axis=1)],
+            axis=1,
+        )
+        df_result = df_result.explode("DataValues").reset_index(drop=True)
+        df_result = pd.concat(
+            [
+                df_result["DataValues"].apply(pd.Series),
+                df_result.drop(["DataValues"], axis=1),
+            ],
+            axis=1,
+        )
+        df_result = pd.concat(
+            [df_result["Value"].apply(pd.Series), df_result.drop(["Value"], axis=1)],
+            axis=1,
+        )
+        df_result = pd.concat(
+            [
+                df_result["StatusCode"].apply(pd.Series),
+                df_result.drop(["StatusCode"], axis=1),
+            ],
+            axis=1,
+        )
+
+        for i, row in df_result.iterrows():
+            if not math.isnan(row["Type"]):
+                df_result.at[i, "Type"] = self._get_value_type(int(row["Type"])).get("type")
+
+        df_result.rename(
+            columns={
+                "Type": "ValueType",
+                "Body": "Value",
+                "Symbol": "StatusSymbol",
+                "Code": "StatusCode",
+                "SourceTimestamp": "Timestamp",
+            },
+            errors="raise",
+            inplace=True,
+        )
+
+        return df_result
+
+    ## New Functions code ends here
 
 
     @validate_arguments
