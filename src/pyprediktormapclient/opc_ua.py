@@ -9,6 +9,7 @@ from typing import Dict, List, Union, Optional
 from pydantic import BaseModel, HttpUrl, AnyUrl, validate_arguments
 from pyprediktormapclient.shared import request_from_api
 from requests import HTTPError
+import asyncio
 
 
 logger = logging.getLogger(__name__)
@@ -406,6 +407,34 @@ class OPC_UA:
         return df_result
 
     ## New Functions
+
+    @validate_arguments
+    async def get_historical_aggregated_values_batched_async(
+        self,
+        start_time: datetime,
+        end_time: datetime,
+        pro_interval: int,
+        agg_name: str,
+        variable_list: List[Variables],
+        batch_size: int = 1000,
+    ) -> pd.DataFrame:
+        """Request historical aggregated values from the OPC UA server with batching"""
+
+
+        time_batches = self.generate_time_batches(start_time, end_time, pro_interval, batch_size)
+        variable_batches = self.generate_variable_batches(variable_list, batch_size)
+
+        result_list = []
+
+        for time_batch_start, time_batch_end in time_batches:
+            for variable_sublist in variable_batches:
+                batch_response = self.make_api_request(time_batch_start, time_batch_end, pro_interval, agg_name, variable_sublist)
+                batch_result = self.process_api_response(batch_response)
+                result_list.append(batch_result)
+        result_df = pd.concat(result_list, ignore_index=True)
+
+        return result_df
+
     @validate_arguments
     def get_historical_aggregated_values_batched(
         self,
