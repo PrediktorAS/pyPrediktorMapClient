@@ -355,52 +355,28 @@ class OPC_UA:
         if not "HistoryReadResults" in content:
             raise RuntimeError(content.get("ErrorMessage"))
 
-        results_list = []
-        for x in content["HistoryReadResults"]:
-            results_list.append(x)
-        # print(results_list)
-        df_result = pd.DataFrame(results_list)
-        del df_result["StatusCode"]
-        df_result = pd.concat(
-            [df_result["NodeId"].apply(pd.Series), df_result.drop(["NodeId"], axis=1)],
-            axis=1,
-        )
-        df_result = df_result.explode("DataValues").reset_index(drop=True)
-        df_result = pd.concat(
-            [
-                df_result["DataValues"].apply(pd.Series),
-                df_result.drop(["DataValues"], axis=1),
-            ],
-            axis=1,
-        )
-        df_result = pd.concat(
-            [df_result["Value"].apply(pd.Series), df_result.drop(["Value"], axis=1)],
-            axis=1,
-        )
-        df_result = pd.concat(
-            [
-                df_result["StatusCode"].apply(pd.Series),
-                df_result.drop(["StatusCode"], axis=1),
-            ],
-            axis=1,
-        )
+        df_result = pd.json_normalize(content, record_path=['HistoryReadResults', 'DataValues'], meta=[['HistoryReadResults', 'NodeId', 'IdType'], ['HistoryReadResults', 'NodeId','Id'],['HistoryReadResults', 'NodeId','Namespace']] )
+
         for i, row in df_result.iterrows():
-            if not math.isnan(row["Type"]):
-                df_result.at[i, "Type"] = self._get_value_type(int(row["Type"])).get(
+            if not math.isnan(row["Value.Type"]):
+                df_result.at[i, "Value.Type"] = self._get_value_type(int(row["Value.Type"])).get(
                     "type"
                 )
 
         df_result.rename(
             columns={
-                "Type": "ValueType",
-                "Body": "Value",
-                "Symbol": "StatusSymbol",
-                "Code": "StatusCode",
+                "Value.Type": "ValueType",
+                "Value.Body": "Value",
+                "StatusCode.Symbol": "StatusSymbol",
+                "StatusCode.Code": "StatusCode",
                 "SourceTimestamp": "Timestamp",
+                "HistoryReadResults.NodeId.IdType": "Id",
+                "HistoryReadResults.NodeId.Namespace": "Namespace",
             },
             errors="raise",
             inplace=True,
         )
+
 
         return df_result
 
