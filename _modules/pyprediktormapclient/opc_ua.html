@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pyprediktormapclient.opc_ua &mdash; pyPrediktorMapClient 0.4.1 documentation</title>
+  <title>pyprediktormapclient.opc_ua &mdash; pyPrediktorMapClient 0.4.2 documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -32,7 +32,7 @@
             pyPrediktorMapClient
           </a>
               <div class="version">
-                0.4.1
+                0.4.2
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -433,52 +433,28 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="s2">&quot;HistoryReadResults&quot;</span> <span class="ow">in</span> <span class="n">content</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">content</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ErrorMessage&quot;</span><span class="p">))</span>
 
-        <span class="n">results_list</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">content</span><span class="p">[</span><span class="s2">&quot;HistoryReadResults&quot;</span><span class="p">]:</span>
-            <span class="n">results_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="c1"># print(results_list)</span>
-        <span class="n">df_result</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">results_list</span><span class="p">)</span>
-        <span class="k">del</span> <span class="n">df_result</span><span class="p">[</span><span class="s2">&quot;StatusCode&quot;</span><span class="p">]</span>
-        <span class="n">df_result</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
-            <span class="p">[</span><span class="n">df_result</span><span class="p">[</span><span class="s2">&quot;NodeId&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">),</span> <span class="n">df_result</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s2">&quot;NodeId&quot;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)],</span>
-            <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">df_result</span> <span class="o">=</span> <span class="n">df_result</span><span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="s2">&quot;DataValues&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">df_result</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
-            <span class="p">[</span>
-                <span class="n">df_result</span><span class="p">[</span><span class="s2">&quot;DataValues&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">),</span>
-                <span class="n">df_result</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s2">&quot;DataValues&quot;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
-            <span class="p">],</span>
-            <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">df_result</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
-            <span class="p">[</span><span class="n">df_result</span><span class="p">[</span><span class="s2">&quot;Value&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">),</span> <span class="n">df_result</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s2">&quot;Value&quot;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)],</span>
-            <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">df_result</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
-            <span class="p">[</span>
-                <span class="n">df_result</span><span class="p">[</span><span class="s2">&quot;StatusCode&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">),</span>
-                <span class="n">df_result</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s2">&quot;StatusCode&quot;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
-            <span class="p">],</span>
-            <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="n">df_result</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">json_normalize</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">record_path</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;HistoryReadResults&#39;</span><span class="p">,</span> <span class="s1">&#39;DataValues&#39;</span><span class="p">],</span> <span class="n">meta</span><span class="o">=</span><span class="p">[[</span><span class="s1">&#39;HistoryReadResults&#39;</span><span class="p">,</span> <span class="s1">&#39;NodeId&#39;</span><span class="p">,</span> <span class="s1">&#39;IdType&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;HistoryReadResults&#39;</span><span class="p">,</span> <span class="s1">&#39;NodeId&#39;</span><span class="p">,</span><span class="s1">&#39;Id&#39;</span><span class="p">],[</span><span class="s1">&#39;HistoryReadResults&#39;</span><span class="p">,</span> <span class="s1">&#39;NodeId&#39;</span><span class="p">,</span><span class="s1">&#39;Namespace&#39;</span><span class="p">]]</span> <span class="p">)</span>
+
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">df_result</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;Type&quot;</span><span class="p">]):</span>
-                <span class="n">df_result</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="s2">&quot;Type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_value_type</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;Type&quot;</span><span class="p">]))</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;Value.Type&quot;</span><span class="p">]):</span>
+                <span class="n">df_result</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="s2">&quot;Value.Type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_value_type</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;Value.Type&quot;</span><span class="p">]))</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
                     <span class="s2">&quot;type&quot;</span>
                 <span class="p">)</span>
 
         <span class="n">df_result</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
             <span class="n">columns</span><span class="o">=</span><span class="p">{</span>
-                <span class="s2">&quot;Type&quot;</span><span class="p">:</span> <span class="s2">&quot;ValueType&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;Body&quot;</span><span class="p">:</span> <span class="s2">&quot;Value&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;Symbol&quot;</span><span class="p">:</span> <span class="s2">&quot;StatusSymbol&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;Code&quot;</span><span class="p">:</span> <span class="s2">&quot;StatusCode&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Value.Type&quot;</span><span class="p">:</span> <span class="s2">&quot;ValueType&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Value.Body&quot;</span><span class="p">:</span> <span class="s2">&quot;Value&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;StatusCode.Symbol&quot;</span><span class="p">:</span> <span class="s2">&quot;StatusSymbol&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;StatusCode.Code&quot;</span><span class="p">:</span> <span class="s2">&quot;StatusCode&quot;</span><span class="p">,</span>
                 <span class="s2">&quot;SourceTimestamp&quot;</span><span class="p">:</span> <span class="s2">&quot;Timestamp&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;HistoryReadResults.NodeId.IdType&quot;</span><span class="p">:</span> <span class="s2">&quot;Id&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;HistoryReadResults.NodeId.Namespace&quot;</span><span class="p">:</span> <span class="s2">&quot;Namespace&quot;</span><span class="p">,</span>
             <span class="p">},</span>
             <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;raise&quot;</span><span class="p">,</span>
             <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">)</span>
+
 
         <span class="k">return</span> <span class="n">df_result</span></div>
 
