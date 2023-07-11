@@ -1,7 +1,8 @@
-from pydantic import BaseModel, HttpUrl, validate_arguments
+from pydantic import BaseModel, HttpUrl, validate_call, AwareDatetime, field_validator
 from pyprediktormapclient.shared import request_from_api
 import datetime
 import json
+import re
 
 class Ory_Login_Structure(BaseModel):
     method: str
@@ -10,8 +11,17 @@ class Ory_Login_Structure(BaseModel):
 
 class Token(BaseModel):
     access_token: str
-    expires_at: datetime.datetime = None
-    expired: bool = None
+    expires_at: AwareDatetime = datetime.datetime.now()
+    expired: bool = True
+    
+    @field_validator('expires_at', mode='before')
+    def remove_nanoseconds(cls, v):
+        if v is None:
+            return v
+        elif re.match(r"(\d\d\d\d)-(\d\d)-(\d\d)T(\d\d):(\d\d):(\d\d).\d+(\S+)", v):
+            return datetime.datetime.strptime(f"{v[:-11]}.+00:00", "%Y-%m-%dT%H:%M:%S.%z")
+        return v
+    
 
 class AUTH_CLIENT:
     """Helper functions to authenticate with Ory
@@ -25,7 +35,7 @@ class AUTH_CLIENT:
         Object
 
     """
-    @validate_arguments
+    @validate_call
     def __init__(self, rest_url: HttpUrl, username: str, password: str):
         """Class initializer
 
@@ -43,7 +53,7 @@ class AUTH_CLIENT:
         self.token = None
         self.headers = {"Content-Type": "application/json"}
 
-    @validate_arguments
+    @validate_call
     def get_login_id(self) -> None:
         """Request login token from Ory
         """
@@ -63,12 +73,12 @@ class AUTH_CLIENT:
 
         self.id = content.get("id")
 
-    @validate_arguments
+    @validate_call
     def get_login_token(self) -> None:
         """Request login token from Ory
         """
         params = {"flow": self.id}
-        body = (Ory_Login_Structure(method="password", identifier=self.username, password=self.password).dict())
+        body = (Ory_Login_Structure(method="password", identifier=self.username, password=self.password).model_dump())
         content = request_from_api(
             rest_url=self.rest_url,
             method="POST",
@@ -90,12 +100,14 @@ class AUTH_CLIENT:
         # Check if token has expiry date, save it if it does
         if isinstance(content.get("session").get("expires_at"), str):
             # String returned from ory has to many chars in microsec. Remove them
+            #from_string = content.get("session").get("expires_at")
+            #date_object = datetime.datetime.strptime(f"{from_string[:-11]}.+00:00", "%Y-%m-%dT%H:%M:%S.%z")
             try:
-                self.token = Token(access_token=self.token.access_token, expires_at=content.get("session").get("expires_at"), expired=None)
+                self.token = Token(access_token=self.token.access_token, expires_at=content.get("session").get("expires_at"))
             except Exception:
                 # If string returned from Ory cant be parsed, still should be possible to use Ory,
                 #  might be a setting in Ory to not return expiry date
-                self.token = Token(access_token=self.token.access_token, expires_at=None, expired=None)
+                self.token = Token(access_token=self.token.access_token)
 
     def check_if_token_has_expired(self) -> bool:
         """Check if token has expired

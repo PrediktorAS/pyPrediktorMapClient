@@ -1,7 +1,7 @@
 import json
 import logging
 from typing import List
-from pydantic import HttpUrl, validate_arguments
+from pydantic import HttpUrl, validate_call
 from pyprediktormapclient.shared import request_from_api
 
 logger = logging.getLogger(__name__)
@@ -18,7 +18,7 @@ class ModelIndex:
         * Validate combination of url and endpoint
     """
 
-    @validate_arguments
+    @validate_call
     def __init__(self, url: HttpUrl):
         self.url = url
         self.object_types = self.get_object_types()
@@ -38,7 +38,7 @@ class ModelIndex:
 
         return content
 
-    @validate_arguments
+    @validate_call
     def get_object_type_id_from_name(self, type_name: str) -> str:
         """Get object type id from type name
 
@@ -58,7 +58,7 @@ class ModelIndex:
 
         return object_type_id
 
-    @validate_arguments
+    @validate_call
     def get_objects_of_type(self, type_name: str) -> str:
         """Function to get all the types of an object
 
@@ -77,7 +77,7 @@ class ModelIndex:
 
         return content
 
-    @validate_arguments
+    @validate_call
     def get_object_descendants(
         self,
         type_name: str,
@@ -106,7 +106,7 @@ class ModelIndex:
 
         return content
 
-    @validate_arguments
+    @validate_call
     def get_object_ancestors(
         self,
         type_name: str,
