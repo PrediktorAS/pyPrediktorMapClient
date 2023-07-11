@@ -10,6 +10,10 @@ from pydantic import BaseModel, HttpUrl, AnyUrl, validate_arguments
 from pyprediktormapclient.shared import request_from_api
 from requests import HTTPError
 import asyncio
+import multiprocessing
+from functools import partial
+import concurrent.futures
+import os
 
 
 logger = logging.getLogger(__name__)
@@ -409,8 +413,8 @@ class OPC_UA:
     ## New Functions
 
     @validate_arguments
-    async def get_historical_aggregated_values_batched_async(
-        self,
+    def get_historical_aggregated_values_batched_parallel(
+            self,
         start_time: datetime,
         end_time: datetime,
         pro_interval: int,
@@ -418,19 +422,81 @@ class OPC_UA:
         variable_list: List[Variables],
         batch_size: int = 1000,
     ) -> pd.DataFrame:
+
+        """Concurrent multithreading API requests to the OPC UA server for historical aggregated values"""
+
+        # Configure the logging
+        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+        # Set the number of CPU cores to utilize
+        self.num_cores = os.cpu_count()
+
+        
+        time_batches = self.generate_time_batches(start_time, end_time, pro_interval, batch_size)
+        logging.info("Number of time batches: %d", len(time_batches))
+        variable_batches = self.generate_variable_batches(variable_list, batch_size)
+        logging.info("Number of variable batches: %d", len(variable_batches))
+
+        result_list = []
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.num_cores) as executor:
+            futures = []
+
+            for time_batch_start, time_batch_end in time_batches:
+                for variable_sublist in variable_batches:
+                    logging.info(f"Making API request for time batch: {time_batch_start} - {time_batch_end}")
+                    future = executor.submit(
+                        self.make_api_request,
+                        time_batch_start,
+                        time_batch_end,
+                        pro_interval,
+                        agg_name,
+                        variable_sublist
+                    )
+                    futures.append(future)
+
+            for future in concurrent.futures.as_completed(futures):
+                batch_response = future.result()
+                logging.info("Processing API response...")
+                batch_result = self.process_api_response(batch_response)
+                result_list.append(batch_result)
+
+        logging.info("Concatenating results...")
+        result_df = pd.concat(result_list, ignore_index=True)
+        return result_df
+
+    @validate_arguments
+    async def get_historical_aggregated_values_batched_async(
+        self,
+        start_time: datetime,
+        end_time: datetime,
+        pro_interval: int,
+        agg_name: str,
+        variable_list: List[Variables],
+        batch_size: int = 1000
+    ) -> pd.DataFrame:
         """Request historical aggregated values from the OPC UA server with batching"""
 
+        # Configure the logging
+        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
+        #logging.info("Generating time batches...")
         time_batches = self.generate_time_batches(start_time, end_time, pro_interval, batch_size)
+
+        #logging.info("Generating variable batches...")
         variable_batches = self.generate_variable_batches(variable_list, batch_size)
 
         result_list = []
 
         for time_batch_start, time_batch_end in time_batches:
             for variable_sublist in variable_batches:
+                logging.info(f"Making API request for time batch: {time_batch_start} - {time_batch_end}")
                 batch_response = self.make_api_request(time_batch_start, time_batch_end, pro_interval, agg_name, variable_sublist)
+                
+                logging.info("Processing API response...")
                 batch_result = self.process_api_response(batch_response)
                 result_list.append(batch_result)
+
+        logging.info("Concatenating results...")        
         result_df = pd.concat(result_list, ignore_index=True)
 
         return result_df
