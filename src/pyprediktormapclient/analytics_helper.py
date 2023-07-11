@@ -2,7 +2,7 @@ import pandas as pd
 import json
 import logging
 from typing import List
-from pydantic import validate_arguments, constr
+from pydantic import validate_call, constr
 
 
 logger = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ class AnalyticsHelper:
         * Input checks for nodeIds in variables that requires format int:int:string
     """
 
-    @validate_arguments
+    @validate_call
     def __init__(self, input: List):
         self.dataframe = pd.DataFrame(input)  # Create a DataFrame from the input
         self.normalize()
@@ -105,7 +105,7 @@ class AnalyticsHelper:
                 self.dataframe = None
                 return
 
-    @validate_arguments
+    @validate_call
     def namespaces_as_list(self, list_of_dicts: List) -> List:
         """Takes the output of a get_namespace_array() request from ModelIndex and
         generates a list of strings that can be used for the OPC UA Values API
@@ -123,8 +123,8 @@ class AnalyticsHelper:
 
         return new_list
 
-    @validate_arguments
-    def split_id(self, id: constr(regex=r"^\d+:\d+:\S+$")):
+    @validate_call
+    def split_id(self, id: constr(pattern=r"^\d+:\d+:\S+$")):
         id_split = id.split(":")
         return {
             "Id": id_split[2],

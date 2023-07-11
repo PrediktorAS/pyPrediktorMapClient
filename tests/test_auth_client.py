@@ -417,7 +417,7 @@ class OPCUATestCase(unittest.TestCase):
 
     def test_get_self_service_token_expired_none(self):
         auth_client = AUTH_CLIENT(rest_url=URL, username=username, password=password)
-        auth_client.token = Token(access_token=auth_session_id, expires_at=None)
+        auth_client.token = Token(access_token=auth_session_id)
         token_expired = auth_client.check_if_token_has_expired()
         assert token_expired == False
 
