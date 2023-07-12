@@ -1,9 +1,9 @@
 import requests
-from pydantic import HttpUrl, validate_arguments
+from pydantic import HttpUrl, validate_call
 from typing import Literal
 
 
-@validate_arguments
+@validate_call
 def request_from_api(
     rest_url: HttpUrl,
     method: Literal["GET", "POST"],
@@ -25,12 +25,13 @@ def request_from_api(
         JSON: The result if successfull
     """
     request_timeout = (3, 300 if extended_timeout else 27)
+    combined_url = f"{rest_url}{endpoint}"
     if method == "GET":
-        result = requests.get(rest_url + endpoint, timeout=request_timeout, params=params, headers=headers)
+        result = requests.get(combined_url, timeout=request_timeout, params=params, headers=headers)
 
     if method == "POST":
         result = requests.post(
-            rest_url + endpoint, data=data, headers=headers, timeout=request_timeout, params=params
+            combined_url, data=data, headers=headers, timeout=request_timeout, params=params
         )
 
     result.raise_for_status()

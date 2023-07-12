@@ -6,7 +6,8 @@ import copy
 import pandas as pd
 from datetime import date, datetime
 from typing import Dict, List, Union, Optional
-from pydantic import BaseModel, HttpUrl, AnyUrl, validate_arguments
+from pydantic import BaseModel, HttpUrl, AnyUrl, validate_call
+from pydantic_core import Url
 from pyprediktormapclient.shared import request_from_api
 from requests import HTTPError
 
@@ -45,15 +46,15 @@ class HistoryValue(BaseModel):
     """
     Value: SubValue
 
-class StatusCode(BaseModel):
+class StatsCode(BaseModel):
     """Helper class to parse all values api's.
 
         Variables:
             Code: Optional[int] - Status code, described in https://reference.opcfoundation.org/v104/Core/docs/Part8/A.4.3/
             Symbol: Optional[str] - String value for status code, described in https://reference.opcfoundation.org/v104/Core/docs/Part8/A.4.3/
     """
-    Code: Optional[int]
-    Symbol: Optional[str]
+    Code: Optional[int] = None
+    Symbol: Optional[str] = None
 
 class Value(BaseModel):
     """Helper class to parse all values api's.
@@ -68,10 +69,10 @@ class Value(BaseModel):
     """
     Value: SubValue
     SourceTimestamp: datetime
-    SourcePicoseconds: Optional[int]
-    ServerTimestamp: Optional[datetime]
-    ServerPicoseconds: Optional[int]
-    StatusCode: Optional[StatusCode]
+    SourcePicoseconds: Optional[int] = None
+    ServerTimestamp: Optional[datetime] = None
+    ServerPicoseconds: Optional[int] = None
+    StatusCode: Optional[StatsCode] = None
 
 class WriteVariables(BaseModel):
     """Helper class for write values api.
@@ -101,7 +102,7 @@ class WriteVariablesResponse(BaseModel):
         Variables:
             SymbolCodes: List[StatusCode] - A list of class StatusCode, described in StatusCode class.
     """
-    SymbolCodes: List[StatusCode]
+    SymbolCodes: List[StatsCode]
 
 class WriteReturn(BaseModel):
     """Helper class to collect API output with API input to see successfull writes for nodes.
@@ -137,7 +138,7 @@ class OPC_UA:
         arbitrary_types_allowed = True
 
 
-    @validate_arguments
+    @validate_call
     def __init__(self, rest_url: HttpUrl, opcua_url: AnyUrl, namespaces: List = None, auth_client: object = None):
         """Class initializer
 
@@ -164,6 +165,8 @@ class OPC_UA:
 
         if isinstance(obj, (datetime, date)):
             return obj.isoformat()
+        elif isinstance(obj, Url):
+            return str(obj)
         raise TypeError (f"Type {type(obj)} not serializable")
 
     def check_auth_client(self, content):
@@ -173,7 +176,7 @@ class OPC_UA:
         else:
             raise RuntimeError(content.get("ErrorMessage"))
 
-    @validate_arguments
+    @validate_call
     def _get_value_type(self, id: int) -> Dict:
         """Internal function to get the type of a value from the OPC UA return,as documentet at
         https://docs.prediktor.com/docs/opcuavaluesrestapi/datatypes.html#variant
@@ -201,11 +204,11 @@ class OPC_UA:
         new_vars = []
         for var in variable_list:
             # Convert pydantic model to dict
-            new_vars.append(var.dict())
+            new_vars.append(var.model_dump())
 
         return new_vars
 
-    @validate_arguments
+    @validate_call
     def get_values(self, variable_list: List[Variables]) -> List:
         """Request realtime values from the OPC UA server
 
@@ -281,7 +284,7 @@ class OPC_UA:
 
         return vars
 
-    @validate_arguments
+    @validate_call
     def get_historical_aggregated_values(
         self,
         start_time: datetime,
@@ -381,7 +384,7 @@ class OPC_UA:
         return df_result
 
 
-    @validate_arguments
+    @validate_call
     def write_values(self, variable_list: List[WriteVariables]) -> List:
         """Request to write realtime values to the OPC UA server
 
@@ -431,7 +434,7 @@ class OPC_UA:
 
         return vars
 
-    @validate_arguments
+    @validate_call
     def write_historical_values(self, variable_list: List[WriteHistoricalVariables]) -> List:
         """Request to write realtime values to the OPC UA server
 
