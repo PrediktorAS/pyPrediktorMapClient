@@ -113,7 +113,7 @@ class AUTH_CLIENT:
         """Check if token has expired
         """
         if self.token.expires_at is None:
-            return False
+            return True
         return datetime.datetime.utcnow() > self.token.expires_at
 
     def request_new_ory_token(self) -> None:
