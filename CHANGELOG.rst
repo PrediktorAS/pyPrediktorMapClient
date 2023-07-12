@@ -2,6 +2,8 @@
 Changelog
 =========
 
+More recent changes: See github releases
+
 version 0.3.0
 ===========
 
