@@ -14,6 +14,12 @@ import multiprocessing
 from functools import partial
 import concurrent.futures
 import os
+import uuid
+import requests
+from requests import Session
+from concurrent.futures import ThreadPoolExecutor
+import threading
+
 
 
 logger = logging.getLogger(__name__)
@@ -413,7 +419,7 @@ class OPC_UA:
     ## New Functions
 
     @validate_arguments
-    async def get_historical_aggregated_values_batched_async_parallel(
+    def get_historical_aggregated_values_batched_multithread(
         self,
         start_time: datetime,
         end_time: datetime,
@@ -436,20 +442,84 @@ class OPC_UA:
         logging.info("Number of variable batches: %d", len(variable_batches))
 
         result_list = []
-
-        with concurrent.futures.ThreadPoolExecutor(max_workers=self.num_cores) as executor:
-            futures = []
-
+        batch_requests = []
+        #with concurrent.futures.ProcessPoolExecutor(max_workers=self.num_cores) as executor:
+        with ThreadPoolExecutor() as executor:
             for time_batch_start, time_batch_end in time_batches:
-                for variable_sublist in variable_batches:
-                    logging.info(f"Making API request for time batch: {time_batch_start} - {time_batch_end}")
-                    future = executor.submit(
+                for i,variable_sublist in enumerate(variable_batches):
+                    logging.info(f"Making API request for Time batch: {time_batch_start} - {time_batch_end} and Variable batch: {i}")
+
+                    current_batch_request = executor.submit(
                         self.make_api_request,
                         time_batch_start,
                         time_batch_end,
                         pro_interval,
                         agg_name,
                         variable_sublist
+                    )
+                    batch_requests.append(current_batch_request)
+
+            for breq in concurrent.futures.as_completed(batch_requests):
+                batch_response = breq.result()
+                logging.info("Processing API response...")
+                batch_result = self.process_api_response(batch_response)
+                result_list.append(batch_result)
+
+        logging.info("Concatenating results...")
+        result_df = pd.concat(result_list, ignore_index=True)
+        return result_df
+
+    @validate_arguments
+    async def get_historical_aggregated_values_batched_async_parallel1(
+        self,
+        start_time: datetime,
+        end_time: datetime,
+        pro_interval: int,
+        agg_name: str,
+        variable_list: List[Variables],
+        batch_size: int = 1000,
+    ) -> pd.DataFrame:
+        
+        """Request historical aggregated values with combination of Asyncio and Multiprocessing"""
+
+        # Configure the logging
+        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+        # Set the number of CPU cores to utilize
+        self.num_cores = os.cpu_count()
+
+        time_batches = self.generate_time_batches(start_time, end_time, pro_interval, batch_size)
+        logging.info("Number of time batches: %d", len(time_batches))
+        variable_batches = self.generate_variable_batches(variable_list, batch_size)
+        logging.info("Number of variable batches: %d", len(variable_batches))
+
+        result_list = []
+        NUM_SESSIONS = 100
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_SESSIONS) as executor:
+            futures = []
+            sessions = []
+
+            for _ in range(NUM_SESSIONS):
+                session = requests.Session()
+                sessions.append(session)
+
+            for time_batch_start, time_batch_end in time_batches:
+                for variable_sublist in variable_batches:
+                    logging.info(f"Making API request for time batch: {time_batch_start} - {time_batch_end}")
+
+                    # Get the session index based on the current iteration
+                    session_index = (time_batches.index((time_batch_start, time_batch_end)) * len(variable_batches)
+                                     + variable_batches.index(variable_sublist))
+
+                    session = sessions[session_index]
+                    future = executor.submit(
+                        self.make_api_request,
+                        time_batch_start,
+                        time_batch_end,
+                        pro_interval,
+                        agg_name,
+                        variable_sublist,
+                        session
                     )
                     futures.append(future)
 
@@ -471,15 +541,13 @@ class OPC_UA:
         pro_interval: int,
         agg_name: str,
         variable_list: List[Variables],
-        batch_size: int = 1000,
+        batch_size: int = 500,
     ) -> pd.DataFrame:
 
         """Concurrent multithreading API requests to the OPC UA server for historical aggregated values"""
 
         # Configure the logging
         logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-        # Set the number of CPU cores to utilize
-        self.num_cores = os.cpu_count()
 
         
         time_batches = self.generate_time_batches(start_time, end_time, pro_interval, batch_size)
@@ -488,20 +556,33 @@ class OPC_UA:
         logging.info("Number of variable batches: %d", len(variable_batches))
 
         result_list = []
+        NUM_SESSIONS = len(time_batches) * len(variable_batches)
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=self.num_cores) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_SESSIONS) as executor:
             futures = []
+            sessions = []
+
+            for _ in range(NUM_SESSIONS):
+                session = requests.Session()
+                sessions.append(session)
 
             for time_batch_start, time_batch_end in time_batches:
                 for variable_sublist in variable_batches:
                     logging.info(f"Making API request for time batch: {time_batch_start} - {time_batch_end}")
+
+                    # Get the session index based on the current iteration
+                    session_index = (time_batches.index((time_batch_start, time_batch_end)) * len(variable_batches)
+                                     + variable_batches.index(variable_sublist))
+
+                    session = sessions[session_index]
                     future = executor.submit(
                         self.make_api_request,
                         time_batch_start,
                         time_batch_end,
                         pro_interval,
                         agg_name,
-                        variable_sublist
+                        variable_sublist,
+                        session
                     )
                     futures.append(future)
 
@@ -631,15 +712,16 @@ class OPC_UA:
         body["AggregateName"] = agg_name
 
         try:
-            # Make API request
-            content = request_from_api(
-                rest_url=self.rest_url,
-                method="POST",
-                endpoint="values/historicalaggregated",
-                data=json.dumps(body, default=self.json_serial),
-                headers=self.headers,
-                extended_timeout=True,
-            )
+            with requests.Session() as s:
+                # Make API request
+                content = request_from_api(
+                    rest_url=self.rest_url,
+                    method="POST",
+                    endpoint="values/historicalaggregated",
+                    data=json.dumps(body, default=self.json_serial),
+                    headers=self.headers,
+                    extended_timeout=True,
+                )
         except HTTPError as e:
             if self.auth_client is not None:
                 self.check_auth_client(json.loads(e.response.content))
