@@ -6,7 +6,7 @@ import copy
 import pandas as pd
 from datetime import date, datetime, timedelta
 from typing import Dict, List, Union, Optional
-from pydantic import BaseModel, HttpUrl, AnyUrl, validate_call
+from pydantic import BaseModel, HttpUrl, AnyUrl
 from pydantic_core import Url
 from pyprediktormapclient.shared import request_from_api
 from requests import HTTPError
@@ -20,7 +20,8 @@ import requests
 from requests import Session
 from concurrent.futures import ThreadPoolExecutor
 import threading
-
+import aiohttp
+from pydantic import validate_call
 
 
 logger = logging.getLogger(__name__)
@@ -370,236 +371,34 @@ class OPC_UA:
         if not "HistoryReadResults" in content:
             raise RuntimeError(content.get("ErrorMessage"))
 
-        results_list = []
-        for x in content["HistoryReadResults"]:
-            results_list.append(x)
-        # print(results_list)
-        df_result = pd.DataFrame(results_list)
-        del df_result["StatusCode"]
-        df_result = pd.concat(
-            [df_result["NodeId"].apply(pd.Series), df_result.drop(["NodeId"], axis=1)],
-            axis=1,
-        )
-        df_result = df_result.explode("DataValues").reset_index(drop=True)
-        df_result = pd.concat(
-            [
-                df_result["DataValues"].apply(pd.Series),
-                df_result.drop(["DataValues"], axis=1),
-            ],
-            axis=1,
-        )
-        df_result = pd.concat(
-            [df_result["Value"].apply(pd.Series), df_result.drop(["Value"], axis=1)],
-            axis=1,
-        )
-        df_result = pd.concat(
-            [
-                df_result["StatusCode"].apply(pd.Series),
-                df_result.drop(["StatusCode"], axis=1),
-            ],
-            axis=1,
-        )
+        df_result = pd.json_normalize(content, record_path=['HistoryReadResults', 'DataValues'], meta=[['HistoryReadResults', 'NodeId', 'IdType'], ['HistoryReadResults', 'NodeId','Id'],['HistoryReadResults', 'NodeId','Namespace']] )
+
         for i, row in df_result.iterrows():
-            if not math.isnan(row["Type"]):
-                df_result.at[i, "Type"] = self._get_value_type(int(row["Type"])).get(
+            if not math.isnan(row["Value.Type"]):
+                df_result.at[i, "Value.Type"] = self._get_value_type(int(row["Value.Type"])).get(
                     "type"
                 )
 
         df_result.rename(
             columns={
-                "Type": "ValueType",
-                "Body": "Value",
-                "Symbol": "StatusSymbol",
-                "Code": "StatusCode",
+                "Value.Type": "ValueType",
+                "Value.Body": "Value",
+                "StatusCode.Symbol": "StatusSymbol",
+                "StatusCode.Code": "StatusCode",
                 "SourceTimestamp": "Timestamp",
+                "HistoryReadResults.NodeId.IdType": "Id",
+                "HistoryReadResults.NodeId.Namespace": "Namespace",
             },
             errors="raise",
             inplace=True,
         )
 
+
         return df_result
 
     ## New Functions
 
-    @validate_arguments
-    def get_historical_aggregated_values_batched_multithread(
-        self,
-        start_time: datetime,
-        end_time: datetime,
-        pro_interval: int,
-        agg_name: str,
-        variable_list: List[Variables],
-        batch_size: int = 1000,
-    ) -> pd.DataFrame:
-        
-        """Request historical aggregated values with combination of Asyncio and Multiprocessing"""
-
-        # Configure the logging
-        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-        # Set the number of CPU cores to utilize
-        self.num_cores = os.cpu_count()
-
-        time_batches = self.generate_time_batches(start_time, end_time, pro_interval, batch_size)
-        logging.info("Number of time batches: %d", len(time_batches))
-        variable_batches = self.generate_variable_batches(variable_list, batch_size)
-        logging.info("Number of variable batches: %d", len(variable_batches))
-
-        result_list = []
-        batch_requests = []
-        #with concurrent.futures.ProcessPoolExecutor(max_workers=self.num_cores) as executor:
-        with ThreadPoolExecutor() as executor:
-            for time_batch_start, time_batch_end in time_batches:
-                for i,variable_sublist in enumerate(variable_batches):
-                    logging.info(f"Making API request for Time batch: {time_batch_start} - {time_batch_end} and Variable batch: {i}")
-
-                    current_batch_request = executor.submit(
-                        self.make_api_request,
-                        time_batch_start,
-                        time_batch_end,
-                        pro_interval,
-                        agg_name,
-                        variable_sublist
-                    )
-                    batch_requests.append(current_batch_request)
-
-            for breq in concurrent.futures.as_completed(batch_requests):
-                batch_response = breq.result()
-                logging.info("Processing API response...")
-                batch_result = self.process_api_response(batch_response)
-                result_list.append(batch_result)
-
-        logging.info("Concatenating results...")
-        result_df = pd.concat(result_list, ignore_index=True)
-        return result_df
-
-    @validate_arguments
-    async def get_historical_aggregated_values_batched_async_parallel1(
-        self,
-        start_time: datetime,
-        end_time: datetime,
-        pro_interval: int,
-        agg_name: str,
-        variable_list: List[Variables],
-        batch_size: int = 1000,
-    ) -> pd.DataFrame:
-        
-        """Request historical aggregated values with combination of Asyncio and Multiprocessing"""
-
-        # Configure the logging
-        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-        # Set the number of CPU cores to utilize
-        self.num_cores = os.cpu_count()
-
-        time_batches = self.generate_time_batches(start_time, end_time, pro_interval, batch_size)
-        logging.info("Number of time batches: %d", len(time_batches))
-        variable_batches = self.generate_variable_batches(variable_list, batch_size)
-        logging.info("Number of variable batches: %d", len(variable_batches))
-
-        result_list = []
-        NUM_SESSIONS = 100
-
-        with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_SESSIONS) as executor:
-            futures = []
-            sessions = []
-
-            for _ in range(NUM_SESSIONS):
-                session = requests.Session()
-                sessions.append(session)
-
-            for time_batch_start, time_batch_end in time_batches:
-                for variable_sublist in variable_batches:
-                    logging.info(f"Making API request for time batch: {time_batch_start} - {time_batch_end}")
-
-                    # Get the session index based on the current iteration
-                    session_index = (time_batches.index((time_batch_start, time_batch_end)) * len(variable_batches)
-                                     + variable_batches.index(variable_sublist))
-
-                    session = sessions[session_index]
-                    future = executor.submit(
-                        self.make_api_request,
-                        time_batch_start,
-                        time_batch_end,
-                        pro_interval,
-                        agg_name,
-                        variable_sublist,
-                        session
-                    )
-                    futures.append(future)
-
-            for future in concurrent.futures.as_completed(futures):
-                batch_response = future.result()
-                logging.info("Processing API response...")
-                batch_result = self.process_api_response(batch_response)
-                result_list.append(batch_result)
-
-        logging.info("Concatenating results...")
-        result_df = pd.concat(result_list, ignore_index=True)
-        return result_df
-
-    @validate_arguments
-    def get_historical_aggregated_values_batched_parallel(
-            self,
-        start_time: datetime,
-        end_time: datetime,
-        pro_interval: int,
-        agg_name: str,
-        variable_list: List[Variables],
-        batch_size: int = 500,
-    ) -> pd.DataFrame:
-
-        """Concurrent multithreading API requests to the OPC UA server for historical aggregated values"""
-
-        # Configure the logging
-        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
-        
-        time_batches = self.generate_time_batches(start_time, end_time, pro_interval, batch_size)
-        logging.info("Number of time batches: %d", len(time_batches))
-        variable_batches = self.generate_variable_batches(variable_list, batch_size)
-        logging.info("Number of variable batches: %d", len(variable_batches))
-
-        result_list = []
-        NUM_SESSIONS = len(time_batches) * len(variable_batches)
-
-        with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_SESSIONS) as executor:
-            futures = []
-            sessions = []
-
-            for _ in range(NUM_SESSIONS):
-                session = requests.Session()
-                sessions.append(session)
-
-            for time_batch_start, time_batch_end in time_batches:
-                for variable_sublist in variable_batches:
-                    logging.info(f"Making API request for time batch: {time_batch_start} - {time_batch_end}")
-
-                    # Get the session index based on the current iteration
-                    session_index = (time_batches.index((time_batch_start, time_batch_end)) * len(variable_batches)
-                                     + variable_batches.index(variable_sublist))
-
-                    session = sessions[session_index]
-                    future = executor.submit(
-                        self.make_api_request,
-                        time_batch_start,
-                        time_batch_end,
-                        pro_interval,
-                        agg_name,
-                        variable_sublist,
-                        session
-                    )
-                    futures.append(future)
-
-            for future in concurrent.futures.as_completed(futures):
-                batch_response = future.result()
-                logging.info("Processing API response...")
-                batch_result = self.process_api_response(batch_response)
-                result_list.append(batch_result)
-
-        logging.info("Concatenating results...")
-        result_df = pd.concat(result_list, ignore_index=True)
-        return result_df
-
-    @validate_arguments
+    @validate_call
     async def get_historical_aggregated_values_batched_async(
         self,
         start_time: datetime,
@@ -620,23 +419,72 @@ class OPC_UA:
         #logging.info("Generating variable batches...")
         variable_batches = self.generate_variable_batches(variable_list, batch_size)
 
-        result_list = []
+        # Creating tasks for each API request and gathering the results
+        tasks = []
 
         for time_batch_start, time_batch_end in time_batches:
             for variable_sublist in variable_batches:
-                logging.info(f"Making API request for time batch: {time_batch_start} - {time_batch_end}")
-                batch_response = self.make_api_request(time_batch_start, time_batch_end, pro_interval, agg_name, variable_sublist)
-                
-                logging.info("Processing API response...")
-                batch_result = self.process_api_response(batch_response)
-                result_list.append(batch_result)
+                task = self.make_async_api_request(time_batch_start, time_batch_end, pro_interval, agg_name, variable_sublist)
+                tasks.append(asyncio.create_task(task)) 
+        
+        # Execute all tasks concurrently and gather their results
+        responses = await asyncio.gather(*tasks)
+        
+        # Processing the API responses
+        result_list = []
+        for batch_response in responses:
+            logging.info("Processing API response...")
+            batch_result = self.process_api_response(batch_response)
+            result_list.append(batch_result)
 
         logging.info("Concatenating results...")        
         result_df = pd.concat(result_list, ignore_index=True)
 
         return result_df
+    
+    @validate_call
+    async def make_async_api_request(self, start_time: datetime, end_time: datetime, pro_interval: int, agg_name: str, variable_list: List[Variables]) -> dict:
+        """Make API request for the given time range and variable list"""
 
-    @validate_arguments
+        # Creating a new variable list to remove pydantic models
+        vars = self._get_variable_list_as_list(variable_list)
+
+        extended_variables = [
+            {
+                    "NodeId": var,
+                    "AggregateName": agg_name,
+            }
+            for var in vars
+
+        ]
+
+        body = copy.deepcopy(self.body)
+        body["StartTime"] = start_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+        body["EndTime"] = end_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+        body["ProcessingInterval"] = pro_interval
+        body["ReadValueIds"] = extended_variables
+        body["AggregateName"] = agg_name
+
+        try:
+            # Make API request using aiohttp session
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    f"{self.rest_url}values/historicalaggregated",
+                    data=json.dumps(body, default=str),
+                    headers=self.headers,
+                    timeout=aiohttp.ClientTimeout(total=None)  
+                ) as response:
+                    response.raise_for_status()
+                    content = await response.json()
+        except aiohttp.ClientResponseError as e:
+            if self.auth_client is not None:
+                self.check_auth_client(await e.json())
+            else:
+                raise RuntimeError(f'Error message {e}')
+
+        return content
+
+    @validate_call
     def get_historical_aggregated_values_batched(
         self,
         start_time: datetime,
@@ -706,30 +554,36 @@ class OPC_UA:
                     "AggregateName": agg_name,
                 }
             )
-
         body = copy.deepcopy(self.body)
         body["StartTime"] = start_time.strftime("%Y-%m-%dT%H:%M:%SZ")
         body["EndTime"] = end_time.strftime("%Y-%m-%dT%H:%M:%SZ")
         body["ProcessingInterval"] = pro_interval
         body["ReadValueIds"] = extended_variables
         body["AggregateName"] = agg_name
-
         try:
-            with requests.Session() as s:
-                # Make API request
-                content = request_from_api(
-                    rest_url=self.rest_url,
-                    method="POST",
-                    endpoint="values/historicalaggregated",
-                    data=json.dumps(body, default=self.json_serial),
-                    headers=self.headers,
-                    extended_timeout=True,
-                )
+            #Try making the request, if failes check if it is due to ory client
+            content = request_from_api(
+                rest_url=self.rest_url,
+                method="POST",
+                endpoint="values/historicalaggregated",
+                data=json.dumps(body, default=self.json_serial),
+                headers=self.headers,
+                extended_timeout=True,
+            )
         except HTTPError as e:
             if self.auth_client is not None:
                 self.check_auth_client(json.loads(e.response.content))
             else:
                 raise RuntimeError(f'Error message {e}')
+        finally:
+            content = request_from_api(
+                rest_url=self.rest_url,
+                method="POST",
+                endpoint="values/historicalaggregated",
+                data=json.dumps(body, default=self.json_serial),
+                headers=self.headers,
+                extended_timeout=True,
+            )
 
         return content
 
@@ -746,50 +600,26 @@ class OPC_UA:
             raise RuntimeError(response.get("ErrorMessage"))
 
         # Check for HistoryReadResults
-        if "HistoryReadResults" not in response:
+        if not "HistoryReadResults" in response:
             raise RuntimeError(response.get("ErrorMessage"))
-
-        results_list = []
-        for x in response["HistoryReadResults"]:
-            results_list.append(x)
-
-        df_result = pd.DataFrame(results_list)
-        del df_result["StatusCode"]
-        df_result = pd.concat(
-            [df_result["NodeId"].apply(pd.Series), df_result.drop(["NodeId"], axis=1)],
-            axis=1,
-        )
-        df_result = df_result.explode("DataValues").reset_index(drop=True)
-        df_result = pd.concat(
-            [
-                df_result["DataValues"].apply(pd.Series),
-                df_result.drop(["DataValues"], axis=1),
-            ],
-            axis=1,
-        )
-        df_result = pd.concat(
-            [df_result["Value"].apply(pd.Series), df_result.drop(["Value"], axis=1)],
-            axis=1,
-        )
-        df_result = pd.concat(
-            [
-                df_result["StatusCode"].apply(pd.Series),
-                df_result.drop(["StatusCode"], axis=1),
-            ],
-            axis=1,
-        )
+        
+        df_result = pd.json_normalize(response, record_path=['HistoryReadResults', 'DataValues'], 
+                                      meta=[['HistoryReadResults', 'NodeId', 'IdType'], ['HistoryReadResults', 'NodeId','Id'],
+                                            ['HistoryReadResults', 'NodeId','Namespace']] )
 
         for i, row in df_result.iterrows():
-            if not math.isnan(row["Type"]):
-                df_result.at[i, "Type"] = self._get_value_type(int(row["Type"])).get("type")
+            if not math.isnan(row["Value.Type"]):
+                df_result.at[i, "Value.Type"] = self._get_value_type(int(row["Value.Type"])).get("type")
 
         df_result.rename(
             columns={
-                "Type": "ValueType",
-                "Body": "Value",
-                "Symbol": "StatusSymbol",
-                "Code": "StatusCode",
+                "Value.Type": "ValueType",
+                "Value.Body": "Value",
+                "StatusCode.Symbol": "StatusSymbol",
+                "StatusCode.Code": "StatusCode",
                 "SourceTimestamp": "Timestamp",
+                "HistoryReadResults.NodeId.IdType": "Id",
+                "HistoryReadResults.NodeId.Namespace": "Namespace",
             },
             errors="raise",
             inplace=True,
