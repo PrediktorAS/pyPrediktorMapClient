@@ -11,8 +11,7 @@ class Ory_Login_Structure(BaseModel):
 
 class Token(BaseModel):
     access_token: str
-    expires_at: AwareDatetime = datetime.datetime.now()
-    expired: bool = True
+    expires_at: AwareDatetime = None
     
     @field_validator('expires_at', mode='before')
     def remove_nanoseconds(cls, v):
@@ -112,8 +111,9 @@ class AUTH_CLIENT:
     def check_if_token_has_expired(self) -> bool:
         """Check if token has expired
         """
-        if self.token.expires_at is None:
-            return False
+        if self.token is None or self.token.expires_at is None:
+            return True
+
         return datetime.datetime.utcnow() > self.token.expires_at
 
     def request_new_ory_token(self) -> None:

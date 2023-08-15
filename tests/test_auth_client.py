@@ -419,7 +419,7 @@ class OPCUATestCase(unittest.TestCase):
         auth_client = AUTH_CLIENT(rest_url=URL, username=username, password=password)
         auth_client.token = Token(access_token=auth_session_id)
         token_expired = auth_client.check_if_token_has_expired()
-        assert token_expired == False
+        assert token_expired == True
 
 if __name__ == "__main__":
     unittest.main()

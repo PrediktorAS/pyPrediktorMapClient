@@ -6,7 +6,7 @@ import copy
 import pandas as pd
 from datetime import date, datetime, timedelta
 from typing import Dict, List, Union, Optional
-from pydantic import BaseModel, HttpUrl, AnyUrl
+from pydantic import BaseModel, HttpUrl, AnyUrl, validate_call
 from pydantic_core import Url
 from pyprediktormapclient.shared import request_from_api
 from requests import HTTPError
