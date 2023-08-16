@@ -396,10 +396,8 @@ class OPC_UA:
 
         return df_result
 
-    ## New Functions
-
     @validate_call
-    async def get_historical_aggregated_values_batched_async(
+    async def get_historical_aggregated_values_async(
         self,
         start_time: datetime,
         end_time: datetime,
@@ -413,10 +411,10 @@ class OPC_UA:
         # Configure the logging
         logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
-        #logging.info("Generating time batches...")
+        logging.info("Generating time batches...")
         time_batches = self.generate_time_batches(start_time, end_time, pro_interval, batch_size)
 
-        #logging.info("Generating variable batches...")
+        logging.info("Generating variable batches...")
         variable_batches = self.generate_variable_batches(variable_list, batch_size)
 
         # Creating tasks for each API request and gathering the results
@@ -432,8 +430,8 @@ class OPC_UA:
         
         # Processing the API responses
         result_list = []
-        for batch_response in responses:
-            logging.info("Processing API response...")
+        for idx, batch_response in enumerate(responses):
+            logging.info(f"Processing API response {idx+1}/{len(responses)}...")
             batch_result = self.process_api_response(batch_response)
             result_list.append(batch_result)
 
@@ -485,32 +483,6 @@ class OPC_UA:
         return content
 
     @validate_call
-    def get_historical_aggregated_values_batched(
-        self,
-        start_time: datetime,
-        end_time: datetime,
-        pro_interval: int,
-        agg_name: str,
-        variable_list: List[Variables],
-        batch_size: int = 1000,
-    ) -> pd.DataFrame:
-        """Request historical aggregated values from the OPC UA server with batching"""
-
-
-        time_batches = self.generate_time_batches(start_time, end_time, pro_interval, batch_size)
-        variable_batches = self.generate_variable_batches(variable_list, batch_size)
-
-        result_list = []
-
-        for time_batch_start, time_batch_end in time_batches:
-            for variable_sublist in variable_batches:
-                batch_response = self.make_api_request(time_batch_start, time_batch_end, pro_interval, agg_name, variable_sublist)
-                batch_result = self.process_api_response(batch_response)
-                result_list.append(batch_result)
-        result_df = pd.concat(result_list, ignore_index=True)
-
-        return result_df
-
     def generate_time_batches(self, start_time: datetime, end_time: datetime, pro_interval: int, batch_size: int) -> List[tuple]:
         """Generate time batches based on start time, end time, processing interval, and batch size"""
 
@@ -529,7 +501,7 @@ class OPC_UA:
 
         return time_batches
 
-
+    @validate_call
     def generate_variable_batches(self, variable_list: List[Variables], batch_size: int) -> List[List[Variables]]:
         """Generate variable batches based on the variable list and batch size"""
 
@@ -539,55 +511,7 @@ class OPC_UA:
 
         return variable_batches
 
-
-    def make_api_request(self, start_time: datetime, end_time: datetime, pro_interval: int, agg_name: str, variable_list: List[Variables]) -> dict:
-        """Make API request for the given time range and variable list"""
-
-        # Create a new variable list to remove pydantic models
-        vars = self._get_variable_list_as_list(variable_list)
-
-        extended_variables = []
-        for var in vars:
-            extended_variables.append(
-                {
-                    "NodeId": var,
-                    "AggregateName": agg_name,
-                }
-            )
-        body = copy.deepcopy(self.body)
-        body["StartTime"] = start_time.strftime("%Y-%m-%dT%H:%M:%SZ")
-        body["EndTime"] = end_time.strftime("%Y-%m-%dT%H:%M:%SZ")
-        body["ProcessingInterval"] = pro_interval
-        body["ReadValueIds"] = extended_variables
-        body["AggregateName"] = agg_name
-        try:
-            #Try making the request, if failes check if it is due to ory client
-            content = request_from_api(
-                rest_url=self.rest_url,
-                method="POST",
-                endpoint="values/historicalaggregated",
-                data=json.dumps(body, default=self.json_serial),
-                headers=self.headers,
-                extended_timeout=True,
-            )
-        except HTTPError as e:
-            if self.auth_client is not None:
-                self.check_auth_client(json.loads(e.response.content))
-            else:
-                raise RuntimeError(f'Error message {e}')
-        finally:
-            content = request_from_api(
-                rest_url=self.rest_url,
-                method="POST",
-                endpoint="values/historicalaggregated",
-                data=json.dumps(body, default=self.json_serial),
-                headers=self.headers,
-                extended_timeout=True,
-            )
-
-        return content
-
-
+    @validate_call
     def process_api_response(self, response: dict) -> pd.DataFrame:
         """Process the API response and return the result dataframe"""
 
@@ -626,8 +550,6 @@ class OPC_UA:
         )
 
         return df_result
-
-    ## New Functions code ends here
 
 
     @validate_call
