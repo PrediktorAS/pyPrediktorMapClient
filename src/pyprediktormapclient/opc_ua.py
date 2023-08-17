@@ -4,12 +4,25 @@ import logging
 import datetime
 import copy
 import pandas as pd
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Dict, List, Union, Optional
 from pydantic import BaseModel, HttpUrl, AnyUrl, validate_call
 from pydantic_core import Url
 from pyprediktormapclient.shared import request_from_api
 from requests import HTTPError
+import asyncio
+import multiprocessing
+from functools import partial
+import concurrent.futures
+import os
+import uuid
+import requests
+from requests import Session
+from concurrent.futures import ThreadPoolExecutor
+import threading
+import aiohttp
+from pydantic import validate_call
+
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -380,6 +393,161 @@ class OPC_UA:
             inplace=True,
         )
 
+
+        return df_result
+
+    @validate_call
+    async def get_historical_aggregated_values_async(
+        self,
+        start_time: datetime,
+        end_time: datetime,
+        pro_interval: int,
+        agg_name: str,
+        variable_list: List[Variables],
+        batch_size: int = 1000
+    ) -> pd.DataFrame:
+        """Request historical aggregated values from the OPC UA server with batching"""
+
+        # Configure the logging
+        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
+        logging.info("Generating time batches...")
+        time_batches = self.generate_time_batches(start_time, end_time, pro_interval, batch_size)
+
+        logging.info("Generating variable batches...")
+        variable_batches = self.generate_variable_batches(variable_list, batch_size)
+
+        # Creating tasks for each API request and gathering the results
+        tasks = []
+
+        for time_batch_start, time_batch_end in time_batches:
+            for variable_sublist in variable_batches:
+                task = self.make_async_api_request(time_batch_start, time_batch_end, pro_interval, agg_name, variable_sublist)
+                tasks.append(asyncio.create_task(task)) 
+        
+        # Execute all tasks concurrently and gather their results
+        responses = await asyncio.gather(*tasks)
+        
+        # Processing the API responses
+        result_list = []
+        for idx, batch_response in enumerate(responses):
+            logging.info(f"Processing API response {idx+1}/{len(responses)}...")
+            batch_result = self.process_api_response(batch_response)
+            result_list.append(batch_result)
+
+        logging.info("Concatenating results...")        
+        result_df = pd.concat(result_list, ignore_index=True)
+
+        return result_df
+    
+    @validate_call
+    async def make_async_api_request(self, start_time: datetime, end_time: datetime, pro_interval: int, agg_name: str, variable_list: List[Variables]) -> dict:
+        """Make API request for the given time range and variable list"""
+
+        # Creating a new variable list to remove pydantic models
+        vars = self._get_variable_list_as_list(variable_list)
+
+        extended_variables = [
+            {
+                    "NodeId": var,
+                    "AggregateName": agg_name,
+            }
+            for var in vars
+
+        ]
+
+        body = copy.deepcopy(self.body)
+        body["StartTime"] = start_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+        body["EndTime"] = end_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+        body["ProcessingInterval"] = pro_interval
+        body["ReadValueIds"] = extended_variables
+        body["AggregateName"] = agg_name
+
+        try:
+            # Make API request using aiohttp session
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    f"{self.rest_url}values/historicalaggregated",
+                    data=json.dumps(body, default=str),
+                    headers=self.headers,
+                    timeout=aiohttp.ClientTimeout(total=None)  
+                ) as response:
+                    response.raise_for_status()
+                    content = await response.json()
+        except aiohttp.ClientResponseError as e:
+            if self.auth_client is not None:
+                self.check_auth_client(await e.json())
+            else:
+                raise RuntimeError(f'Error message {e}')
+
+        return content
+
+    @validate_call
+    def generate_time_batches(self, start_time: datetime, end_time: datetime, pro_interval: int, batch_size: int) -> List[tuple]:
+        """Generate time batches based on start time, end time, processing interval, and batch size"""
+
+        total_time_range = end_time - start_time
+        pro_interval_seconds = (pro_interval / 1000)
+        total_data_points = (total_time_range.total_seconds() // pro_interval_seconds) + 1
+
+        total_batches = math.ceil(total_data_points / batch_size)
+        actual_batch_size = math.ceil(total_data_points / total_batches)
+
+        time_batches = [
+            (start_time + timedelta(seconds=(i * actual_batch_size * pro_interval_seconds)),
+            start_time + timedelta(seconds=((i + 1) * actual_batch_size * pro_interval_seconds)) - timedelta(seconds=pro_interval_seconds))
+            for i in range(total_batches)
+        ]
+
+        return time_batches
+
+    @validate_call
+    def generate_variable_batches(self, variable_list: List[Variables], batch_size: int) -> List[List[Variables]]:
+        """Generate variable batches based on the variable list and batch size"""
+
+        variable_batches = [
+            variable_list[i:i + batch_size] for i in range(0, len(variable_list), batch_size)
+        ]
+
+        return variable_batches
+
+    @validate_call
+    def process_api_response(self, response: dict) -> pd.DataFrame:
+        """Process the API response and return the result dataframe"""
+
+        # Return if no content from server
+        if not isinstance(response, dict):
+            raise RuntimeError("No content returned from the server")
+
+        # Return if not successful, but check ory status id ory is enabled
+        if response.get("Success") is False:
+            raise RuntimeError(response.get("ErrorMessage"))
+
+        # Check for HistoryReadResults
+        if not "HistoryReadResults" in response:
+            raise RuntimeError(response.get("ErrorMessage"))
+        
+        df_result = pd.json_normalize(response, record_path=['HistoryReadResults', 'DataValues'], 
+                                      meta=[['HistoryReadResults', 'NodeId', 'IdType'], ['HistoryReadResults', 'NodeId','Id'],
+                                            ['HistoryReadResults', 'NodeId','Namespace']] )
+
+        for i, row in df_result.iterrows():
+            if not math.isnan(row["Value.Type"]):
+                df_result.at[i, "Value.Type"] = self._get_value_type(int(row["Value.Type"])).get("type")
+
+        df_result.rename(
+            columns={
+                "Value.Type": "ValueType",
+                "Value.Body": "Value",
+                "StatusCode.Symbol": "StatusSymbol",
+                "StatusCode.Code": "StatusCode",
+                "SourceTimestamp": "Timestamp",
+                "HistoryReadResults.NodeId.IdType": "Id",
+                "HistoryReadResults.NodeId.Namespace": "Namespace",
+            },
+            errors="raise",
+            inplace=True,
+        )
 
         return df_result
 
