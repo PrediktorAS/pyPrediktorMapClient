@@ -3,18 +3,18 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pyprediktormapclient.auth_client &mdash; pyPrediktorMapClient 0.5.0 documentation</title>
+  <title>pyprediktormapclient.auth_client &mdash; pyPrediktorMapClient 0.5.1 documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/doctools.js"></script>
-        <script src="../../_static/sphinx_highlight.js"></script>
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=b9afe91b"></script>
+        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
@@ -32,7 +32,7 @@
             pyPrediktorMapClient
           </a>
               <div class="version">
-                0.5.0
+                0.5.1
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -76,31 +76,42 @@
            <div itemprop="articleBody">
              
   <h1>Source code for pyprediktormapclient.auth_client</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">HttpUrl</span><span class="p">,</span> <span class="n">validate_call</span><span class="p">,</span> <span class="n">AwareDatetime</span><span class="p">,</span> <span class="n">field_validator</span>
+<span></span><span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">AnyUrl</span><span class="p">,</span> <span class="n">validate_call</span><span class="p">,</span> <span class="n">AwareDatetime</span><span class="p">,</span> <span class="n">field_validator</span>
 <span class="kn">from</span> <span class="nn">pyprediktormapclient.shared</span> <span class="kn">import</span> <span class="n">request_from_api</span>
 <span class="kn">import</span> <span class="nn">datetime</span>
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">re</span>
 
-<div class="viewcode-block" id="Ory_Login_Structure"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.auth_client.Ory_Login_Structure">[docs]</a><span class="k">class</span> <span class="nc">Ory_Login_Structure</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<div class="viewcode-block" id="Ory_Login_Structure">
+<a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.auth_client.Ory_Login_Structure">[docs]</a>
+<span class="k">class</span> <span class="nc">Ory_Login_Structure</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
     <span class="n">method</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">identifier</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">password</span><span class="p">:</span> <span class="nb">str</span></div>
 
-<div class="viewcode-block" id="Token"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.auth_client.Token">[docs]</a><span class="k">class</span> <span class="nc">Token</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+
+<div class="viewcode-block" id="Token">
+<a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.auth_client.Token">[docs]</a>
+<span class="k">class</span> <span class="nc">Token</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
     <span class="n">access_token</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">expires_at</span><span class="p">:</span> <span class="n">AwareDatetime</span> <span class="o">=</span> <span class="kc">None</span>
     
-<div class="viewcode-block" id="Token.remove_nanoseconds"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.auth_client.Token.remove_nanoseconds">[docs]</a>    <span class="nd">@field_validator</span><span class="p">(</span><span class="s1">&#39;expires_at&#39;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;before&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="Token.remove_nanoseconds">
+<a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.auth_client.Token.remove_nanoseconds">[docs]</a>
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s1">&#39;expires_at&#39;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;before&#39;</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">remove_nanoseconds</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">v</span>
         <span class="k">elif</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(\d\d\d\d)-(\d\d)-(\d\d)T(\d\d):(\d\d):(\d\d).\d+(\S+)&quot;</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">v</span><span class="p">[:</span><span class="o">-</span><span class="mi">11</span><span class="p">]</span><span class="si">}</span><span class="s2">.+00:00&quot;</span><span class="p">,</span> <span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">T%H:%M:%S.%z&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">v</span></div></div>
+        <span class="k">return</span> <span class="n">v</span></div>
+</div>
+
     
 
-<div class="viewcode-block" id="AUTH_CLIENT"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.auth_client.AUTH_CLIENT">[docs]</a><span class="k">class</span> <span class="nc">AUTH_CLIENT</span><span class="p">:</span>
+<div class="viewcode-block" id="AUTH_CLIENT">
+<a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.auth_client.AUTH_CLIENT">[docs]</a>
+<span class="k">class</span> <span class="nc">AUTH_CLIENT</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper functions to authenticate with Ory</span>
 
 <span class="sd">    Args:</span>
@@ -113,7 +124,7 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="nd">@validate_call</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rest_url</span><span class="p">:</span> <span class="n">HttpUrl</span><span class="p">,</span> <span class="n">username</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">password</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rest_url</span><span class="p">:</span> <span class="n">AnyUrl</span><span class="p">,</span> <span class="n">username</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">password</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Class initializer</span>
 
 <span class="sd">        Args:</span>
@@ -130,7 +141,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">token</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">}</span>
 
-<div class="viewcode-block" id="AUTH_CLIENT.get_login_id"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.auth_client.AUTH_CLIENT.get_login_id">[docs]</a>    <span class="nd">@validate_call</span>
+<div class="viewcode-block" id="AUTH_CLIENT.get_login_id">
+<a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.auth_client.AUTH_CLIENT.get_login_id">[docs]</a>
+    <span class="nd">@validate_call</span>
     <span class="k">def</span> <span class="nf">get_login_id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Request login token from Ory</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -150,7 +163,10 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="AUTH_CLIENT.get_login_token"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.auth_client.AUTH_CLIENT.get_login_token">[docs]</a>    <span class="nd">@validate_call</span>
+
+<div class="viewcode-block" id="AUTH_CLIENT.get_login_token">
+<a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.auth_client.AUTH_CLIENT.get_login_token">[docs]</a>
+    <span class="nd">@validate_call</span>
     <span class="k">def</span> <span class="nf">get_login_token</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Request login token from Ory</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -186,7 +202,10 @@
                 <span class="c1">#  might be a setting in Ory to not return expiry date</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">token</span> <span class="o">=</span> <span class="n">Token</span><span class="p">(</span><span class="n">access_token</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">token</span><span class="o">.</span><span class="n">access_token</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="AUTH_CLIENT.check_if_token_has_expired"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.auth_client.AUTH_CLIENT.check_if_token_has_expired">[docs]</a>    <span class="k">def</span> <span class="nf">check_if_token_has_expired</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+
+<div class="viewcode-block" id="AUTH_CLIENT.check_if_token_has_expired">
+<a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.auth_client.AUTH_CLIENT.check_if_token_has_expired">[docs]</a>
+    <span class="k">def</span> <span class="nf">check_if_token_has_expired</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if token has expired</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">token</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">token</span><span class="o">.</span><span class="n">expires_at</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -194,11 +213,16 @@
 
         <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">token</span><span class="o">.</span><span class="n">expires_at</span></div>
 
-<div class="viewcode-block" id="AUTH_CLIENT.request_new_ory_token"><a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.auth_client.AUTH_CLIENT.request_new_ory_token">[docs]</a>    <span class="k">def</span> <span class="nf">request_new_ory_token</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+
+<div class="viewcode-block" id="AUTH_CLIENT.request_new_ory_token">
+<a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.auth_client.AUTH_CLIENT.request_new_ory_token">[docs]</a>
+    <span class="k">def</span> <span class="nf">request_new_ory_token</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Request Ory token</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">get_login_id</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">get_login_token</span><span class="p">()</span></div></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">get_login_token</span><span class="p">()</span></div>
+</div>
+
 </pre></div>
 
            </div>
