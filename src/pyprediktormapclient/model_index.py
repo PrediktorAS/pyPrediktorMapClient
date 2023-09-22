@@ -1,7 +1,7 @@
 import json
 import logging
 from typing import List
-from pydantic import HttpUrl, validate_call
+from pydantic import AnyUrl, validate_call
 from pyprediktormapclient.shared import request_from_api
 
 logger = logging.getLogger(__name__)
@@ -19,7 +19,7 @@ class ModelIndex:
     """
 
     @validate_call
-    def __init__(self, url: HttpUrl):
+    def __init__(self, url: AnyUrl):
         self.url = url
         self.object_types = self.get_object_types()
 

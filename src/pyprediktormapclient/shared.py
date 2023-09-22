@@ -1,11 +1,11 @@
 import requests
-from pydantic import HttpUrl, validate_call
+from pydantic import AnyUrl, validate_call
 from typing import Literal
 
 
 @validate_call
 def request_from_api(
-    rest_url: HttpUrl,
+    rest_url: AnyUrl,
     method: Literal["GET", "POST"],
     endpoint: str,
     data: str = None,
