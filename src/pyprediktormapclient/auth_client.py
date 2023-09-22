@@ -1,4 +1,4 @@
-from pydantic import BaseModel, HttpUrl, validate_call, AwareDatetime, field_validator
+from pydantic import BaseModel, AnyUrl, validate_call, AwareDatetime, field_validator
 from pyprediktormapclient.shared import request_from_api
 import datetime
 import json
@@ -35,7 +35,7 @@ class AUTH_CLIENT:
 
     """
     @validate_call
-    def __init__(self, rest_url: HttpUrl, username: str, password: str):
+    def __init__(self, rest_url: AnyUrl, username: str, password: str):
         """Class initializer
 
         Args:
