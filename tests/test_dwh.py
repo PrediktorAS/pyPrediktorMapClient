@@ -13,7 +13,7 @@ def test_database_operations_init_success(monkeypatch):
         pass
 
     monkeypatch.setattr(
-        "pyprediktormapclient.dwh.DWH.connect_to_database_using_pyodbc", mock_connect
+        "pyprediktormapclient.dwh.DWH.connect", mock_connect
     )
 
     dwh = DWH(grs(), grs(), grs(), grs())
