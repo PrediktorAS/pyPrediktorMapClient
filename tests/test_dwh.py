@@ -1,5 +1,4 @@
 import pytest
-import os
 import random
 import string
 from pyprediktormapclient.dwh import DWH
@@ -8,7 +7,7 @@ def grs():
     return "".join(random.choices(string.ascii_uppercase + string.digits, k=10))
 
 
-def test_database_operations_init_success(setup_environment, monkeypatch):
+def test_database_operations_init_success(monkeypatch):
     # Mock the database connection
     def mock_connect(self):
         pass
@@ -21,7 +20,7 @@ def test_database_operations_init_success(setup_environment, monkeypatch):
     assert dwh is not None
 
 
-def test_connect_to_database_using_pyodbc_no_drivers(setup_environment, monkeypatch):
+def test_connect_to_database_using_pyodbc_no_drivers(monkeypatch):
     # Mock the absence of ODBC drivers
     monkeypatch.setattr("database_operations.pyodbc.drivers", lambda: [])
 
