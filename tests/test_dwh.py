@@ -25,6 +25,6 @@ def test_connect_to_database_using_pyodbc_no_drivers(monkeypatch):
     monkeypatch.setattr("pyprediktormapclient.dwh.pyodbc.drivers", lambda: [])
 
     # Test failure scenario when no ODBC drivers are available
-    with pytest.raises(IndexError) as excinfo:
-        dwh = DWH(grs(), grs(), grs(), grs())
-    assert "list index out of range" in str(excinfo.value)
+    with pytest.raises(ValueError) as excinfo:
+        DWH(grs(), grs(), grs(), grs())
+    assert "is out of range" in str(excinfo.value)
