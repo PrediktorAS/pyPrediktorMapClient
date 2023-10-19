@@ -27,4 +27,4 @@ def test_connect_to_database_using_pyodbc_no_drivers(monkeypatch):
     # Test failure scenario when no ODBC drivers are available
     with pytest.raises(IndexError) as excinfo:
         dwh = DWH(grs(), grs(), grs(), grs())
-    assert "IndexError: list index out of range" in str(excinfo.value)
+    assert "list index out of range" in str(excinfo.value)
