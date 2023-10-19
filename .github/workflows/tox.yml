@@ -16,6 +16,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Install Microsoft ODBC
+      run: |
+        sudo ACCEPT_EULA=Y apt-get install msodbcsql18 -y
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
