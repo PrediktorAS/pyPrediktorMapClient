@@ -15,24 +15,65 @@ jobs:
         working-directory: /home/runner/work/pyPrediktorMapClient/pyPrediktorMapClient
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Install Microsoft ODBC
+
+    - name: Check initial setup
       run: |
-        sudo ACCEPT_EULA=Y apt-get install msodbcsql18 -y
+        echo '*** echo $PATH'
+        echo "$PATH"
+        echo "*** odbcinst -j"
+        odbcinst -j
+        echo '*** ls -l /etc/odbc*.ini'
+        ls -l /etc/odbc*.ini || true
+        echo "*** cat /etc/odbcinst.ini"
+        cat /etc/odbcinst.ini
+        echo "*** cat /etc/odbc.ini"
+        cat /etc/odbc.ini
+
+    - name: Install ODBC driver for SQL Server
+      run: |
+        echo "*** apt-get install the driver"
+        sudo ACCEPT_EULA=Y apt-get install --yes msodbcsql18
+        echo '*** ls -l /usr/lib/x86_64-linux-gnu/odbc'
+        ls -l /opt/microsoft/msodbcsql18/lib64 || true
+
+    - name: Check ODBC setup
+      run: |
+        echo "*** odbcinst -j"
+        odbcinst -j
+        echo "*** cat /etc/odbcinst.ini"
+        cat /etc/odbcinst.ini
+        echo "*** cat /etc/odbc.ini"
+        cat /etc/odbc.ini
+        echo '*** ls -l /opt/microsoft/msodbcsql18/lib64'
+        ls -l /opt/microsoft/msodbcsql18/lib64 || true
+        echo '*** ls -l /usr/lib/x86_64-linux-gnu/odbc'
+        ls -l /usr/lib/x86_64-linux-gnu/odbc || true
+        sudo apt-get install -y unixodbc-dev
+
+    - uses: actions/checkout@v4
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
+
     - name: Install dependencies
       run: |
+        cd "$GITHUB_WORKSPACE"
+        echo "*** current python version"
+        python -VV
         python -m pip install --upgrade pip
         python -m pip install tox tox-gh-actions pytest
         python -m pip install -e .
-        sudo apt-get install -y unixodbc-dev
-      shell: sudo bash {0}
+        echo "*** pyodbc version"
+        python -c "import pyodbc; print(pyodbc.version)"
+        echo "*** pyodbc drivers"
+        python -c "import pyodbc; print('\n'.join(sorted(pyodbc.drivers())))"
+
     - name: Test with pytest
       run: |
         pytest
+
     - name: Test with tox
       run: |
         tox
