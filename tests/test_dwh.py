@@ -13,7 +13,7 @@ def test_database_operations_init_success(monkeypatch):
         pass
 
     monkeypatch.setattr(
-        "database_operations.DWH.connect_to_database_using_pyodbc", mock_connect
+        "pyprediktormapclient.dwh.DWH.connect_to_database_using_pyodbc", mock_connect
     )
 
     dwh = DWH(grs(), grs(), grs(), grs())
@@ -22,7 +22,7 @@ def test_database_operations_init_success(monkeypatch):
 
 def test_connect_to_database_using_pyodbc_no_drivers(monkeypatch):
     # Mock the absence of ODBC drivers
-    monkeypatch.setattr("database_operations.pyodbc.drivers", lambda: [])
+    monkeypatch.setattr("pyprediktormapclient.dwh.pyodbc.drivers", lambda: [])
 
     # Test failure scenario when no ODBC drivers are available
     with pytest.raises(ValueError) as excinfo:
