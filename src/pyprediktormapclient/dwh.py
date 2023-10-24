@@ -8,15 +8,29 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 class DWH:
-    """Helper functions to access a PowerView Data Warehouse. This class is a wrapper around pyodbc
-    and you can use all pyodbc methods as well as the provided methods. Look at the pyodbc documentation
-    and use the cursor attribute to access the pyodbc cursor.
+    """Helper functions to access a PowerView Data Warehouse or other SQL databases.
+    This class is a wrapper around pyodbc and you can use all pyodbc methods as well
+    as the provided methods. Look at the pyodbc documentation and use the cursor
+    attribute to access the pyodbc cursor.
 
     Args:
         url (str): The URL of the sql server
         database (str): The name of the database
         username (str): The username
         password (str): The password
+    
+    Attributes:
+        connection (pyodbc.Connection): The connection object
+        cursor (pyodbc.Cursor): The cursor object
+
+    Examples:
+        >>> from pyprediktormapclient.dwh import DWH
+        >>> dwh = DWH("localhost", "mydatabase", "myusername", "mypassword")
+        >>> dwh.read("SELECT * FROM mytable")
+        >>> dwh.write("INSERT INTO mytable VALUES (1, 'test')")
+        >>> dwh.commit() # Or commit=True in the write method
+        >>> # You can also use the cursor directly
+        >>> dwh.cursor.execute("SELECT * FROM mytable")
     """
 
     @validate_call

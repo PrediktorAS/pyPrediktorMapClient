@@ -28,10 +28,13 @@ class AnalyticsHelper:
         - Id
 
     Args:
-        List: The return from a ModelIndex call function
-
+        input (List): The return from a ModelIndex call function
+    
+    Attributes:
+        dataframe (pandas.DataFrame): The normalized dataframe
+    
     Returns:
-        An instance of the class with some resources. You can access the dataframe directly as "dataframe"
+        An instance of the class with some resources and attributes
 
     Todo:
         * Input checks for nodeIds in variables that requires format int:int:string
@@ -43,19 +46,9 @@ class AnalyticsHelper:
         self.normalize()
 
     def normalize(self):
-        """Normalize column names in the dataframe. Different ModelIndex calls has different column names
-        but this will be normalized with this function according to the class docs.
-
-        Columns in the dataframe are:
-        - Id
-        - Name
-        - Type
-        - Props
-            - DisplayName
-            - Value
-        - Vars
-            - DisplayName
-            - Id
+        """Normalize column names in the `dataframe` class attribute. Different
+        ModelIndex calls has different column names but this will be normalized
+        with this function according to the class docs.
 
         Returns:
             Nothing, but normalizes the instance "dataframe"
