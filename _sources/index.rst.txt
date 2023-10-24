@@ -14,7 +14,7 @@ Contents
    Contributions & Help <contributing>
    License <license>
    Authors <authors>
-   Changelog <changelog>
+   Working with Data Warehouse <dwh>
    Module Reference <api/modules>
 
 
