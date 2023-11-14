@@ -7,6 +7,7 @@ from pydantic import validate_call
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+
 class DWH:
     """Helper functions to access a PowerView Data Warehouse or other
     SQL databases. This class is a wrapper around pyodbc and you can use
@@ -35,12 +36,7 @@ class DWH:
 
     @validate_call
     def __init__(
-        self,
-        url: str,
-        database: str,
-        username: str,
-        password: str,
-        driver: int = 0
+        self, url: str, database: str, username: str, password: str, driver: int = 0
     ) -> None:
         """Class initializer
 
@@ -57,12 +53,14 @@ class DWH:
         self.username = username
         self.password = password
         self.connection = None
-        self.connection_string =\
-            f"UID={self.username};" +\
-            f"PWD={self.password}" +\
-            f"DRIVER={self.driver};" +\
-            f"SERVER={self.url};" +\
-            f"DATABASE={self.database};"
+        self.connection_string = (
+            f"UID={self.username};"
+            + f"PWD={self.password}"
+            + f"DRIVER={self.driver};"
+            + f"SERVER={self.url};"
+            + f"DATABASE={self.database};"
+        )
+        self.connection_attempts = 3
 
         self.__set_driver(driver)
         self.__connect()
@@ -75,26 +73,15 @@ class DWH:
         if self.connection is not None:
             self.__disconnect()
 
-
-
-    '''
+    """
     Public
-    '''
+    """
     # .......
 
-
-
-
-
-
-
-
-
-
-
-    '''
+    """
     Public - Low level database operations
-    '''
+    """
+
     @validate_call
     def read(self, sql: str) -> List[Any]:
         """Executes a SQL query and returns the results.
@@ -123,15 +110,13 @@ class DWH:
         self.__connect()
         self.cursor.execute(sql)
         result = self.cursor.fetchall()
-        if commit: self.commit()
+        if commit:
+            self.commit()
         return result
 
     @validate_call
     def execute_many(
-        self,
-        sql: str,
-        params: List[Any],
-        commit: bool = False
+        self, sql: str, params: List[Any], commit: bool = False
     ) -> List[Any]:
         """Executes a SQL query against all parameters or mappings and
         returns the results.
@@ -147,7 +132,8 @@ class DWH:
         self.__connect()
         self.cursor.executemany(sql)
         result = self.cursor.fetchall()
-        if commit: self.commit()
+        if commit:
+            self.commit()
         return result
 
     @validate_call
@@ -168,11 +154,10 @@ class DWH:
         """Commits any changes to the database."""
         self.connection.commit()
 
-
-
-    '''
+    """
     Private - Driver
-    '''
+    """
+
     @validate_call
     def __set_driver(self, driver_index: int):
         """Sets the driver to use for the connection.
@@ -182,9 +167,9 @@ class DWH:
         """
         if self.__get_number_of_available_pyodbc_drivers() < (driver_index + 1):
             raise ValueError(
-                f"Driver index {driver_index} is out of range. Please use " +\
-                f"the __get_list_of_available_pyodbc_drivers() method " +\
-                f"to list all available drivers."
+                f"Driver index {driver_index} is out of range. Please use "
+                + f"the __get_list_of_available_pyodbc_drivers() method "
+                + f"to list all available drivers."
             )
 
         self.driver = self.__get_list_of_available_pyodbc_drivers()[driver_index]
@@ -195,52 +180,80 @@ class DWH:
     def __get_list_of_available_pyodbc_drivers(self):
         return pyodbc.drivers()
 
-
-
-    '''
+    """
     Private - Connector & Disconnector
-    '''
+    """
+
     def __connect(self):
         """Establishes a connection to the database."""
         if self.connection:
             return
 
         logging.info("Initiating connection to the database...")
-        try:
-            self.connection = pyodbc.connect(self.connection_string)
-            self.cursor = self.connection.cursor()
-            logging.info("Connection successfull...")
-        except pyodbc.OperationalError as err:
-            logger.error(f"Operational Error {err.args[0]}: {err.args[1]}")
-            logger.warning(
-                f"Pyodbc is having issues with the connection. This could " +\
-                f"be due to the wrong driver being used. Please check your " +\
-                f"driver with the __get_list_of_available_pyodbc_drivers() " +\
-                f"method and try again."
-            )
-            raise
-        except pyodbc.DataError as err:
-            logger.error(f"Data Error {err.args[0]}: {err.args[1]}")
-            raise
-        except pyodbc.IntegrityError as err:
-            logger.error(f"Integrity Error {err.args[0]}: {err.args[1]}")
-            raise
-        except pyodbc.ProgrammingError as err:
-            logger.error(f"Programming Error {err.args[0]}: {err.args[1]}")
-            logger.warning(
-                f"There seems to be a problem with your code. Please check " +\
-                f"your code and try again."
-            )
-            raise
-        except pyodbc.NotSupportedError as err:
-            logger.error(f"Not supported {err.args[0]}: {err.args[1]}")
-            raise
-        except pyodbc.DatabaseError as err:
-            logger.error(f"Database Error {err.args[0]}: {err.args[1]}")
-            raise
-        except pyodbc.Error as err:
-            logger.error(f"Generic Error {err.args[0]}: {err.args[1]}")
-            raise
+
+        attempt = 0
+        while attempt < self.connection_attempts:
+            try:
+                self.connection = pyodbc.connect(self.connection_string)
+                self.cursor = self.connection.cursor()
+                logging.info("Connection successfull!")
+                break
+
+            # Exceptions once thrown there is no point attempting
+            except pyodbc.DataError as err:
+                logger.error(f"Data Error {err.args[0]}: {err.args[1]}")
+                raise
+            except pyodbc.IntegrityError as err:
+                logger.error(f"Integrity Error {err.args[0]}: {err.args[1]}")
+                raise
+            except pyodbc.ProgrammingError as err:
+                logger.error(f"Programming Error {err.args[0]}: {err.args[1]}")
+                logger.warning(
+                    f"There seems to be a problem with your code. Please "
+                    + f"check your code and try again."
+                )
+                raise
+            except pyodbc.NotSupportedError as err:
+                logger.error(f"Not supported {err.args[0]}: {err.args[1]}")
+                raise
+
+            # Exceptions when thrown we can continue attempting
+            except pyodbc.OperationalError as err:
+                logger.error(f"Operational Error {err.args[0]}: {err.args[1]}")
+                logger.warning(
+                    f"Pyodbc is having issues with the connection. This "
+                    + f"could be due to the wrong driver being used. Please "
+                    + f"check your driver with "
+                    + f"the __get_list_of_available_pyodbc_drivers() method "
+                    + f"and try again."
+                )
+
+                attempt += 1
+                if self.__are_connection_attempts_reached(attempt):
+                    raise
+            except pyodbc.DatabaseError as err:
+                logger.error(f"Database Error {err.args[0]}: {err.args[1]}")
+
+                attempt += 1
+                if self.__are_connection_attempts_reached(attempt):
+                    raise
+            except pyodbc.Error as err:
+                logger.error(f"Generic Error {err.args[0]}: {err.args[1]}")
+
+                attempt += 1
+                if self.__are_connection_attempts_reached(attempt):
+                    raise
+
+    def __are_connection_attempts_reached(self, attempt):
+        if attempt != self.connection_attempts:
+            logger.warning("Retrying connection...")
+            return False
+
+        logger.error(
+            f"Failed to connect to the DataWarehouse after "
+            + f"{self.connection_attempts} attempts."
+        )
+        return True
 
     def __disconnect(self):
         """Closes the connection to the database."""
