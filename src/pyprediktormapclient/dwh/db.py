@@ -8,11 +8,8 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
-class DWH:
-    """Helper functions to access a PowerView Data Warehouse or other
-    SQL databases. This class is a wrapper around pyodbc and you can use
-    all pyodbc methods as well as the provided methods. Look at the pyodbc
-    documentation and use the cursor attribute to access the pyodbc cursor.
+class Db:
+    """Access a PowerView Data Warehouse or other SQL databases.
 
     Args:
         url (str): The URL of the sql server
@@ -23,22 +20,13 @@ class DWH:
     Attributes:
         connection (pyodbc.Connection): The connection object
         cursor (pyodbc.Cursor): The cursor object
-
-    Examples:
-        >>> from pyprediktormapclient.dwh import DWH
-        >>> dwh = DWH("localhost", "mydatabase", "myusername", "mypassword")
-        >>> dwh.read("SELECT * FROM mytable")
-        >>> dwh.write("INSERT INTO mytable VALUES (1, 'test')")
-        >>> dwh.commit() # Or commit=True in the write method
-        >>> # You can also use the cursor directly
-        >>> dwh.cursor.execute("SELECT * FROM mytable")
     """
 
     @validate_call
     def __init__(
         self, url: str, database: str, username: str, password: str, driver: int = 0
     ) -> None:
-        """Class initializer
+        """Class initializer.
 
         Args:
             url (str): The URL of the sql server
@@ -46,8 +34,9 @@ class DWH:
             username (str): The username
             password (str): The password
         """
+        self.__set_driver(driver)
+
         self.url = url
-        self.driver = None
         self.cursor = None
         self.database = database
         self.username = username
@@ -55,14 +44,13 @@ class DWH:
         self.connection = None
         self.connection_string = (
             f"UID={self.username};"
-            + f"PWD={self.password}"
+            + f"PWD={self.password};"
             + f"DRIVER={self.driver};"
             + f"SERVER={self.url};"
             + f"DATABASE={self.database};"
         )
         self.connection_attempts = 3
 
-        self.__set_driver(driver)
         self.__connect()
 
     def __enter__(self):
@@ -76,91 +64,91 @@ class DWH:
     """
     Public
     """
-    # .......
-
-    """
-    Public - Low level database operations
-    """
 
     @validate_call
-    def read(self, sql: str) -> List[Any]:
-        """Executes a SQL query and returns the results.
+    def fetch(self, query: str, to_dataframe: bool = False) -> List[Any]:
+        """Execute the SQL query to get results from DWH and return the data.
+
+        Use that method for getting data. That means that if you use SELECT or
+        you'd like to call a stored procedure that returns one or more sets
+        of data, that is the correct method to use.
+
+        Use that method to GET.
 
         Args:
-            sql (str): The SQL query to execute.
+            query (str): The SQL query to execute.
+            to_dataframe (bool): If True, return the results as a list
+                of DataFrames.
+
+        Returns:
+            List[Any]: The results of the query. If DWH returns multiple
+                data sets, this method is going to return a list
+                of result sets (lists). If DWH returns a single data set,
+                the method is going to return a list representing the single
+                result set.
+
+                If to_dataframe is True, the data inside each data set
+                is going to be in DataFrame format.
+        """
+        self.__connect()
+        self.cursor.execute(query)
+
+        data_sets = []
+        while True:
+            data_set = []
+
+            columns = [col[0] for col in self.cursor.description]
+            for row in self.cursor.fetchall():
+                data_set.append(
+                    {name: row[index] for index, name in enumerate(columns)}
+                )
+
+            data_sets.append(pd.DataFrame(data_set) if to_dataframe else data_set)
+
+            if not self.cursor.nextset():
+                break
+
+        return data_sets if len(data_sets) > 1 else data_sets[0]
+
+    @validate_call
+    def execute(self, query: str, commit: bool = True) -> List[Any]:
+        """Execute the SQL query and return the results.
+
+        For instance, if we create a new record in DWH by calling
+        a stored procedure returning the id of the inserted element or
+        in our query we use `SELECT SCOPE_IDENTITY() AS LastInsertedId;`,
+        the DWH is going to return data after executing our write request.
+
+        Please note that here we expect a single result set. Therefore DWH
+        is obligated to return only one data set and also we're obligated to
+        construct our query according to this requirement.
+
+        Use that method to CREATE, UPDATE, DELETE or execute business logic.
+        To NOT use for GET.
+
+        Args:
+            query (str): The SQL query to execute.
+            commit (bool): If True, commit the changes to the database.
 
         Returns:
             List[Any]: The results of the query.
         """
         self.__connect()
-        self.cursor.execute(sql)
-        return self.cursor.fetchall()
+        self.cursor.execute(query)
 
-    @validate_call
-    def write(self, sql: str, commit: bool = False) -> List[Any]:
-        """Executes a SQL query and returns the results.
-
-        Args:
-            sql (str): The SQL query to execute.
-            commit (bool): Whether to commit the changes to the database.
-
-        Returns:
-            List[Any]: The results of the query.
-        """
-        self.__connect()
-        self.cursor.execute(sql)
         result = self.cursor.fetchall()
         if commit:
-            self.commit()
+            self.__commit()
+
         return result
-
-    @validate_call
-    def execute_many(
-        self, sql: str, params: List[Any], commit: bool = False
-    ) -> List[Any]:
-        """Executes a SQL query against all parameters or mappings and
-        returns the results.
-
-        Args:
-            sql (str): The SQL query to execute.
-            params (List[Any]): The parameters or mappings to use.
-            commit (bool): Whether to commit the changes to the database.
-
-        Returns:
-            List[Any]: The results of the query.
-        """
-        self.__connect()
-        self.cursor.executemany(sql)
-        result = self.cursor.fetchall()
-        if commit:
-            self.commit()
-        return result
-
-    @validate_call
-    def read_to_dataframe(self, sql: str) -> pd.DataFrame:
-        """Executes a SQL query and returns the results as a DataFrame.
-
-        Args:
-            sql (str): The SQL query to execute.
-
-        Returns:
-            pd.DataFrame: The results of the query.
-
-        """
-        self.__connect()
-        return pd.read_sql(sql, self.connection)
-
-    def commit(self):
-        """Commits any changes to the database."""
-        self.connection.commit()
 
     """
     Private - Driver
     """
 
     @validate_call
-    def __set_driver(self, driver_index: int):
-        """Sets the driver to use for the connection.
+    def __set_driver(self, driver_index: int) -> None:
+        """Sets the driver to use for the connection to the database.
 
         Args:
             driver (int): The index of the driver to use.
@@ -174,17 +162,20 @@ class DWH:
 
         self.driver = self.__get_list_of_available_pyodbc_drivers()[driver_index]
 
-    def __get_number_of_available_pyodbc_drivers(self):
+    @validate_call
+    def __get_number_of_available_pyodbc_drivers(self) -> int:
         return len(self.__get_list_of_available_pyodbc_drivers())
 
-    def __get_list_of_available_pyodbc_drivers(self):
+    @validate_call
+    def __get_list_of_available_pyodbc_drivers(self) -> List[Any]:
         return pyodbc.drivers()
 
     """
     Private - Connector & Disconnector
     """
 
-    def __connect(self):
+    @validate_call
+    def __connect(self) -> None:
         """Establishes a connection to the database."""
         if self.connection:
             return
@@ -244,7 +235,8 @@ class DWH:
                 if self.__are_connection_attempts_reached(attempt):
                     raise
 
-    def __are_connection_attempts_reached(self, attempt):
+    @validate_call
+    def __are_connection_attempts_reached(self, attempt) -> bool:
         if attempt != self.connection_attempts:
             logger.warning("Retrying connection...")
             return False
@@ -255,10 +247,20 @@ class DWH:
         )
         return True
 
-    def __disconnect(self):
+    @validate_call
+    def __disconnect(self) -> None:
         """Closes the connection to the database."""
         if self.connection:
             self.connection.close()
 
             self.cursor = None
             self.connection = None
+
+    """
+    Private - Low level database operations
+    """
+
+    @validate_call
+    def __commit(self) -> None:
+        """Commits any changes to the database."""
+        self.connection.commit()
