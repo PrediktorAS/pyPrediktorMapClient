@@ -138,6 +138,7 @@ def test_version_when_version_data_is_returned_then_return_version_data(monkeypa
     mock_connection = Mock()
     mock_connection.cursor.return_value = mock_cursor
     monkeypatch.setattr("pyodbc.connect", lambda *args, **kwargs: mock_connection)
+    monkeypatch.setattr("pyodbc.drivers", lambda: ["Driver1", "Driver2", "Driver3"])
 
     dwh = DWH(grs(), grs(), grs(), grs(), 2)
     version = dwh.version()
@@ -167,6 +168,7 @@ def test_version_when_version_data_is_not_returned_then_return_empty_tuple(monke
     mock_connection = Mock()
     mock_connection.cursor.return_value = mock_cursor
     monkeypatch.setattr("pyodbc.connect", lambda *args, **kwargs: mock_connection)
+    monkeypatch.setattr("pyodbc.drivers", lambda: ["Driver1", "Driver2", "Driver3"])
 
     dwh = DWH(grs(), grs(), grs(), grs(), 2)
     version = dwh.version()

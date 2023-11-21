@@ -150,6 +150,7 @@ def test_fetch_when_to_dataframe_is_false_and_no_data_is_returned_then_return_em
     mock_connection = Mock()
     mock_connection.cursor.return_value = mock_cursor
     monkeypatch.setattr("pyodbc.connect", lambda *args, **kwargs: mock_connection)
+    monkeypatch.setattr("pyodbc.drivers", lambda: ["Driver1", "Driver2", "Driver3"])
 
     db = Db(grs(), grs(), grs(), grs(), 2)
     actual_result = db.fetch(query)
@@ -240,6 +241,7 @@ def test_fetch_when_to_dataframe_is_false_and_single_data_set_is_returned_then_r
     mock_connection = Mock()
     mock_connection.cursor.return_value = mock_cursor
     monkeypatch.setattr("pyodbc.connect", lambda *args, **kwargs: mock_connection)
+    monkeypatch.setattr("pyodbc.drivers", lambda: ["Driver1", "Driver2", "Driver3"])
 
     db = Db(grs(), grs(), grs(), grs(), 2)
     actual_result = db.fetch(query)
@@ -375,6 +377,7 @@ def test_fetch_when_to_dataframe_is_false_and_multiple_data_sets_are_returned_th
     mock_connection = Mock()
     mock_connection.cursor.return_value = mock_cursor
     monkeypatch.setattr("pyodbc.connect", lambda *args, **kwargs: mock_connection)
+    monkeypatch.setattr("pyodbc.drivers", lambda: ["Driver1", "Driver2", "Driver3"])
 
     db = Db(grs(), grs(), grs(), grs(), 2)
     actual_result = db.fetch(query)
@@ -406,6 +409,7 @@ def test_fetch_when_to_dataframe_is_true_and_no_data_is_returned_then_return_emp
     mock_connection = Mock()
     mock_connection.cursor.return_value = mock_cursor
     monkeypatch.setattr("pyodbc.connect", lambda *args, **kwargs: mock_connection)
+    monkeypatch.setattr("pyodbc.drivers", lambda: ["Driver1", "Driver2", "Driver3"])
 
     db = Db(grs(), grs(), grs(), grs(), 2)
     actual_result = db.fetch(query, True)
@@ -497,6 +501,7 @@ def test_fetch_when_to_dataframe_is_true_and_single_data_set_is_returned_then_re
     mock_connection = Mock()
     mock_connection.cursor.return_value = mock_cursor
     monkeypatch.setattr("pyodbc.connect", lambda *args, **kwargs: mock_connection)
+    monkeypatch.setattr("pyodbc.drivers", lambda: ["Driver1", "Driver2", "Driver3"])
 
     db = Db(grs(), grs(), grs(), grs(), 2)
     actual_result = db.fetch(query, True)
@@ -636,6 +641,7 @@ def test_fetch_when_to_dataframe_is_true_and_multiple_data_sets_are_returned_the
     mock_connection = Mock()
     mock_connection.cursor.return_value = mock_cursor
     monkeypatch.setattr("pyodbc.connect", lambda *args, **kwargs: mock_connection)
+    monkeypatch.setattr("pyodbc.drivers", lambda: ["Driver1", "Driver2", "Driver3"])
 
     db = Db(grs(), grs(), grs(), grs(), 2)
     actual_result = db.fetch(query, True)
