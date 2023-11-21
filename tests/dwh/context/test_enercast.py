@@ -24,16 +24,16 @@ def test_get_plants_to_update(monkeypatch):
     expected_query = "SET NOCOUNT ON; EXEC dwetl.GetEnercastPlantsToUpdate"
     expected_result = [
         {
-            "plantname": "CC-LL",
-            "AssetName": "PredPV1",
-            "AssetId": "86358efb-c076-4bca-a775-0a63ec92d8ba",
+            "plantname": "AB-CD",
+            "AssetName": "SomePlant",
+            "AssetId": "12345678-c810-4abc-b85e-1a93de82fake",
             "Percentile": 20,
             "ExtForecastTypeKey": 11,
         },
         {
-            "plantname": "CC-LL",
-            "AssetName": "PredPV1",
-            "AssetId": "86358efb-c076-4bca-a775-0a63ec92d8ba",
+            "plantname": "AB-CD",
+            "AssetName": "SomePlant",
+            "AssetId": "12345678-c810-4abc-b85e-1a93de82fake",
             "Percentile": 80,
             "ExtForecastTypeKey": 12,
         },
@@ -55,7 +55,7 @@ get_live_meter_data
 
 
 def test_get_live_meter_data(monkeypatch):
-    asset_name = "PredPV1"
+    asset_name = "SomePlant"
 
     expected_query = (
         f"SET NOCOUNT ON; EXEC dwetl.GetEnercastLiveMeterData '{asset_name}'"
@@ -89,7 +89,7 @@ upsert_forecast_data
 def test_upsert_forecast_data(monkeypatch):
     enercast_forecast_data = {
         "results": {
-            "facilityName": "PredPV1",
+            "facilityName": "SomePlant",
             "powerUnit": "W",
             "values": [
                 {"timestamp": "2023-11-20T17:30:00Z", "normed": 0, "absolute": 0},

@@ -24,8 +24,8 @@ def test_get_plants_to_update(monkeypatch):
     expected_query = "SET NOCOUNT ON; EXEC dwetl.GetSolcastPlantsToUpdate"
     expected_result = [
         {
-            "plantname": "SA-S1",
-            "resource_id": "1a57-6b1f-ec18-c5c8",
+            "plantname": "XY-ZK",
+            "resource_id": "1234-abcd-efgh-5678",
             "api_key": "SOME_KEY",
             "ExtForecastTypeKey": 13,
             "hours": 168,
@@ -33,8 +33,8 @@ def test_get_plants_to_update(monkeypatch):
             "period": "PT15M",
         },
         {
-            "plantname": "SA-S1",
-            "resource_id": "1a57-6b1f-ec18-c5c8",
+            "plantname": "XY-ZK",
+            "resource_id": "1234-abcd-efgh-5678",
             "api_key": "SOME_KEY",
             "ExtForecastTypeKey": 14,
             "hours": 168,
@@ -42,8 +42,8 @@ def test_get_plants_to_update(monkeypatch):
             "period": "PT15M",
         },
         {
-            "plantname": "SA-D1",
-            "resource_id": "ba75-e17a-7374-95ed",
+            "plantname": "KL-MN",
+            "resource_id": "1234-abcd-efgh-5678",
             "api_key": "SOME_KEY",
             "ExtForecastTypeKey": 13,
             "hours": 168,
@@ -68,7 +68,7 @@ upsert_forecast_data
 
 
 def test_upsert_forecast_data(monkeypatch):
-    plantname = "PredPV1"
+    plantname = "SomePlant"
     solcast_forecast_data = {"forecasts": {"key": "value"}}
     forecast_type_key = 1
 

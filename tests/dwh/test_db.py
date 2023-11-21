@@ -165,8 +165,8 @@ def test_fetch_when_to_dataframe_is_false_and_single_data_set_is_returned_then_r
     query = "SELECT * FROM mytable"
     data_returned_by_db = [
         (
-            "SA-S1",
-            "1a57-6b1f-ec18-c5c8",
+            "XY-ZK",
+            "1234-abcd-efgh-5678",
             "SOME_KEY",
             13,
             168,
@@ -174,8 +174,8 @@ def test_fetch_when_to_dataframe_is_false_and_single_data_set_is_returned_then_r
             "PT15M",
         ),
         (
-            "SA-S1",
-            "1a57-6b1f-ec18-c5c8",
+            "XY-ZK",
+            "1234-abcd-efgh-5678",
             "SOME_KEY",
             14,
             168,
@@ -183,8 +183,8 @@ def test_fetch_when_to_dataframe_is_false_and_single_data_set_is_returned_then_r
             "PT15M",
         ),
         (
-            "SA-D1",
-            "ba75-e17a-7374-95ed",
+            "KL-MN",
+            "1234-abcd-efgh-5678",
             "SOME_KEY",
             13,
             168,
@@ -195,8 +195,8 @@ def test_fetch_when_to_dataframe_is_false_and_single_data_set_is_returned_then_r
 
     expected_result = [
         {
-            "plantname": "SA-S1",
-            "resource_id": "1a57-6b1f-ec18-c5c8",
+            "plantname": "XY-ZK",
+            "resource_id": "1234-abcd-efgh-5678",
             "api_key": "SOME_KEY",
             "ExtForecastTypeKey": 13,
             "hours": 168,
@@ -204,8 +204,8 @@ def test_fetch_when_to_dataframe_is_false_and_single_data_set_is_returned_then_r
             "period": "PT15M",
         },
         {
-            "plantname": "SA-S1",
-            "resource_id": "1a57-6b1f-ec18-c5c8",
+            "plantname": "XY-ZK",
+            "resource_id": "1234-abcd-efgh-5678",
             "api_key": "SOME_KEY",
             "ExtForecastTypeKey": 14,
             "hours": 168,
@@ -213,8 +213,8 @@ def test_fetch_when_to_dataframe_is_false_and_single_data_set_is_returned_then_r
             "period": "PT15M",
         },
         {
-            "plantname": "SA-D1",
-            "resource_id": "ba75-e17a-7374-95ed",
+            "plantname": "KL-MN",
+            "resource_id": "1234-abcd-efgh-5678",
             "api_key": "SOME_KEY",
             "ExtForecastTypeKey": 13,
             "hours": 168,
@@ -256,8 +256,8 @@ def test_fetch_when_to_dataframe_is_false_and_multiple_data_sets_are_returned_th
     query = "SELECT * FROM mytable"
     data_returned_by_db_set_one = [
         (
-            "SA-S1",
-            "1a57-6b1f-ec18-c5c8",
+            "XY-ZK",
+            "1234-abcd-efgh-5678",
             "SOME_KEY",
             13,
             168,
@@ -265,8 +265,8 @@ def test_fetch_when_to_dataframe_is_false_and_multiple_data_sets_are_returned_th
             "PT15M",
         ),
         (
-            "SA-S1",
-            "1a57-6b1f-ec18-c5c8",
+            "XY-ZK",
+            "1234-abcd-efgh-5678",
             "SOME_KEY",
             14,
             168,
@@ -274,8 +274,8 @@ def test_fetch_when_to_dataframe_is_false_and_multiple_data_sets_are_returned_th
             "PT15M",
         ),
         (
-            "SA-D1",
-            "ba75-e17a-7374-95ed",
+            "KL-MN",
+            "1234-abcd-efgh-5678",
             "SOME_KEY",
             13,
             168,
@@ -286,7 +286,7 @@ def test_fetch_when_to_dataframe_is_false_and_multiple_data_sets_are_returned_th
     data_returned_by_db_set_two = [
         (
             "ALPHA",
-            "1a57-6b1f-ec18-c5c8",
+            "1234-abcd-efgh-5678",
             "SOME_KEY",
             13,
             168,
@@ -295,7 +295,7 @@ def test_fetch_when_to_dataframe_is_false_and_multiple_data_sets_are_returned_th
         ),
         (
             "BETA",
-            "1a57-6b1f-ec18-c5c8",
+            "1234-abcd-efgh-5678",
             "SOME_KEY",
             14,
             168,
@@ -307,8 +307,8 @@ def test_fetch_when_to_dataframe_is_false_and_multiple_data_sets_are_returned_th
     expected_result = [
         [
             {
-                "plantname": "SA-S1",
-                "resource_id": "1a57-6b1f-ec18-c5c8",
+                "plantname": "XY-ZK",
+                "resource_id": "1234-abcd-efgh-5678",
                 "api_key": "SOME_KEY",
                 "ExtForecastTypeKey": 13,
                 "hours": 168,
@@ -316,8 +316,8 @@ def test_fetch_when_to_dataframe_is_false_and_multiple_data_sets_are_returned_th
                 "period": "PT15M",
             },
             {
-                "plantname": "SA-S1",
-                "resource_id": "1a57-6b1f-ec18-c5c8",
+                "plantname": "XY-ZK",
+                "resource_id": "1234-abcd-efgh-5678",
                 "api_key": "SOME_KEY",
                 "ExtForecastTypeKey": 14,
                 "hours": 168,
@@ -325,8 +325,8 @@ def test_fetch_when_to_dataframe_is_false_and_multiple_data_sets_are_returned_th
                 "period": "PT15M",
             },
             {
-                "plantname": "SA-D1",
-                "resource_id": "ba75-e17a-7374-95ed",
+                "plantname": "KL-MN",
+                "resource_id": "1234-abcd-efgh-5678",
                 "api_key": "SOME_KEY",
                 "ExtForecastTypeKey": 13,
                 "hours": 168,
@@ -337,7 +337,7 @@ def test_fetch_when_to_dataframe_is_false_and_multiple_data_sets_are_returned_th
         [
             {
                 "plantname": "ALPHA",
-                "resource_id": "1a57-6b1f-ec18-c5c8",
+                "resource_id": "1234-abcd-efgh-5678",
                 "api_key": "SOME_KEY",
                 "ExtForecastTypeKey": 13,
                 "hours": 168,
@@ -346,7 +346,7 @@ def test_fetch_when_to_dataframe_is_false_and_multiple_data_sets_are_returned_th
             },
             {
                 "plantname": "BETA",
-                "resource_id": "1a57-6b1f-ec18-c5c8",
+                "resource_id": "1234-abcd-efgh-5678",
                 "api_key": "SOME_KEY",
                 "ExtForecastTypeKey": 14,
                 "hours": 168,
@@ -424,8 +424,8 @@ def test_fetch_when_to_dataframe_is_true_and_single_data_set_is_returned_then_re
     query = "SELECT * FROM mytable"
     data_returned_by_db = [
         (
-            "SA-S1",
-            "1a57-6b1f-ec18-c5c8",
+            "XY-ZK",
+            "1234-abcd-efgh-5678",
             "SOME_KEY",
             13,
             168,
@@ -433,8 +433,8 @@ def test_fetch_when_to_dataframe_is_true_and_single_data_set_is_returned_then_re
             "PT15M",
         ),
         (
-            "SA-S1",
-            "1a57-6b1f-ec18-c5c8",
+            "XY-ZK",
+            "1234-abcd-efgh-5678",
             "SOME_KEY",
             14,
             168,
@@ -442,8 +442,8 @@ def test_fetch_when_to_dataframe_is_true_and_single_data_set_is_returned_then_re
             "PT15M",
         ),
         (
-            "SA-D1",
-            "ba75-e17a-7374-95ed",
+            "KL-MN",
+            "1234-abcd-efgh-5678",
             "SOME_KEY",
             13,
             168,
@@ -454,8 +454,8 @@ def test_fetch_when_to_dataframe_is_true_and_single_data_set_is_returned_then_re
 
     expected_result = [
         {
-            "plantname": "SA-S1",
-            "resource_id": "1a57-6b1f-ec18-c5c8",
+            "plantname": "XY-ZK",
+            "resource_id": "1234-abcd-efgh-5678",
             "api_key": "SOME_KEY",
             "ExtForecastTypeKey": 13,
             "hours": 168,
@@ -463,8 +463,8 @@ def test_fetch_when_to_dataframe_is_true_and_single_data_set_is_returned_then_re
             "period": "PT15M",
         },
         {
-            "plantname": "SA-S1",
-            "resource_id": "1a57-6b1f-ec18-c5c8",
+            "plantname": "XY-ZK",
+            "resource_id": "1234-abcd-efgh-5678",
             "api_key": "SOME_KEY",
             "ExtForecastTypeKey": 14,
             "hours": 168,
@@ -472,8 +472,8 @@ def test_fetch_when_to_dataframe_is_true_and_single_data_set_is_returned_then_re
             "period": "PT15M",
         },
         {
-            "plantname": "SA-D1",
-            "resource_id": "ba75-e17a-7374-95ed",
+            "plantname": "KL-MN",
+            "resource_id": "1234-abcd-efgh-5678",
             "api_key": "SOME_KEY",
             "ExtForecastTypeKey": 13,
             "hours": 168,
@@ -520,8 +520,8 @@ def test_fetch_when_to_dataframe_is_true_and_multiple_data_sets_are_returned_the
     query = "SELECT * FROM mytable"
     data_returned_by_db_set_one = [
         (
-            "SA-S1",
-            "1a57-6b1f-ec18-c5c8",
+            "XY-ZK",
+            "1234-abcd-efgh-5678",
             "SOME_KEY",
             13,
             168,
@@ -529,8 +529,8 @@ def test_fetch_when_to_dataframe_is_true_and_multiple_data_sets_are_returned_the
             "PT15M",
         ),
         (
-            "SA-S1",
-            "1a57-6b1f-ec18-c5c8",
+            "XY-ZK",
+            "1234-abcd-efgh-5678",
             "SOME_KEY",
             14,
             168,
@@ -538,8 +538,8 @@ def test_fetch_when_to_dataframe_is_true_and_multiple_data_sets_are_returned_the
             "PT15M",
         ),
         (
-            "SA-D1",
-            "ba75-e17a-7374-95ed",
+            "KL-MN",
+            "1234-abcd-efgh-5678",
             "SOME_KEY",
             13,
             168,
@@ -550,7 +550,7 @@ def test_fetch_when_to_dataframe_is_true_and_multiple_data_sets_are_returned_the
     data_returned_by_db_set_two = [
         (
             "ALPHA",
-            "1a57-6b1f-ec18-c5c8",
+            "1234-abcd-efgh-5678",
             "SOME_KEY",
             13,
             168,
@@ -559,7 +559,7 @@ def test_fetch_when_to_dataframe_is_true_and_multiple_data_sets_are_returned_the
         ),
         (
             "BETA",
-            "1a57-6b1f-ec18-c5c8",
+            "1234-abcd-efgh-5678",
             "SOME_KEY",
             14,
             168,
@@ -570,8 +570,8 @@ def test_fetch_when_to_dataframe_is_true_and_multiple_data_sets_are_returned_the
 
     expected_result_set_one = [
         {
-            "plantname": "SA-S1",
-            "resource_id": "1a57-6b1f-ec18-c5c8",
+            "plantname": "XY-ZK",
+            "resource_id": "1234-abcd-efgh-5678",
             "api_key": "SOME_KEY",
             "ExtForecastTypeKey": 13,
             "hours": 168,
@@ -579,8 +579,8 @@ def test_fetch_when_to_dataframe_is_true_and_multiple_data_sets_are_returned_the
             "period": "PT15M",
         },
         {
-            "plantname": "SA-S1",
-            "resource_id": "1a57-6b1f-ec18-c5c8",
+            "plantname": "XY-ZK",
+            "resource_id": "1234-abcd-efgh-5678",
             "api_key": "SOME_KEY",
             "ExtForecastTypeKey": 14,
             "hours": 168,
@@ -588,8 +588,8 @@ def test_fetch_when_to_dataframe_is_true_and_multiple_data_sets_are_returned_the
             "period": "PT15M",
         },
         {
-            "plantname": "SA-D1",
-            "resource_id": "ba75-e17a-7374-95ed",
+            "plantname": "KL-MN",
+            "resource_id": "1234-abcd-efgh-5678",
             "api_key": "SOME_KEY",
             "ExtForecastTypeKey": 13,
             "hours": 168,
@@ -600,7 +600,7 @@ def test_fetch_when_to_dataframe_is_true_and_multiple_data_sets_are_returned_the
     expected_result_set_two = [
         {
             "plantname": "ALPHA",
-            "resource_id": "1a57-6b1f-ec18-c5c8",
+            "resource_id": "1234-abcd-efgh-5678",
             "api_key": "SOME_KEY",
             "ExtForecastTypeKey": 13,
             "hours": 168,
@@ -609,7 +609,7 @@ def test_fetch_when_to_dataframe_is_true_and_multiple_data_sets_are_returned_the
         },
         {
             "plantname": "BETA",
-            "resource_id": "1a57-6b1f-ec18-c5c8",
+            "resource_id": "1234-abcd-efgh-5678",
             "api_key": "SOME_KEY",
             "ExtForecastTypeKey": 14,
             "hours": 168,

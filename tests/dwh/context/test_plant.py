@@ -21,7 +21,7 @@ get_optimal_tracker_angles
 
 
 def test_get_optimal_tracker_angles(monkeypatch):
-    facility_name = "PredPV2"
+    facility_name = "AnotherPlant"
 
     expected_query = (
         f"SET NOCOUNT ON; EXEC dwetl.GetOptimalTrackerAngleParameters "
@@ -71,7 +71,7 @@ insert_log
 
 def test_insert_log_when_has_thrown_error_is_false_then_result_is_ok(monkeypatch):
     message = "Some message"
-    plantname = "NO-PR2"
+    plantname = "XY-ZK2"
     data_type = "Forecast"
     has_thrown_error = False
     ext_forecast_type_key = 11
@@ -100,7 +100,7 @@ def test_insert_log_when_has_thrown_error_is_false_then_result_is_ok(monkeypatch
 
 def test_insert_log_when_has_thrown_error_is_true_then_result_is_error(monkeypatch):
     message = "Some message"
-    plantname = "NO-PR2"
+    plantname = "XY-ZK2"
     data_type = "Forecast"
     has_thrown_error = True
     ext_forecast_type_key = 11
