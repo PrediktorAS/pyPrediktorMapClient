@@ -1,6 +1,14 @@
 pyprediktormapclient package
 ============================
 
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   pyprediktormapclient.dwh
+
 Submodules
 ----------
 
@@ -16,14 +24,6 @@ pyprediktormapclient.auth\_client module
 ----------------------------------------
 
 .. automodule:: pyprediktormapclient.auth_client
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pyprediktormapclient.dwh module
--------------------------------
-
-.. automodule:: pyprediktormapclient.dwh
    :members:
    :undoc-members:
    :show-inheritance:

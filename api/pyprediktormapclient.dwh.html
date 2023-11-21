@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pyprediktormapclient.dwh package &mdash; pyPrediktorMapClient 0.6.2 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=1c28bd9a"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="pyprediktormapclient.dwh.context package" href="pyprediktormapclient.dwh.context.html" />
+    <link rel="prev" title="pyprediktormapclient package" href="pyprediktormapclient.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pyPrediktorMapClient
+          </a>
+              <div class="version">
+                0.6.2
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../readme.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributions &amp; Help</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../authors.html">Authors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dwh.html">Working with Data Warehouse</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">Module Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="pyprediktormapclient.html">pyprediktormapclient package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="pyprediktormapclient.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">pyprediktormapclient.dwh package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="pyprediktormapclient.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pyprediktormapclient.html#module-pyprediktormapclient.analytics_helper">pyprediktormapclient.analytics_helper module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pyprediktormapclient.html#module-pyprediktormapclient.auth_client">pyprediktormapclient.auth_client module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pyprediktormapclient.html#module-pyprediktormapclient.model_index">pyprediktormapclient.model_index module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pyprediktormapclient.html#module-pyprediktormapclient.opc_ua">pyprediktormapclient.opc_ua module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pyprediktormapclient.html#module-pyprediktormapclient.shared">pyprediktormapclient.shared module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pyprediktormapclient.html#module-pyprediktormapclient">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pyPrediktorMapClient</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">pyprediktormapclient</a></li>
+          <li class="breadcrumb-item"><a href="pyprediktormapclient.html">pyprediktormapclient package</a></li>
+      <li class="breadcrumb-item active">pyprediktormapclient.dwh package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/pyprediktormapclient.dwh.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="pyprediktormapclient-dwh-package">
+<h1>pyprediktormapclient.dwh package<a class="headerlink" href="#pyprediktormapclient-dwh-package" title="Link to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="pyprediktormapclient.dwh.context.html">pyprediktormapclient.dwh.context package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pyprediktormapclient.dwh.context.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyprediktormapclient.dwh.context.html#module-pyprediktormapclient.dwh.context.enercast">pyprediktormapclient.dwh.context.enercast module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pyprediktormapclient.dwh.context.html#pyprediktormapclient.dwh.context.enercast.Enercast"><code class="docutils literal notranslate"><span class="pre">Enercast</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.dwh.context.html#pyprediktormapclient.dwh.context.enercast.Enercast.get_live_meter_data"><code class="docutils literal notranslate"><span class="pre">Enercast.get_live_meter_data</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.dwh.context.html#pyprediktormapclient.dwh.context.enercast.Enercast.get_plants_to_update"><code class="docutils literal notranslate"><span class="pre">Enercast.get_plants_to_update</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.dwh.context.html#pyprediktormapclient.dwh.context.enercast.Enercast.upsert_forecast_data"><code class="docutils literal notranslate"><span class="pre">Enercast.upsert_forecast_data</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="pyprediktormapclient.dwh.context.html#module-pyprediktormapclient.dwh.context.plant">pyprediktormapclient.dwh.context.plant module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pyprediktormapclient.dwh.context.html#pyprediktormapclient.dwh.context.plant.Plant"><code class="docutils literal notranslate"><span class="pre">Plant</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.dwh.context.html#pyprediktormapclient.dwh.context.plant.Plant.get_optimal_tracker_angles"><code class="docutils literal notranslate"><span class="pre">Plant.get_optimal_tracker_angles</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.dwh.context.html#pyprediktormapclient.dwh.context.plant.Plant.insert_log"><code class="docutils literal notranslate"><span class="pre">Plant.insert_log</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.dwh.context.html#pyprediktormapclient.dwh.context.plant.Plant.upsert_optimal_tracker_angles"><code class="docutils literal notranslate"><span class="pre">Plant.upsert_optimal_tracker_angles</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="pyprediktormapclient.dwh.context.html#module-pyprediktormapclient.dwh.context.solcast">pyprediktormapclient.dwh.context.solcast module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pyprediktormapclient.dwh.context.html#pyprediktormapclient.dwh.context.solcast.Solcast"><code class="docutils literal notranslate"><span class="pre">Solcast</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.dwh.context.html#pyprediktormapclient.dwh.context.solcast.Solcast.get_plants_to_update"><code class="docutils literal notranslate"><span class="pre">Solcast.get_plants_to_update</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyprediktormapclient.dwh.context.html#pyprediktormapclient.dwh.context.solcast.Solcast.upsert_forecast_data"><code class="docutils literal notranslate"><span class="pre">Solcast.upsert_forecast_data</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="pyprediktormapclient.dwh.context.html#module-pyprediktormapclient.dwh.context">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-pyprediktormapclient.dwh.db">
+<span id="pyprediktormapclient-dwh-db-module"></span><h2>pyprediktormapclient.dwh.db module<a class="headerlink" href="#module-pyprediktormapclient.dwh.db" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="pyprediktormapclient.dwh.db.Db">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyprediktormapclient.dwh.db.</span></span><span class="sig-name descname"><span class="pre">Db</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.12/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">database</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.12/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">username</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.12/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">password</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.12/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">driver</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.12/library/functions.html#int" title="(in Python v3.12)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyprediktormapclient/dwh/db.html#Db"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.dwh.db.Db" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.12/library/functions.html#object" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Access a PowerView Data Warehouse or other SQL databases.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>url</strong> (<a class="reference external" href="https://docs.python.org/3.12/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a>) – The URL of the sql server</p></li>
+<li><p><strong>database</strong> (<a class="reference external" href="https://docs.python.org/3.12/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a>) – The name of the database</p></li>
+<li><p><strong>username</strong> (<a class="reference external" href="https://docs.python.org/3.12/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a>) – The username</p></li>
+<li><p><strong>password</strong> (<a class="reference external" href="https://docs.python.org/3.12/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a>) – The password</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyprediktormapclient.dwh.db.Db.connection">
+<span class="sig-name descname"><span class="pre">connection</span></span><a class="headerlink" href="#pyprediktormapclient.dwh.db.Db.connection" title="Link to this definition"></a></dt>
+<dd><p>The connection object</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pyodbc.Connection</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyprediktormapclient.dwh.db.Db.cursor">
+<span class="sig-name descname"><span class="pre">cursor</span></span><a class="headerlink" href="#pyprediktormapclient.dwh.db.Db.cursor" title="Link to this definition"></a></dt>
+<dd><p>The cursor object</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pyodbc.Cursor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyprediktormapclient.dwh.db.Db.execute">
+<span class="sig-name descname"><span class="pre">execute</span></span><a class="reference internal" href="../_modules/pyprediktormapclient/dwh/db.html#Db.execute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.dwh.db.Db.execute" title="Link to this definition"></a></dt>
+<dd><p>Execute the SQL query and return the results.</p>
+<p>For instance, if we create a new record in DWH by calling
+a stored procedure returning the id of the inserted element or
+in our query we use <cite>SELECT SCOPE_IDENTITY() AS LastInsertedId;</cite>,
+the DWH is going to return data after executing our write request.</p>
+<p>Please note that here we expect a single result set. Therefore DWH
+is obligated to return only one data set and also we’re obligated to
+construct our query according to this requirement.</p>
+<p>Use that method to CREATE, UPDATE, DELETE or execute business logic.
+To NOT use for GET.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>query</strong> (<a class="reference external" href="https://docs.python.org/3.12/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a>) – The SQL query to execute.</p></li>
+<li><p><strong>commit</strong> (<a class="reference external" href="https://docs.python.org/3.12/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a>) – If True, commit the changes to the database.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The results of the query.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[Any]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyprediktormapclient.dwh.db.Db.fetch">
+<span class="sig-name descname"><span class="pre">fetch</span></span><a class="reference internal" href="../_modules/pyprediktormapclient/dwh/db.html#Db.fetch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.dwh.db.Db.fetch" title="Link to this definition"></a></dt>
+<dd><p>Execute the SQL query to get results from DWH and return the data.</p>
+<p>Use that method for getting data. That means that if you use SELECT or
+you’d like to call a stored procedure that returns one or more sets
+of data, that is the correct method to use.</p>
+<p>Use that method to GET.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>query</strong> (<a class="reference external" href="https://docs.python.org/3.12/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a>) – The SQL query to execute.</p></li>
+<li><p><strong>to_dataframe</strong> (<a class="reference external" href="https://docs.python.org/3.12/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a>) – If True, return the results as a list
+of DataFrames.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl>
+<dt>The results of the query. If DWH returns multiple</dt><dd><p>data sets, this method is going to return a list
+of result sets (lists). If DWH returns a single data set,
+the method is going to return a list representing the single
+result set.</p>
+<p>If to_dataframe is True, the data inside each data set
+is going to be in DataFrame format.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[Any]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-pyprediktormapclient.dwh.dwh">
+<span id="pyprediktormapclient-dwh-dwh-module"></span><h2>pyprediktormapclient.dwh.dwh module<a class="headerlink" href="#module-pyprediktormapclient.dwh.dwh" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="pyprediktormapclient.dwh.dwh.DWH">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyprediktormapclient.dwh.dwh.</span></span><span class="sig-name descname"><span class="pre">DWH</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.12/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">database</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.12/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">username</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.12/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">password</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.12/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">driver</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.12/library/functions.html#int" title="(in Python v3.12)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyprediktormapclient/dwh/dwh.html#DWH"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.dwh.dwh.DWH" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyprediktormapclient.dwh.db.Db" title="pyprediktormapclient.dwh.db.Db"><code class="xref py py-class docutils literal notranslate"><span class="pre">Db</span></code></a>, <a class="reference internal" href="#pyprediktormapclient.dwh.idwh.IDWH" title="pyprediktormapclient.dwh.idwh.IDWH"><code class="xref py py-class docutils literal notranslate"><span class="pre">IDWH</span></code></a></p>
+<p>Helper functions to access a PowerView Data Warehouse or other
+SQL databases. This class is a wrapper around pyodbc and you can use
+all pyodbc methods as well as the provided methods. Look at the pyodbc
+documentation and use the cursor attribute to access the pyodbc cursor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>url</strong> (<a class="reference external" href="https://docs.python.org/3.12/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a>) – The URL of the sql server</p></li>
+<li><p><strong>database</strong> (<a class="reference external" href="https://docs.python.org/3.12/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a>) – The name of the database</p></li>
+<li><p><strong>username</strong> (<a class="reference external" href="https://docs.python.org/3.12/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a>) – The username</p></li>
+<li><p><strong>password</strong> (<a class="reference external" href="https://docs.python.org/3.12/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a>) – The password</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyprediktormapclient.dwh.dwh.DWH.connection">
+<span class="sig-name descname"><span class="pre">connection</span></span><a class="headerlink" href="#pyprediktormapclient.dwh.dwh.DWH.connection" title="Link to this definition"></a></dt>
+<dd><p>The connection object</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pyodbc.Connection</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyprediktormapclient.dwh.dwh.DWH.cursor">
+<span class="sig-name descname"><span class="pre">cursor</span></span><a class="headerlink" href="#pyprediktormapclient.dwh.dwh.DWH.cursor" title="Link to this definition"></a></dt>
+<dd><p>The cursor object</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pyodbc.Cursor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl>
+<dt>Examples - of low level usage:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pyprediktormapclient.dwh</span> <span class="kn">import</span> <span class="n">DWH</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dwh</span> <span class="o">=</span> <span class="n">DWH</span><span class="p">(</span><span class="s2">&quot;localhost&quot;</span><span class="p">,</span> <span class="s2">&quot;mydatabase&quot;</span><span class="p">,</span> <span class="s2">&quot;myusername&quot;</span><span class="p">,</span> <span class="s2">&quot;mypassword&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dwh</span><span class="o">.</span><span class="n">fetch</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM mytable&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dwh</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;INSERT INTO mytable VALUES (1, &#39;test&#39;)&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+<dt>Examples - of high level usage:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pyprediktormapclient.dwh</span> <span class="kn">import</span> <span class="n">DWH</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dwh</span> <span class="o">=</span> <span class="n">DWH</span><span class="p">(</span><span class="s2">&quot;localhost&quot;</span><span class="p">,</span> <span class="s2">&quot;mydatabase&quot;</span><span class="p">,</span> <span class="s2">&quot;myusername&quot;</span><span class="p">,</span> <span class="s2">&quot;mypassword&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">database_version</span> <span class="o">=</span> <span class="n">dwh</span><span class="o">.</span><span class="n">version</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">enercast_plants</span> <span class="o">=</span> <span class="n">dwh</span><span class="o">.</span><span class="n">enercast</span><span class="o">.</span><span class="n">get_plants_to_update</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyprediktormapclient.dwh.dwh.DWH.version">
+<span class="sig-name descname"><span class="pre">version</span></span><a class="reference internal" href="../_modules/pyprediktormapclient/dwh/dwh.html#DWH.version"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.dwh.dwh.DWH.version" title="Link to this definition"></a></dt>
+<dd><p>Get the DWH version.</p>
+<p>Returns:
+Dict: A dictionary with the following keys (or similar):</p>
+<blockquote>
+<div><p>DWHVersion,
+UpdateDate,
+ImplementedDate,
+Comment,
+MajorVersionNo,
+MinorVersionNo,
+InterimVersionNo</p>
+</div></blockquote>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-pyprediktormapclient.dwh.idwh">
+<span id="pyprediktormapclient-dwh-idwh-module"></span><h2>pyprediktormapclient.dwh.idwh module<a class="headerlink" href="#module-pyprediktormapclient.dwh.idwh" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="pyprediktormapclient.dwh.idwh.IDWH">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyprediktormapclient.dwh.idwh.</span></span><span class="sig-name descname"><span class="pre">IDWH</span></span><a class="reference internal" href="../_modules/pyprediktormapclient/dwh/idwh.html#IDWH"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.dwh.idwh.IDWH" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.12/library/abc.html#abc.ABC" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pyprediktormapclient.dwh.idwh.IDWH.execute">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">query</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.12/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">commit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.12/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3.12/library/typing.html#typing.List" title="(in Python v3.12)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.12/library/typing.html#typing.Any" title="(in Python v3.12)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/pyprediktormapclient/dwh/idwh.html#IDWH.execute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.dwh.idwh.IDWH.execute" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyprediktormapclient.dwh.idwh.IDWH.fetch">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fetch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">query</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.12/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">to_dataframe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.12/library/functions.html#bool" title="(in Python v3.12)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3.12/library/typing.html#typing.List" title="(in Python v3.12)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.12/library/typing.html#typing.Any" title="(in Python v3.12)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/pyprediktormapclient/dwh/idwh.html#IDWH.fetch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.dwh.idwh.IDWH.fetch" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyprediktormapclient.dwh.idwh.IDWH.version">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">version</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3.12/library/typing.html#typing.Dict" title="(in Python v3.12)"><span class="pre">Dict</span></a></span></span><a class="reference internal" href="../_modules/pyprediktormapclient/dwh/idwh.html#IDWH.version"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.dwh.idwh.IDWH.version" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-pyprediktormapclient.dwh">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-pyprediktormapclient.dwh" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="pyprediktormapclient.html" class="btn btn-neutral float-left" title="pyprediktormapclient package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="pyprediktormapclient.dwh.context.html" class="btn btn-neutral float-right" title="pyprediktormapclient.dwh.context package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Prediktor Support.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,37 @@
+pyprediktormapclient.dwh.context package
+========================================
+
+Submodules
+----------
+
+pyprediktormapclient.dwh.context.enercast module
+------------------------------------------------
+
+.. automodule:: pyprediktormapclient.dwh.context.enercast
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pyprediktormapclient.dwh.context.plant module
+---------------------------------------------
+
+.. automodule:: pyprediktormapclient.dwh.context.plant
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pyprediktormapclient.dwh.context.solcast module
+-----------------------------------------------
+
+.. automodule:: pyprediktormapclient.dwh.context.solcast
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: pyprediktormapclient.dwh.context
+   :members:
+   :undoc-members:
+   :show-inheritance:

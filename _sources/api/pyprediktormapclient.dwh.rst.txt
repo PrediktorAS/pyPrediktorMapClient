@@ -1,0 +1,45 @@
+pyprediktormapclient.dwh package
+================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   pyprediktormapclient.dwh.context
+
+Submodules
+----------
+
+pyprediktormapclient.dwh.db module
+----------------------------------
+
+.. automodule:: pyprediktormapclient.dwh.db
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pyprediktormapclient.dwh.dwh module
+-----------------------------------
+
+.. automodule:: pyprediktormapclient.dwh.dwh
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pyprediktormapclient.dwh.idwh module
+------------------------------------
+
+.. automodule:: pyprediktormapclient.dwh.idwh
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: pyprediktormapclient.dwh
+   :members:
+   :undoc-members:
+   :show-inheritance:
