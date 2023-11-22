@@ -24,7 +24,12 @@ class Db:
 
     @validate_call
     def __init__(
-        self, url: str, database: str, username: str, password: str, driver: int = 0
+        self,
+        url: str,
+        database: str,
+        username: str,
+        password: str,
+        driver_index: int = -1,
     ) -> None:
         """Class initializer.
 
@@ -34,14 +39,15 @@ class Db:
             username (str): The username
             password (str): The password
         """
-        self.__set_driver(driver)
-
         self.url = url
         self.cursor = None
         self.database = database
         self.username = username
         self.password = password
         self.connection = None
+
+        self.__set_driver(driver_index)
+
         self.connection_string = (
             f"UID={self.username};"
             + f"PWD={self.password};"
@@ -151,8 +157,14 @@ class Db:
         """Sets the driver to use for the connection to the database.
 
         Args:
-            driver (int): The index of the driver to use.
+            driver (int): The index of the driver to use. If the index is -1 or
+                in general below 0, pyPrediktorMapClient is going to choose
+                the driver for you.
         """
+        if driver_index < 0:
+            self.driver = self.__get_list_of_available_and_supported_pyodbc_drivers()[0]
+            return
+
         if self.__get_number_of_available_pyodbc_drivers() < (driver_index + 1):
             raise ValueError(
                 f"Driver index {driver_index} is out of range. Please use "
@@ -160,15 +172,34 @@ class Db:
                 + f"to list all available drivers."
             )
 
-        self.driver = self.__get_list_of_available_pyodbc_drivers()[driver_index]
+        self.driver = self.__get_list_of_supported_pyodbc_drivers()[driver_index]
 
     @validate_call
     def __get_number_of_available_pyodbc_drivers(self) -> int:
-        return len(self.__get_list_of_available_pyodbc_drivers())
+        return len(self.__get_list_of_supported_pyodbc_drivers())
 
     @validate_call
-    def __get_list_of_available_pyodbc_drivers(self) -> List[Any]:
+    def __get_list_of_supported_pyodbc_drivers(self) -> List[Any]:
         return pyodbc.drivers()
+
+    @validate_call
+    def __get_list_of_available_and_supported_pyodbc_drivers(self) -> List[Any]:
+        available_drivers = []
+        for driver in self.__get_list_of_supported_pyodbc_drivers():
+            try:
+                pyodbc.connect(
+                    f"UID={self.username};"
+                    + f"PWD={self.password};"
+                    + f"DRIVER={driver};"
+                    + f"SERVER={self.url};"
+                    + f"DATABASE={self.database};",
+                    timeout=3,
+                )
+                available_drivers.append(driver)
+            except pyodbc.Error as e:
+                pass
+
+        return available_drivers
 
     """
     Private - Connector & Disconnector
@@ -215,7 +246,7 @@ class Db:
                     f"Pyodbc is having issues with the connection. This "
                     + f"could be due to the wrong driver being used. Please "
                     + f"check your driver with "
-                    + f"the __get_list_of_available_pyodbc_drivers() method "
+                    + f"the __get_list_of_available_and_supported_pyodbc_drivers() method "
                     + f"and try again."
                 )
 

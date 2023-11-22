@@ -39,12 +39,14 @@ __init__
 
 
 def test_init_when_instantiate_dwh_then_instance_is_created(monkeypatch):
+    driver_index = 0
+
     # Mock the database connection
     monkeypatch.setattr(
         "pyprediktormapclient.dwh.db.pyodbc.connect", mock_pyodbc_connection
     )
 
-    dwh = DWH(grs(), grs(), grs(), grs())
+    dwh = DWH(grs(), grs(), grs(), grs(), driver_index)
     assert dwh is not None
     assert dwh.plant is not None
     assert dwh.solcast is not None
@@ -54,17 +56,21 @@ def test_init_when_instantiate_dwh_then_instance_is_created(monkeypatch):
 def test_init_when_instantiate_dwh_but_no_pyodbc_drivers_available_then_throw_exception(
     monkeypatch,
 ):
+    driver_index = 0
+
     # Mock the absence of ODBC drivers
     monkeypatch.setattr("pyprediktormapclient.dwh.db.pyodbc.drivers", lambda: [])
 
     with pytest.raises(ValueError) as excinfo:
-        DWH(grs(), grs(), grs(), grs())
+        DWH(grs(), grs(), grs(), grs(), driver_index)
     assert "Driver index 0 is out of range." in str(excinfo.value)
 
 
 def test_init_when_instantiate_dwh_but_pyodbc_throws_error_with_tolerance_to_attempts_then_throw_exception(
     monkeypatch,
 ):
+    driver_index = 0
+
     # Mock the database connection
     monkeypatch.setattr(
         "pyprediktormapclient.dwh.db.pyodbc.connect",
@@ -72,12 +78,14 @@ def test_init_when_instantiate_dwh_but_pyodbc_throws_error_with_tolerance_to_att
     )
 
     with pytest.raises(pyodbc.DataError):
-        DWH(grs(), grs(), grs(), grs())
+        DWH(grs(), grs(), grs(), grs(), driver_index)
 
 
 def test_init_when_instantiate_dwh_but_pyodbc_throws_error_tolerant_to_attempts_then_retry_connecting_and_throw_exception(
     caplog, monkeypatch
 ):
+    driver_index = 0
+
     # Mock the database connection
     monkeypatch.setattr(
         "pyprediktormapclient.dwh.db.pyodbc.connect",
@@ -86,12 +94,30 @@ def test_init_when_instantiate_dwh_but_pyodbc_throws_error_tolerant_to_attempts_
 
     with caplog.at_level(logging.ERROR):
         with pytest.raises(pyodbc.DatabaseError):
-            DWH(grs(), grs(), grs(), grs())
+            DWH(grs(), grs(), grs(), grs(), driver_index)
 
     assert any(
         "Failed to connect to the DataWarehouse after 3 attempts." in message
         for message in caplog.messages
     )
+
+
+def test_init_when_instantiate_dwh_but_driver_index_is_not_passed_then_instance_is_created(
+    monkeypatch,
+):
+    # Mock the connection method to return a mock connection with a mock cursor
+    mock_cursor = Mock()
+    mock_connection = Mock()
+    mock_connection.cursor.return_value = mock_cursor
+    monkeypatch.setattr("pyodbc.connect", lambda *args, **kwargs: mock_connection)
+    monkeypatch.setattr("pyodbc.drivers", lambda: ["Driver1", "Driver2"])
+
+    dwh = DWH(grs(), grs(), grs(), grs())
+    assert dwh is not None
+    assert dwh.plant is not None
+    assert dwh.solcast is not None
+    assert dwh.enercast is not None
+    assert dwh.driver == "Driver1"
 
 
 """
@@ -100,6 +126,7 @@ version
 
 
 def test_version_when_version_data_is_returned_then_return_version_data(monkeypatch):
+    driver_index = 2
     data_returned_by_dwh = [
         (
             "2.3.1",
@@ -140,7 +167,7 @@ def test_version_when_version_data_is_returned_then_return_version_data(monkeypa
     monkeypatch.setattr("pyodbc.connect", lambda *args, **kwargs: mock_connection)
     monkeypatch.setattr("pyodbc.drivers", lambda: ["Driver1", "Driver2", "Driver3"])
 
-    dwh = DWH(grs(), grs(), grs(), grs(), 2)
+    dwh = DWH(grs(), grs(), grs(), grs(), driver_index)
     version = dwh.version()
 
     mock_cursor.execute.assert_called_once_with(expected_query)
@@ -148,6 +175,7 @@ def test_version_when_version_data_is_returned_then_return_version_data(monkeypa
 
 
 def test_version_when_version_data_is_not_returned_then_return_empty_tuple(monkeypatch):
+    driver_index = 2
     expected_query = "SET NOCOUNT ON; EXEC [dbo].[GetVersion]"
     expected_result = {}
 
@@ -170,7 +198,7 @@ def test_version_when_version_data_is_not_returned_then_return_empty_tuple(monke
     monkeypatch.setattr("pyodbc.connect", lambda *args, **kwargs: mock_connection)
     monkeypatch.setattr("pyodbc.drivers", lambda: ["Driver1", "Driver2", "Driver3"])
 
-    dwh = DWH(grs(), grs(), grs(), grs(), 2)
+    dwh = DWH(grs(), grs(), grs(), grs(), driver_index)
     version = dwh.version()
 
     mock_cursor.execute.assert_called_once_with(expected_query)
