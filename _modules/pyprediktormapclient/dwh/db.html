@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pyprediktormapclient.dwh.db &mdash; pyPrediktorMapClient 0.6.2 documentation</title>
+  <title>pyprediktormapclient.dwh.db &mdash; pyPrediktorMapClient 0.6.3 documentation</title>
       <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -12,7 +12,7 @@
   
         <script src="../../../_static/jquery.js?v=5d32c60e"></script>
         <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+        <script src="../../../_static/documentation_options.js?v=b8503983"></script>
         <script src="../../../_static/doctools.js?v=888ff710"></script>
         <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/js/theme.js"></script>
@@ -32,7 +32,7 @@
             pyPrediktorMapClient
           </a>
               <div class="version">
-                0.6.2
+                0.6.3
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
@@ -104,7 +104,12 @@
 
     <span class="nd">@validate_call</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">database</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">username</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">password</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">driver</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">database</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">username</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">password</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">driver_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Class initializer.</span>
 
@@ -114,14 +119,15 @@
 <span class="sd">            username (str): The username</span>
 <span class="sd">            password (str): The password</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">__set_driver</span><span class="p">(</span><span class="n">driver</span><span class="p">)</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">url</span> <span class="o">=</span> <span class="n">url</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cursor</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">database</span> <span class="o">=</span> <span class="n">database</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">username</span> <span class="o">=</span> <span class="n">username</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">password</span> <span class="o">=</span> <span class="n">password</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">connection</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__set_driver</span><span class="p">(</span><span class="n">driver_index</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">connection_string</span> <span class="o">=</span> <span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;UID=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">username</span><span class="si">}</span><span class="s2">;&quot;</span>
             <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;PWD=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">password</span><span class="si">}</span><span class="s2">;&quot;</span>
@@ -237,8 +243,14 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the driver to use for the connection to the database.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            driver (int): The index of the driver to use.</span>
+<span class="sd">            driver (int): The index of the driver to use. If the index is -1 or</span>
+<span class="sd">                in general below 0, pyPrediktorMapClient is going to choose</span>
+<span class="sd">                the driver for you.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">driver_index</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">driver</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_list_of_available_and_supported_pyodbc_drivers</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">return</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_number_of_available_pyodbc_drivers</span><span class="p">()</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">driver_index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;Driver index </span><span class="si">{</span><span class="n">driver_index</span><span class="si">}</span><span class="s2"> is out of range. Please use &quot;</span>
@@ -246,15 +258,34 @@
                 <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;to list all available drivers.&quot;</span>
             <span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">driver</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_list_of_available_pyodbc_drivers</span><span class="p">()[</span><span class="n">driver_index</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">driver</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_list_of_supported_pyodbc_drivers</span><span class="p">()[</span><span class="n">driver_index</span><span class="p">]</span>
 
     <span class="nd">@validate_call</span>
     <span class="k">def</span> <span class="nf">__get_number_of_available_pyodbc_drivers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__get_list_of_available_pyodbc_drivers</span><span class="p">())</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__get_list_of_supported_pyodbc_drivers</span><span class="p">())</span>
 
     <span class="nd">@validate_call</span>
-    <span class="k">def</span> <span class="nf">__get_list_of_available_pyodbc_drivers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="nf">__get_list_of_supported_pyodbc_drivers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
         <span class="k">return</span> <span class="n">pyodbc</span><span class="o">.</span><span class="n">drivers</span><span class="p">()</span>
+
+    <span class="nd">@validate_call</span>
+    <span class="k">def</span> <span class="nf">__get_list_of_available_and_supported_pyodbc_drivers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+        <span class="n">available_drivers</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">driver</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_list_of_supported_pyodbc_drivers</span><span class="p">():</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">pyodbc</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;UID=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">username</span><span class="si">}</span><span class="s2">;&quot;</span>
+                    <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;PWD=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">password</span><span class="si">}</span><span class="s2">;&quot;</span>
+                    <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;DRIVER=</span><span class="si">{</span><span class="n">driver</span><span class="si">}</span><span class="s2">;&quot;</span>
+                    <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;SERVER=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="si">}</span><span class="s2">;&quot;</span>
+                    <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;DATABASE=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="si">}</span><span class="s2">;&quot;</span><span class="p">,</span>
+                    <span class="n">timeout</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">available_drivers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">driver</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">pyodbc</span><span class="o">.</span><span class="n">Error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">pass</span>
+
+        <span class="k">return</span> <span class="n">available_drivers</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Private - Connector &amp; Disconnector</span>
@@ -301,7 +332,7 @@
                     <span class="sa">f</span><span class="s2">&quot;Pyodbc is having issues with the connection. This &quot;</span>
                     <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;could be due to the wrong driver being used. Please &quot;</span>
                     <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;check your driver with &quot;</span>
-                    <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;the __get_list_of_available_pyodbc_drivers() method &quot;</span>
+                    <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;the __get_list_of_available_and_supported_pyodbc_drivers() method &quot;</span>
                     <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;and try again.&quot;</span>
                 <span class="p">)</span>
 
