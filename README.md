@@ -122,6 +122,47 @@ Helper functions to access a PowerView Data Warehouse or other SQL databases. Th
 Here is a diagram that illustrates the architecture of the DWH component:
 ![My Image](./diagram-dwh.png)
 
+### Initialisation
+When initialising DWH you have to pass the patameters below following the same order:
+
+- SQL_SERVER
+- SQL_DATABASE
+- SQL_USER
+- SQL_PASSWORD
+
+```
+dwh = DWH(SQL_SERVER, SQL_DATABASE, SQL_USER, SQL_PASSWORD)
+```
+
+There is fifth parameter `SQL_DRIVER_INDEX` but it is not required. If you do not pass the driver index, pyPrediktorMapClient is going to check two things:
+
+- All drivers supported by `pyodbc`.
+- All drivers that are supported by `pyodbc` and are also installed and available on your machine.
+
+pyPrediktorMapClient is going to choose the first one from the list of supported and available drivers. In that way, the whole process is automated for you and you can use pyPrediktorMapClient DWH class out of the box.
+
+If you would like to pick up a particular driver you have to do the above yourself and pass the desired driver index. Here is an example how to do that. First we get a list of available drivers supported by `pyodbc`:
+
+```
+available_drivers = pyodbc.drivers()
+```
+
+Let's say that list contains the following drivers:
+```
+[
+    'ODBC Driver 18 for SQL Server',
+    'ODBC Driver 13 for SQL Server',
+    'ODBC Driver 17 for SQL Server'
+]
+```
+
+and you'd like to use the third one. Threfore the driver index you have to pass when initialising DWH equals 2 _(because that is the index of the driver in the list)_:
+
+```
+driver_index = 2
+dwh = DWH(SQL_SERVER, SQL_DATABASE, SQL_USER, SQL_PASSWORD, driver_index)
+```
+
 ### Low level usage
 ```
 from pyprediktormapclient.dwh import DWH

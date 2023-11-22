@@ -49,9 +49,14 @@ class DWH(Db, IDWH):
 
     @validate_call
     def __init__(
-        self, url: str, database: str, username: str, password: str, driver: int = 0
+        self,
+        url: str,
+        database: str,
+        username: str,
+        password: str,
+        driver_index: int = -1,
     ) -> None:
-        super().__init__(url, database, username, password, driver)
+        super().__init__(url, database, username, password, driver_index)
         self.__initialize_context_services()
 
     """
