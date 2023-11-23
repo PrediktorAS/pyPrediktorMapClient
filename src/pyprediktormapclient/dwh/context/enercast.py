@@ -24,5 +24,6 @@ class Enercast:
         self, enercast_forecast_data: Dict, forecast_type_key: Union[int, None] = None
     ) -> List[Any]:
         enercast_forecast_data_json = json.dumps({"results": enercast_forecast_data})
-        query = f"EXEC dwetl.UpsertEnercastForecastData {enercast_forecast_data_json}, {forecast_type_key}"
-        return self.dwh.execute(query)
+
+        query = "EXEC dwetl.UpsertEnercastForecastData ?, ?"
+        return self.dwh.execute(query, enercast_forecast_data_json, forecast_type_key)

@@ -723,15 +723,18 @@ def test_execute_when_init_db_connection_is_successfull_but_fails_when_calling_e
         db.execute(query)
 
 
-def test_execute_when_commit_is_true_then_fetch_results_commit_and_return_data(
+def test_execute_when_parameter_passed_then_fetch_results_and_return_data(
     monkeypatch,
 ):
-    query = "INSERT INTO mytable VALUES (1, 'test')"
+    query = "INSERT INTO mytable VALUES (?, ?)"
+    param_one = "John"
+    param_two = "Smith"
     driver_index = 0
-    expected_result = [(1, "test")]
+    expected_result = [{"id": 13}]
 
-    # Mock the cursor
+    # Mock the cursor and execute
     mock_cursor = Mock()
+    mock_execute = Mock()
 
     # Mock the connection method to return a mock connection with a mock cursor
     mock_connection = Mock()
@@ -742,52 +745,14 @@ def test_execute_when_commit_is_true_then_fetch_results_commit_and_return_data(
         Mock(return_value=mock_connection),
     )
 
-    # Mock the commit method
-    mock_commit = Mock()
-    mock_connection.commit = mock_commit
-
     # Mock the fetch method
     mock_fetch = Mock(return_value=expected_result)
+    mock_cursor.execute = mock_execute
     mock_cursor.fetchall = mock_fetch
 
     db = Db(grs(), grs(), grs(), grs(), driver_index)
-    actual_result = db.execute(query, commit=True)
+    actual_result = db.execute(query, param_one, param_two)
 
+    mock_execute.assert_called_once_with(query, param_one, param_two)
     mock_fetch.assert_called_once()
-    mock_commit.assert_called_once()
-    assert actual_result == expected_result
-
-
-def test_execute_when_commit_is_false_then_fetch_results_do_not_commit_but_return_data(
-    monkeypatch,
-):
-    query = "INSERT INTO mytable VALUES (1, 'test')"
-    driver_index = 0
-    expected_result = [(1, "test")]
-
-    # Mock the cursor
-    mock_cursor = Mock()
-
-    # Mock the connection method to return a mock connection with a mock cursor
-    mock_connection = Mock()
-    mock_connection.cursor.return_value = mock_cursor
-
-    monkeypatch.setattr(
-        "pyodbc.connect",
-        Mock(return_value=mock_connection),
-    )
-
-    # Mock the commit method
-    mock_commit = Mock()
-    mock_connection.commit = mock_commit
-
-    # Mock the fetch method
-    mock_fetch = Mock(return_value=expected_result)
-    mock_cursor.fetchall = mock_fetch
-
-    db = Db(grs(), grs(), grs(), grs(), driver_index)
-    actual_result = db.execute(query, commit=False)
-
-    mock_fetch.assert_called_once()
-    mock_commit.assert_not_called()
     assert actual_result == expected_result

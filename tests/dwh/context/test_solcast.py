@@ -80,7 +80,7 @@ def test_upsert_forecast_data(monkeypatch):
             }
         }
     )
-    expected_query = f"EXEC dwetl.UpsertSolcastForecastData {solcast_forecast_data_json}, {forecast_type_key}"
+    expected_query = f"EXEC dwetl.UpsertSolcastForecastData ?, ?"
     expected_result = {
         "data": [
             {
@@ -119,5 +119,7 @@ def test_upsert_forecast_data(monkeypatch):
         plantname, solcast_forecast_data, forecast_type_key
     )
 
-    mock_dwh.execute.assert_called_once_with(expected_query)
+    mock_dwh.execute.assert_called_once_with(
+        expected_query, solcast_forecast_data_json, forecast_type_key
+    )
     assert actual_result == expected_result

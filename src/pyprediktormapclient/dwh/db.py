@@ -117,7 +117,7 @@ class Db:
         return data_sets if len(data_sets) > 1 else data_sets[0]
 
     @validate_call
-    def execute(self, query: str, commit: bool = True) -> List[Any]:
+    def execute(self, query: str, *args, **kwargs) -> List[Any]:
         """Execute the SQL query and return the results.
 
         For instance, if we create a new record in DWH by calling
@@ -134,17 +134,17 @@ class Db:
 
         Args:
             query (str): The SQL query to execute.
-            commit (bool): If True, commit the changes to the database.
+            *args: Variable length argument list to pass to cursor.execute().
+            **kwargs: Arbitrary keyword arguments to pass to cursor.execute().
 
         Returns:
             List[Any]: The results of the query.
         """
         self.__connect()
-        self.cursor.execute(query)
+        self.cursor.execute(query, *args, **kwargs)
 
         result = self.cursor.fetchall()
-        if commit:
-            self.__commit()
+        self.__commit()
 
         return result
 

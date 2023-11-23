@@ -12,5 +12,5 @@ class IDWH(ABC):
         pass
 
     @abstractmethod
-    def execute(self, query: str, commit: bool = True) -> List[Any]:
+    def execute(self, query: str, *args, **kwargs) -> List[Any]:
         pass
