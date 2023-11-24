@@ -49,9 +49,7 @@ def test_upsert_optimal_tracker_angles(monkeypatch):
     facility_data_json = json.dumps(facility_data)
 
     facility_data_json.replace("'", '"')
-    expected_query = (
-        f"EXEC dwetl.UpsertOptimalTrackerAngles @json = {facility_data_json}"
-    )
+    expected_query = f"EXEC dwetl.UpsertOptimalTrackerAngles @json = ?"
     expected_result = []
 
     mock_dwh = Mock(spec=IDWH)
@@ -60,7 +58,7 @@ def test_upsert_optimal_tracker_angles(monkeypatch):
     plant = Plant(mock_dwh)
     actual_result = plant.upsert_optimal_tracker_angles(facility_data)
 
-    mock_dwh.execute.assert_called_once_with(expected_query)
+    mock_dwh.execute.assert_called_once_with(expected_query, facility_data_json)
     assert actual_result == expected_result
 
 
@@ -78,11 +76,11 @@ def test_insert_log_when_has_thrown_error_is_false_then_result_is_ok(monkeypatch
 
     expected_query = (
         f"EXEC dwetl.InsertExtDataUpdateLog "
-        + f"@plantname = {plantname}, "
-        + f"@extkey = {ext_forecast_type_key}, "
-        + f"@DataType = {data_type}, "
-        + f"@Message = {message}, "
-        + f"@Result = OK"
+        + f"@plantname = ?, "
+        + f"@extkey = ?, "
+        + f"@DataType = ?, "
+        + f"@Message = ?, "
+        + f"@Result = ?"
     )
     expected_result = []
 
@@ -94,7 +92,9 @@ def test_insert_log_when_has_thrown_error_is_false_then_result_is_ok(monkeypatch
         plantname, ext_forecast_type_key, data_type, has_thrown_error, message
     )
 
-    mock_dwh.execute.assert_called_once_with(expected_query)
+    mock_dwh.execute.assert_called_once_with(
+        expected_query, plantname, ext_forecast_type_key, data_type, message, "OK"
+    )
     assert actual_result == expected_result
 
 
@@ -107,11 +107,11 @@ def test_insert_log_when_has_thrown_error_is_true_then_result_is_error(monkeypat
 
     expected_query = (
         f"EXEC dwetl.InsertExtDataUpdateLog "
-        + f"@plantname = {plantname}, "
-        + f"@extkey = {ext_forecast_type_key}, "
-        + f"@DataType = {data_type}, "
-        + f"@Message = {message}, "
-        + f"@Result = ERROR"
+        + f"@plantname = ?, "
+        + f"@extkey = ?, "
+        + f"@DataType = ?, "
+        + f"@Message = ?, "
+        + f"@Result = ?"
     )
     expected_result = []
 
@@ -123,5 +123,7 @@ def test_insert_log_when_has_thrown_error_is_true_then_result_is_error(monkeypat
         plantname, ext_forecast_type_key, data_type, has_thrown_error, message
     )
 
-    mock_dwh.execute.assert_called_once_with(expected_query)
+    mock_dwh.execute.assert_called_once_with(
+        expected_query, plantname, ext_forecast_type_key, data_type, message, "ERROR"
+    )
     assert actual_result == expected_result

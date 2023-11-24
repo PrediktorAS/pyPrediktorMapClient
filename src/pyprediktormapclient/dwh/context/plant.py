@@ -21,8 +21,9 @@ class Plant:
     def upsert_optimal_tracker_angles(self, facility_data: Dict) -> List[Any]:
         facility_data_json = json.dumps(facility_data)
         facility_data_json.replace("'", '"')
-        query = f"EXEC dwetl.UpsertOptimalTrackerAngles @json = {facility_data_json}"
-        return self.dwh.execute(query)
+
+        query = "EXEC dwetl.UpsertOptimalTrackerAngles @json = ?"
+        return self.dwh.execute(query, facility_data_json)
 
     @validate_call
     def insert_log(
@@ -33,13 +34,12 @@ class Plant:
         has_thrown_error: bool = False,
         message: str = "",
     ) -> List[Any]:
-        result = "ERROR" if has_thrown_error else "OK"
-        query = (
-            f"EXEC dwetl.InsertExtDataUpdateLog "
-            + f"@plantname = {plantname}, "
-            + f"@extkey = {ext_forecast_type_key}, "
-            + f"@DataType = {data_type}, "
-            + f"@Message = {message}, "
-            + f"@Result = {result}"
+        query = "EXEC dwetl.InsertExtDataUpdateLog @plantname = ?, @extkey = ?, @DataType = ?, @Message = ?, @Result = ?"
+        return self.dwh.execute(
+            query,
+            plantname,
+            ext_forecast_type_key,
+            data_type,
+            message,
+            "ERROR" if has_thrown_error else "OK",
         )
-        return self.dwh.execute(query)

@@ -101,7 +101,7 @@ def test_upsert_forecast_data(monkeypatch):
     forecast_type_key = 1
 
     enercast_forecast_data_json = json.dumps({"results": enercast_forecast_data})
-    expected_query = f"EXEC dwetl.UpsertEnercastForecastData {enercast_forecast_data_json}, {forecast_type_key}"
+    expected_query = f"EXEC dwetl.UpsertEnercastForecastData ?, ?"
     expected_result = []
 
     mock_dwh = Mock(spec=IDWH)
@@ -112,5 +112,7 @@ def test_upsert_forecast_data(monkeypatch):
         enercast_forecast_data, forecast_type_key
     )
 
-    mock_dwh.execute.assert_called_once_with(expected_query)
+    mock_dwh.execute.assert_called_once_with(
+        expected_query, enercast_forecast_data_json, forecast_type_key
+    )
     assert actual_result == expected_result
