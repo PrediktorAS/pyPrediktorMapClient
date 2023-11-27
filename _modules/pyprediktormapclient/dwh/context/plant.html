@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pyprediktormapclient.dwh.context.plant &mdash; pyPrediktorMapClient 0.6.3 documentation</title>
+  <title>pyprediktormapclient.dwh.context.plant &mdash; pyPrediktorMapClient 0.6.4 documentation</title>
       <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -12,7 +12,7 @@
   
         <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
         <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="../../../../_static/documentation_options.js?v=b8503983"></script>
+        <script src="../../../../_static/documentation_options.js?v=73d9a94e"></script>
         <script src="../../../../_static/doctools.js?v=888ff710"></script>
         <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../../_static/js/theme.js"></script>
@@ -32,7 +32,7 @@
             pyPrediktorMapClient
           </a>
               <div class="version">
-                0.6.3
+                0.6.4
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
@@ -106,8 +106,9 @@
     <span class="k">def</span> <span class="nf">upsert_optimal_tracker_angles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">facility_data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
         <span class="n">facility_data_json</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">facility_data</span><span class="p">)</span>
         <span class="n">facility_data_json</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;&#39;&quot;</span><span class="p">,</span> <span class="s1">&#39;&quot;&#39;</span><span class="p">)</span>
-        <span class="n">query</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;EXEC dwetl.UpsertOptimalTrackerAngles @json = </span><span class="si">{</span><span class="n">facility_data_json</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dwh</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span></div>
+
+        <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;EXEC dwetl.UpsertOptimalTrackerAngles @json = ?&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dwh</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">facility_data_json</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Plant.insert_log">
@@ -121,16 +122,15 @@
         <span class="n">has_thrown_error</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="s2">&quot;ERROR&quot;</span> <span class="k">if</span> <span class="n">has_thrown_error</span> <span class="k">else</span> <span class="s2">&quot;OK&quot;</span>
-        <span class="n">query</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;EXEC dwetl.InsertExtDataUpdateLog &quot;</span>
-            <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;@plantname = </span><span class="si">{</span><span class="n">plantname</span><span class="si">}</span><span class="s2">, &quot;</span>
-            <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;@extkey = </span><span class="si">{</span><span class="n">ext_forecast_type_key</span><span class="si">}</span><span class="s2">, &quot;</span>
-            <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;@DataType = </span><span class="si">{</span><span class="n">data_type</span><span class="si">}</span><span class="s2">, &quot;</span>
-            <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;@Message = </span><span class="si">{</span><span class="n">message</span><span class="si">}</span><span class="s2">, &quot;</span>
-            <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;@Result = </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dwh</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span></div>
+        <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;EXEC dwetl.InsertExtDataUpdateLog @plantname = ?, @extkey = ?, @DataType = ?, @Message = ?, @Result = ?&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dwh</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="n">query</span><span class="p">,</span>
+            <span class="n">plantname</span><span class="p">,</span>
+            <span class="n">ext_forecast_type_key</span><span class="p">,</span>
+            <span class="n">data_type</span><span class="p">,</span>
+            <span class="n">message</span><span class="p">,</span>
+            <span class="s2">&quot;ERROR&quot;</span> <span class="k">if</span> <span class="n">has_thrown_error</span> <span class="k">else</span> <span class="s2">&quot;OK&quot;</span><span class="p">,</span>
+        <span class="p">)</span></div>
 </div>
 
 </pre></div>
