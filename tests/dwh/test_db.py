@@ -723,9 +723,7 @@ def test_execute_when_init_db_connection_is_successfull_but_fails_when_calling_e
         db.execute(query)
 
 
-def test_execute_when_parameter_passed_then_fetch_results_and_return_data(
-    monkeypatch,
-):
+def test_execute_when_parameter_passed_then_fetch_results_and_return_data(monkeypatch):
     query = "INSERT INTO mytable VALUES (?, ?)"
     param_one = "John"
     param_two = "Smith"
@@ -756,3 +754,35 @@ def test_execute_when_parameter_passed_then_fetch_results_and_return_data(
     mock_execute.assert_called_once_with(query, param_one, param_two)
     mock_fetch.assert_called_once()
     assert actual_result == expected_result
+
+
+def test_execute_when_fetchall_throws_error_then_return_empty_list(monkeypatch):
+    query = "INSERT INTO mytable VALUES (?, ?)"
+    param_one = "John"
+    param_two = "Smith"
+    driver_index = 0
+
+    # Mock the cursor and execute
+    mock_cursor = Mock()
+    mock_execute = Mock()
+    mock_fetchall = Mock(side_effect=Exception("Error occurred"))
+
+    # Mock the connection method to return a mock connection with a mock cursor
+    mock_connection = Mock()
+    mock_connection.cursor.return_value = mock_cursor
+
+    monkeypatch.setattr(
+        "pyodbc.connect",
+        Mock(return_value=mock_connection),
+    )
+
+    # Mock the fetchall method
+    mock_cursor.execute = mock_execute
+    mock_cursor.fetchall = mock_fetchall
+
+    db = Db(grs(), grs(), grs(), grs(), driver_index)
+    actual_result = db.execute(query, param_one, param_two)
+
+    mock_execute.assert_called_once_with(query, param_one, param_two)
+    mock_fetchall.assert_called_once()
+    assert actual_result == []

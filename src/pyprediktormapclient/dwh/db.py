@@ -143,7 +143,12 @@ class Db:
         self.__connect()
         self.cursor.execute(query, *args, **kwargs)
 
-        result = self.cursor.fetchall()
+        result = []
+        try:
+            result = self.cursor.fetchall()
+        except Exception:
+            pass
+
         self.__commit()
 
         return result
