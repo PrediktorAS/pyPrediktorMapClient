@@ -150,6 +150,8 @@ pygments_style = "sphinx"
 # If this is True, todo emits a warning for each TODO entries. The default is False.
 todo_emit_warnings = True
 
+# Since the documentation build process doesn't need to make actual database connections, we can mock the pyodbc module during the documentation build.
+autodoc_mock_imports = ["pyodbc"]
 
 # -- Options for HTML output -------------------------------------------------
 
