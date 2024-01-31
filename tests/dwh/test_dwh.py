@@ -203,14 +203,3 @@ def test_version_when_version_data_is_not_returned_then_return_empty_tuple(monke
 
     mock_cursor.execute.assert_called_once_with(expected_query)
     assert version == expected_result
-
-
-# def test_x(monkeypatch):
-#     dwh = DWH(
-#         "UIDEV-DWH-01.prediktor.no", "PView_DWH", "PView_ETL", "#cantine-reckless11"
-#     )
-
-#     plants_to_update = dwh.enercast.get_plants_to_update()
-#     print("//////////////////////")
-#     print(plants_to_update)
-#     print("//////////////////////")
