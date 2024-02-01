@@ -1,6 +1,6 @@
 import json
 from pydantic import validate_call
-from typing import List, Dict, Any, Union
+from typing import List, Dict, Union
 
 from ..idwh import IDWH
 
@@ -10,19 +10,19 @@ class Enercast:
         self.dwh = dwh
 
     @validate_call
-    def get_plants_to_update(self) -> List[Any]:
+    def get_plants_to_update(self) -> List:
         query = "SET NOCOUNT ON; EXEC dwetl.GetEnercastPlantsToUpdate"
         return self.dwh.fetch(query)
 
     @validate_call
-    def get_live_meter_data(self, asset_name: str) -> List[Any]:
+    def get_live_meter_data(self, asset_name: str) -> List:
         query = f"SET NOCOUNT ON; EXEC dwetl.GetEnercastLiveMeterData '{asset_name}'"
         return self.dwh.fetch(query)
 
     @validate_call
     def upsert_forecast_data(
         self, enercast_forecast_data: Dict, forecast_type_key: Union[int, None] = None
-    ) -> List[Any]:
+    ) -> List:
         enercast_forecast_data_json = json.dumps({"results": enercast_forecast_data})
 
         query = "EXEC dwetl.UpsertEnercastForecastData ?, ?"

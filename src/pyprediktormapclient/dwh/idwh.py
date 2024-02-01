@@ -1,4 +1,4 @@
-from typing import Dict, List, Any
+from typing import Dict, List
 from abc import ABC, abstractmethod
 
 
@@ -8,9 +8,9 @@ class IDWH(ABC):
         pass
 
     @abstractmethod
-    def fetch(self, query: str, to_dataframe: bool = False) -> List[Any]:
+    def fetch(self, query: str, to_dataframe: bool = False) -> List:
         pass
 
     @abstractmethod
-    def execute(self, query: str, *args, **kwargs) -> List[Any]:
+    def execute(self, query: str, *args, **kwargs) -> List:
         pass

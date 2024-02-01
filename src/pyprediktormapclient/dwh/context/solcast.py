@@ -1,6 +1,6 @@
 import json
 from pydantic import validate_call
-from typing import List, Dict, Any, Union
+from typing import List, Dict, Union
 
 from ..idwh import IDWH
 
@@ -10,7 +10,7 @@ class Solcast:
         self.dwh = dwh
 
     @validate_call
-    def get_plants_to_update(self) -> List[Any]:
+    def get_plants_to_update(self) -> List:
         query = "SET NOCOUNT ON; EXEC dwetl.GetSolcastPlantsToUpdate"
         return self.dwh.fetch(query)
 
@@ -20,7 +20,7 @@ class Solcast:
         plantname: str,
         solcast_forecast_data: Dict,
         forecast_type_key: Union[int, None] = None,
-    ) -> List[Any]:
+    ) -> List:
         solcast_forecast_data_json = json.dumps(
             {
                 "results": {
