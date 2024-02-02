@@ -43,7 +43,7 @@ def test_init_when_instantiate_dwh_then_instance_is_created(monkeypatch):
 
     # Mock the database connection
     monkeypatch.setattr(
-        "pyprediktormapclient.dwh.db.pyodbc.connect", mock_pyodbc_connection
+        "pyprediktorutilities.dwh.pyodbc.connect", mock_pyodbc_connection
     )
 
     dwh = DWH(grs(), grs(), grs(), grs(), driver_index)
@@ -59,7 +59,7 @@ def test_init_when_instantiate_dwh_but_no_pyodbc_drivers_available_then_throw_ex
     driver_index = 0
 
     # Mock the absence of ODBC drivers
-    monkeypatch.setattr("pyprediktormapclient.dwh.db.pyodbc.drivers", lambda: [])
+    monkeypatch.setattr("pyprediktorutilities.dwh.pyodbc.drivers", lambda: [])
 
     with pytest.raises(ValueError) as excinfo:
         DWH(grs(), grs(), grs(), grs(), driver_index)
@@ -73,7 +73,7 @@ def test_init_when_instantiate_dwh_but_pyodbc_throws_error_with_tolerance_to_att
 
     # Mock the database connection
     monkeypatch.setattr(
-        "pyprediktormapclient.dwh.db.pyodbc.connect",
+        "pyprediktorutilities.dwh.pyodbc.connect",
         mock_pyodbc_connection_throws_error_not_tolerant_to_attempts,
     )
 
@@ -88,7 +88,7 @@ def test_init_when_instantiate_dwh_but_pyodbc_throws_error_tolerant_to_attempts_
 
     # Mock the database connection
     monkeypatch.setattr(
-        "pyprediktormapclient.dwh.db.pyodbc.connect",
+        "pyprediktorutilities.dwh.pyodbc.connect",
         mock_pyodbc_connection_throws_error_tolerant_to_attempts,
     )
 

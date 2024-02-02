@@ -1,6 +1,6 @@
 import json
 from pydantic import validate_call
-from typing import List, Dict, Any
+from typing import List, Dict
 
 from ..idwh import IDWH
 
@@ -10,7 +10,7 @@ class Plant:
         self.dwh = dwh
 
     @validate_call
-    def get_optimal_tracker_angles(self, facility_name: str) -> List[Any]:
+    def get_optimal_tracker_angles(self, facility_name: str) -> List:
         query = (
             f"SET NOCOUNT ON; EXEC dwetl.GetOptimalTrackerAngleParameters "
             + f"@FacilityName = N'{facility_name}'"
@@ -18,7 +18,7 @@ class Plant:
         return self.dwh.fetch(query)
 
     @validate_call
-    def upsert_optimal_tracker_angles(self, facility_data: Dict) -> List[Any]:
+    def upsert_optimal_tracker_angles(self, facility_data: Dict) -> List:
         facility_data_json = json.dumps(facility_data)
         facility_data_json.replace("'", '"')
 
@@ -33,7 +33,7 @@ class Plant:
         data_type: str,
         has_thrown_error: bool = False,
         message: str = "",
-    ) -> List[Any]:
+    ) -> List:
         query = "EXEC dwetl.InsertExtDataUpdateLog @plantname = ?, @extkey = ?, @DataType = ?, @Message = ?, @Result = ?"
         return self.dwh.execute(
             query,
