@@ -1,6 +1,7 @@
 from pydantic import BaseModel, AnyUrl, validate_call, AwareDatetime, field_validator
 from pyprediktormapclient.shared import request_from_api
 import datetime
+import requests
 import json
 import re
 
@@ -10,7 +11,7 @@ class Ory_Login_Structure(BaseModel):
     password: str
 
 class Token(BaseModel):
-    access_token: str
+    session_token: str
     expires_at: AwareDatetime = None
     
     @field_validator('expires_at', mode='before')
@@ -34,7 +35,7 @@ class AUTH_CLIENT:
         Object
 
     """
-    @validate_call
+    
     def __init__(self, rest_url: AnyUrl, username: str, password: str):
         """Class initializer
 
@@ -51,8 +52,9 @@ class AUTH_CLIENT:
         self.id = None
         self.token = None
         self.headers = {"Content-Type": "application/json"}
+        self.session = requests.Session()
 
-    @validate_call
+    
     def get_login_id(self) -> None:
         """Request login token from Ory
         """
@@ -63,16 +65,17 @@ class AUTH_CLIENT:
             headers=self.headers,
             extended_timeout=True,
         )
-        if content.get("Success") is False:
-            raise RuntimeError(content.get("ErrorMessage"))
-        
-        # Return if no content for id from server, then no further login is possible
-        if not isinstance(content.get("id"), str):
-            raise RuntimeError(content.get("ErrorMessage"))
+        if "error" in content:
+            # Handle the error appropriately
+            raise RuntimeError(content["error"])
+
+        if content.get("Success") is False or not isinstance(content.get("id"), str):
+            error_message = content.get("ErrorMessage", "Unknown error occurred during login.")
+            raise RuntimeError(error_message)
 
         self.id = content.get("id")
 
-    @validate_call
+    
     def get_login_token(self) -> None:
         """Request login token from Ory
         """
@@ -94,7 +97,7 @@ class AUTH_CLIENT:
         # Return if no content from server
         if not isinstance(content.get("session_token"), str):
             raise RuntimeError(content.get("ErrorMessage"))
-        self.token = Token(access_token=content.get("session_token"))
+        self.token = Token(session_token=content.get("session_token"))
 
         # Check if token has expiry date, save it if it does
         if isinstance(content.get("session").get("expires_at"), str):
@@ -102,11 +105,11 @@ class AUTH_CLIENT:
             #from_string = content.get("session").get("expires_at")
             #date_object = datetime.datetime.strptime(f"{from_string[:-11]}.+00:00", "%Y-%m-%dT%H:%M:%S.%z")
             try:
-                self.token = Token(access_token=self.token.access_token, expires_at=content.get("session").get("expires_at"))
+                self.token = Token(session_token=self.token.session_token, expires_at=content.get("session").get("expires_at"))
             except Exception:
                 # If string returned from Ory cant be parsed, still should be possible to use Ory,
                 #  might be a setting in Ory to not return expiry date
-                self.token = Token(access_token=self.token.access_token)
+                self.token = Token(session_token=self.token.session_token)
 
     def check_if_token_has_expired(self) -> bool:
         """Check if token has expired
