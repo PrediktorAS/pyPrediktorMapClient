@@ -11,17 +11,8 @@ from pydantic_core import Url
 from pyprediktormapclient.shared import request_from_api
 from requests import HTTPError
 import asyncio
-import multiprocessing
-from functools import partial
-import concurrent.futures
-import os
-import uuid
 import requests
-from requests import Session
-from concurrent.futures import ThreadPoolExecutor
-import threading
 import aiohttp
-from pydantic import validate_call
 
 
 logger = logging.getLogger(__name__)
@@ -131,6 +122,9 @@ class WriteReturn(BaseModel):
     TimeStamp: str
     Success: bool
 
+class Config:
+        arbitrary_types_allowed = True
+
 class OPC_UA:
     """Helper functions to access the OPC UA REST Values API server
 
@@ -209,7 +203,7 @@ class OPC_UA:
             {"id": None, "type": None, "description": None},
         )
 
-    def _get_variable_list_as_list(self, variable_list: List) -> List:
+    def _get_variable_list_as_list(self, variable_list: list) -> list:
         """Internal function to convert a list of pydantic Variable models to a
         list of dicts
 
@@ -270,33 +264,22 @@ class OPC_UA:
             var["StatusCode"] = None
             var["StatusSymbol"] = None
 
-        # Return if no content from server
-        if not isinstance(content, list):
-            return vars
+        id_to_var_map = {var['Id']: var for var in vars}
 
-        # Choose first item and return if not successful
-        content = content[0]
-        if content.get("Success") is False:
-            raise RuntimeError(content.get("ErrorMessage"))
 
-        # Return if missing values
-        if not content.get("Values"):
-            return vars
-
-        # Use .get from one dict to the other to ensure None values if something is missing
-        for num, row in enumerate(vars):
-            contline = content["Values"][num]
-            vars[num]["Timestamp"] = contline.get("ServerTimestamp")
-            # Values are not present in the answer if not found
-            if "Value" in contline:
-                vars[num]["Value"] = contline["Value"].get("Body")
-                vars[num]["ValueType"] = self._get_value_type(
-                    contline["Value"].get("Type")
-                ).get("type")
-            # StatusCode is not always present in the answer
-            if "StatusCode" in contline:
-                vars[num]["StatusCode"] = contline["StatusCode"].get("Code")
-                vars[num]["StatusSymbol"] = contline["StatusCode"].get("Symbol")
+        if isinstance(content, list) and content and 'Values' in content[0]:
+            for contline in content[0]["Values"]:
+                contline_id = contline.get("NodeId", {}).get("Id")
+                
+                if contline_id and contline_id in id_to_var_map:
+                    var = id_to_var_map[contline_id]
+                    var["Timestamp"] = contline.get("ServerTimestamp")
+                    if "Value" in contline:
+                        var["Value"] = contline["Value"].get("Body")
+                        var["ValueType"] = self._get_value_type(contline["Value"].get("Type")).get("type")
+                    if "StatusCode" in contline:
+                        var["StatusCode"] = contline["StatusCode"].get("Code")
+                        var["StatusSymbol"] = contline["StatusCode"].get("Symbol")
 
         return vars
 

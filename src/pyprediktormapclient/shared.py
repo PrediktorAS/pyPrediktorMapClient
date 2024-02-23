@@ -1,9 +1,10 @@
 import requests
-import logging
-from pydantic import AnyUrl, validate_call
+from pydantic import AnyUrl
 from typing import Literal
+from pydantic import ValidationError
 
-
+class Config:
+        arbitrary_types_allowed = True
 
 def request_from_api(
     rest_url: AnyUrl,
@@ -40,14 +41,13 @@ def request_from_api(
             combined_url, data=data, headers=headers, timeout=request_timeout, params=params
         )
     
+    if method not in ["GET", "POST"]:
+        raise ValidationError("Unsupported method")
+    
     result.raise_for_status()
 
     if 'application/json' in result.headers.get('Content-Type', ''):
         return result.json()
 
     else:
-        logging.warning(f"Non-JSON response received from {combined_url}")
         return {"error": "Non-JSON response", "content": result.text}
-    
-    
-    #return result.json()

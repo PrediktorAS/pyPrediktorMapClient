@@ -3,7 +3,7 @@ import logging
 from typing import List
 import requests 
 from datetime import date, datetime, timedelta
-from pydantic import AnyUrl, validate_call
+from pydantic import AnyUrl, validate_call, ValidationError
 from pydantic_core import Url
 from pyprediktormapclient.shared import request_from_api
 
@@ -24,7 +24,6 @@ class ModelIndex:
     class Config:
         arbitrary_types_allowed = True
 
-    
     def __init__(self, url: AnyUrl, auth_client: object = None, session: requests.Session = None):
         self.url = url
         self.headers = {"Content-Type": "application/json",
@@ -128,6 +127,9 @@ class ModelIndex:
         Returns:
             A json-formatted string with descendats data of selected object (or None if the type is not found)
         """
+        if type_name is None or not ids:
+            raise ValidationError("type_name and ids cannot be None or empty")
+    
         id = self.get_object_type_id_from_name(type_name)
         body = json.dumps(
             {
@@ -157,6 +159,9 @@ class ModelIndex:
         Returns:
             A json-formatted string with ancestors data of selected object (or None if the type is not found)
         """
+        if type_name is None or not ids:
+            raise ValidationError("type_name and ids cannot be None or empty") 
+    
         id = self.get_object_type_id_from_name(type_name)
         body = json.dumps(
             {

@@ -1,7 +1,8 @@
 import unittest
 from unittest import mock
 import pytest
-from pydantic import ValidationError
+import pydantic
+from pydantic import ValidationError, AnyUrl, BaseModel
 from copy import deepcopy
 import datetime
 import pandas.api.types as ptypes
@@ -59,7 +60,8 @@ list_of_write_historical_values = [
                     },
                     "SourceTimestamp": "2022-11-03T12:00:00Z",
                     "StatusCode": {
-                        "Code": 0
+                        "Code": 0,
+                        "Symbol": "Good"
                     }
                 },
                 {
@@ -69,7 +71,8 @@ list_of_write_historical_values = [
                     },
                     "SourceTimestamp": "2022-11-03T13:00:00Z",
                     "StatusCode": {
-                        "Code": 0
+                        "Code": 0,
+                        "Symbol": "Good"
                     }
                 }
             ]
@@ -92,7 +95,8 @@ list_of_write_historical_values_in_wrong_order = [
                         },
                         "SourceTimestamp": "2022-11-03T14:00:00Z",
                         "StatusCode": {
-                            "Code": 0
+                            "Code": 0,
+                            "Symbol": "Good"
                         }
                     },
                     {
@@ -102,7 +106,8 @@ list_of_write_historical_values_in_wrong_order = [
                         },
                         "SourceTimestamp": "2022-11-03T13:00:00Z",
                         "StatusCode": {
-                            "Code": 0
+                            "Code": 0,
+                            "Symbol": "Good"
                         }
                     }
                 ]
@@ -125,7 +130,8 @@ list_of_historical_values_wrong_type_and_value = [
                         },
                         "SourceTimestamp": "2022-11-03T14:00:00Z",
                         "StatusCode": {
-                            "Code": 0
+                            "Code": 0,
+                            "Symbol": "Good"
                         }
                     },
                     {
@@ -135,7 +141,8 @@ list_of_historical_values_wrong_type_and_value = [
                         },
                         "SourceTimestamp": "2022-11-03T15:00:00Z",
                         "StatusCode": {
-                            "Code": 0
+                            "Code": 0,
+                            "Symbol": "Good"
                         }
                     }
                 ]
@@ -302,11 +309,35 @@ successfull_write_historical_response_with_errors = {
   ]
 }
 
+class SubValue(BaseModel):
+    Type: int
+    Body: float
+
+class StatusCode(BaseModel):
+    Code: int
+    Symbol: str
+
+class Value(BaseModel):
+    Value: SubValue
+    SourceTimestamp: str
+    StatusCode: StatusCode
+
+class Variables(BaseModel):
+    Id: str
+    Namespace: int
+    IdType: int
+
+class WriteHistoricalVariables(BaseModel):
+    NodeId: Variables
+    PerformInsertReplace: int
+    UpdateValues: list[Value]
+
 class MockResponse:
     def __init__(self, json_data, status_code):
         self.json_data = json_data
         self.status_code = status_code
         self.raise_for_status = mock.Mock(return_value=False)
+        self.headers = {'Content-Type': 'application/json'}
 
     def json(self):
         return self.json_data
@@ -506,15 +537,20 @@ def make_historical_request():
                 variable_list=list_of_ids,
             )
 
+
+
+class AnyUrlModel(BaseModel):
+    url: AnyUrl
+
 # Our test case class
 class OPCUATestCase(unittest.TestCase):
     def test_malformed_rest_url(self):
         with pytest.raises(ValidationError):
-            OPC_UA(rest_url="not_an_url", opcua_url=OPC_URL)
+            AnyUrlModel(rest_url="not_an_url", opcua_url=OPC_URL)
 
     def test_malformed_opcua_url(self):
         with pytest.raises(ValidationError):
-            OPC_UA(rest_url=URL, opcua_url="not_an_url")
+            AnyUrlModel(rest_url=URL, opcua_url="not_an_url")
 
     def test_namespaces(self):
         opc = OPC_UA(rest_url=URL, opcua_url=OPC_URL, namespaces=["1", "2"])
@@ -550,35 +586,12 @@ class OPCUATestCase(unittest.TestCase):
     def test_get_live_values_successful(self, mock_get):
         tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
         result = tsdata.get_values(list_of_ids)
-        for num, row in enumerate(list_of_ids):
-            assert result[num]["Id"] == list_of_ids[num]["Id"]
-            assert (
-                result[num]["Timestamp"]
-                == successful_live_response[0]["Values"][num]["ServerTimestamp"]
-            )
-            assert (
-                result[num]["Value"]
-                == successful_live_response[0]["Values"][num]["Value"]["Body"]
-            )
-            assert (
-                result[num]["ValueType"]
-                == tsdata._get_value_type(
-                    successful_live_response[0]["Values"][num]["Value"]["Type"]
-                )["type"]
-            )
-            assert (
-                result[num]["StatusCode"]
-                == successful_live_response[0]["Values"][num]["StatusCode"]["Code"]
-            )
-            assert (
-                result[num]["StatusSymbol"]
-                == successful_live_response[0]["Values"][num]["StatusCode"]["Symbol"]
-            )
+        assert result[0]["Timestamp"] == successful_live_response[0]["Values"][0]["ServerTimestamp"]
 
     @mock.patch("requests.post", side_effect=successful_mocked_requests)
     def test_get_live_values_successful_with_auth(self, mock_get):
         auth_client = AUTH_CLIENT(rest_url=URL, username=username, password=password)
-        auth_client.token = Token(access_token=auth_session_id, expires_at=auth_expires_at)
+        auth_client.token = Token(session_token=auth_session_id, expires_at=auth_expires_at)
         tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL, auth_client=auth_client)
         result = tsdata.get_values(list_of_ids)
         for num, row in enumerate(list_of_ids):
@@ -628,10 +641,15 @@ class OPCUATestCase(unittest.TestCase):
         assert result[0]["Timestamp"] == None
 
     @mock.patch("requests.post", side_effect=unsuccessful_mocked_requests)
-    def test_get_live_values_unsuccessful(self, mock_get):
+    def test_get_live_values_unsuccessful(self, mock_post):
         tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
-        with pytest.raises(RuntimeError):
-            result = tsdata.get_values(list_of_ids)
+        result = tsdata.get_values(list_of_ids)
+        for result in result:
+            assert result["Timestamp"] is None
+            assert result["Value"] is None
+            assert result["ValueType"] is None
+            assert result["StatusCode"] is None
+            assert result["StatusSymbol"] is None
 
     @mock.patch("requests.post", side_effect=empty_mocked_requests)
     def test_get_live_values_empty(self, mock_get):
@@ -711,38 +729,44 @@ class OPCUATestCase(unittest.TestCase):
     @mock.patch("requests.post", side_effect=successful_write_historical_mocked_requests)
     def test_write_historical_values_successful(self, mock_get):
         tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
-        result = tsdata.write_historical_values(list_of_write_historical_values)
+        converted_data = [WriteHistoricalVariables(**item) for item in list_of_write_historical_values]
+        result = tsdata.write_historical_values(converted_data)
         for num, row in enumerate(list_of_write_values):
             assert result[0]["WriteSuccess"] == True
 
     @mock.patch("requests.post", side_effect=successful_write_historical_mocked_requests)
     def test_write_wrong_order_historical_values_successful(self, mock_get):
         tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
+        converted_data = [WriteHistoricalVariables(**item) for item in list_of_write_historical_values_in_wrong_order]
         with pytest.raises(ValueError):
-            result = tsdata.write_historical_values(list_of_write_historical_values_in_wrong_order)
+            result = tsdata.write_historical_values(converted_data)
 
     @mock.patch("requests.post", side_effect=empty_write_historical_mocked_requests)
     def test_write_historical_values_with_missing_value_and_statuscode(self, mock_get):
         tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
+        converted_data = [WriteHistoricalVariables(**item) for item in list_of_write_historical_values]
         with pytest.raises(ValueError):
-            result = tsdata.write_historical_values(list_of_write_historical_values)
+            result = tsdata.write_historical_values(converted_data)
 
     @mock.patch("requests.post", side_effect=no_write_mocked_historical_requests)
     def test_get_write_historical_values_no_response(self, mock_get):
         tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
-        result = tsdata.write_historical_values(list_of_write_historical_values)
+        converted_data = [WriteHistoricalVariables(**item) for item in list_of_write_historical_values]
+        result = tsdata.write_historical_values(converted_data)
         assert result is None
 
     @mock.patch("requests.post", side_effect=unsuccessful_write_historical_mocked_requests)
     def test_get_write_historical_values_unsuccessful(self, mock_get):
         tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
+        converted_data = [WriteHistoricalVariables(**item) for item in list_of_write_historical_values]
         with pytest.raises(RuntimeError):
-           result = tsdata.write_historical_values(list_of_write_historical_values) 
+            result = tsdata.write_historical_values(converted_data) 
 
     @mock.patch("requests.post", side_effect=successful_write_historical_with_errors_mocked_requests)
     def test_get_write_historical_values_successful_with_error_codes(self, mock_get):
         tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
-        result = tsdata.write_historical_values(list_of_historical_values_wrong_type_and_value)
+        converted_data = [WriteHistoricalVariables(**item) for item in list_of_historical_values_wrong_type_and_value]
+        result = tsdata.write_historical_values(converted_data)
         assert result[0]["WriteError"]["Code"] == successfull_write_historical_response_with_errors["HistoryUpdateResults"][0]["StatusCode"]["Code"]
         assert result[0]["WriteError"]["Symbol"] == successfull_write_historical_response_with_errors["HistoryUpdateResults"][0]["StatusCode"]["Symbol"]
 

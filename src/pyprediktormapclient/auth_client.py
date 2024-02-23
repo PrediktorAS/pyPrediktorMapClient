@@ -18,8 +18,9 @@ class Token(BaseModel):
     def remove_nanoseconds(cls, v):
         if v is None:
             return v
-        elif re.match(r"(\d\d\d\d)-(\d\d)-(\d\d)T(\d\d):(\d\d):(\d\d).\d+(\S+)", v):
-            return datetime.datetime.strptime(f"{v[:-11]}.+00:00", "%Y-%m-%dT%H:%M:%S.%z")
+        match = re.match(r"(\d\d\d\d)-(\d\d)-(\d\d)T(\d\d):(\d\d):(\d\d).\d+(\S+)", v)
+        if match:
+            return datetime.datetime.strptime(match.group(0)[:-4] + match.group(7), "%Y-%m-%dT%H:%M:%S.%f%z")
         return v
     
 

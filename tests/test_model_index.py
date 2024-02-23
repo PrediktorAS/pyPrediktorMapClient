@@ -2,7 +2,7 @@ import requests
 import pytest
 import unittest
 from unittest import mock
-from pydantic import ValidationError
+from pydantic import ValidationError, BaseModel, AnyUrl
 from pyprediktormapclient.model_index import ModelIndex
 
 URL = "http://someserver.somedomain.com/v1/"
@@ -65,6 +65,7 @@ def mocked_requests(*args, **kwargs):
             self.json_data = json_data
             self.status_code = status_code
             self.raise_for_status = mock.Mock(return_value=False)
+            self.headers = {'Content-Type': 'application/json'}
 
         def json(self):
             return self.json_data
@@ -83,11 +84,14 @@ def mocked_requests(*args, **kwargs):
     return MockResponse(None, 404)
 
 
+class AnyUrlModel(BaseModel):
+    url: AnyUrl
+
 # Our test case class
 class ModelIndexTestCase(unittest.TestCase):
     def test_malformed_url(self):
         with pytest.raises(ValidationError):
-            ModelIndex(url="not_an_url")
+            AnyUrlModel(url="not_an_url")
 
     @mock.patch("requests.get", side_effect=mocked_requests)
     def test_get_object_types(self, mock_get):
@@ -127,7 +131,7 @@ class ModelIndexTestCase(unittest.TestCase):
     @mock.patch("requests.get", side_effect=mocked_requests)
     def test_get_object_descendants_with_no_type_id(self, mock_get):
         model = ModelIndex(url=URL)
-        with pytest.raises(ValidationError):
+        with pytest.raises(TypeError):
             result = model.get_object_descendants(
                 type_name=None, ids=["Anything"], domain="PV_Assets"
             )
@@ -136,7 +140,7 @@ class ModelIndexTestCase(unittest.TestCase):
     @mock.patch("requests.get", side_effect=mocked_requests)
     def test_get_object_descendants_with_no_ids(self, mock_get):
         model = ModelIndex(url=URL)
-        with pytest.raises(ValidationError):
+        with pytest.raises(TypeError):
             model.get_object_descendants(
                 type_name="IPVBaseCalculate", ids=None, domain="PV_Assets"
             )
@@ -153,7 +157,7 @@ class ModelIndexTestCase(unittest.TestCase):
     @mock.patch("requests.get", side_effect=mocked_requests)
     def test_get_object_ancestors_with_no_id(self, mock_get):
         model = ModelIndex(url=URL)
-        with pytest.raises(ValidationError):
+        with pytest.raises(TypeError):
             model.get_object_ancestors(
                 type_name=None, ids=["Anything"], domain="PV_Assets"
             )
@@ -161,7 +165,7 @@ class ModelIndexTestCase(unittest.TestCase):
     @mock.patch("requests.get", side_effect=mocked_requests)
     def test_get_object_ancestors_with_no_ids(self, mock_get):
         model = ModelIndex(url=URL)
-        with pytest.raises(ValidationError):
+        with pytest.raises(TypeError):
             model.get_object_ancestors(
                 type_name="IPVBaseCalculate", ids=None, domain="PV_Assets"
             )

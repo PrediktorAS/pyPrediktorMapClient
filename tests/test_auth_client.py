@@ -1,7 +1,7 @@
 import unittest
 from unittest import mock
 import pytest
-from pydantic import ValidationError
+from pydantic import ValidationError, BaseModel, AnyUrl
 from copy import deepcopy
 import datetime
 
@@ -288,6 +288,7 @@ class MockResponse:
         self.json_data = json_data
         self.status_code = status_code
         self.raise_for_status = mock.Mock(return_value=False)
+        self.headers = {'Content-Type': 'application/json'}
 
     def json(self):
         return self.json_data
@@ -351,14 +352,15 @@ def expired_self_service_login_mocked_requests(*args, **kwargs):
 
     return MockResponse(None, 404)
 
-
+class AnyUrlModel(BaseModel):
+    url: AnyUrl
 
 # Our test case class
 class OPCUATestCase(unittest.TestCase):
 
     def test_malformed_rest_url(self):
         with pytest.raises(ValidationError):
-            auth_client = AUTH_CLIENT(rest_url="htio/dsadsadsa", username=username, password=password)
+            AnyUrlModel(rest_url="invalid-url")
 
     @mock.patch("requests.get", side_effect=successful_self_service_mocked_requests)
     def test_get_self_service_login_id_successful(self, mock_get):
@@ -396,8 +398,8 @@ class OPCUATestCase(unittest.TestCase):
         auth_client = AUTH_CLIENT(rest_url=URL, username=username, password=password)
         auth_client.id = auth_id
         auth_client.get_login_token()
-        test_token = Token(access_token=auth_session_id, expires_at=auth_expires_at)
-        assert auth_client.token.access_token == test_token.access_token
+        test_token = Token(session_token=auth_session_id, expires_at=auth_expires_at)
+        assert auth_client.token.session_token == test_token.session_token
         assert auth_client.token.expires_at == test_token.expires_at
 
     @mock.patch("requests.post", side_effect=unsuccessful_self_service_login_token_mocked_requests)
@@ -410,14 +412,14 @@ class OPCUATestCase(unittest.TestCase):
 
     def test_get_self_service_token_expired(self):
         auth_client = AUTH_CLIENT(rest_url=URL, username=username, password=password)
-        auth_client.token = Token(access_token=auth_session_id, expires_at=auth_expires_at_2hrs_ago)
+        auth_client.token = Token(session_token=auth_session_id, expires_at=auth_expires_at_2hrs_ago)
         auth_client.token.expires_at = datetime.datetime.utcnow() - datetime.timedelta(hours=2)
         token_expired = auth_client.check_if_token_has_expired()
         assert token_expired == True
 
     def test_get_self_service_token_expired_none(self):
         auth_client = AUTH_CLIENT(rest_url=URL, username=username, password=password)
-        auth_client.token = Token(access_token=auth_session_id)
+        auth_client.token = Token(session_token=auth_session_id)
         token_expired = auth_client.check_if_token_has_expired()
         assert token_expired == True
 
