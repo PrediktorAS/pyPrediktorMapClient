@@ -249,12 +249,20 @@ class OPC_UA:
                 extended_timeout=True,
             )
         except HTTPError as e:
-            error_content = json.loads(e.response.content) if e.response.content else {}
-            if self.auth_client is not None and error_content.get('error', {}).get('code') == 404:
-                self.auth_client.request_new_ory_token()
-                self.headers["Authorization"] = f"Bearer {self.auth_client.token.session_token}"
+            # print(.get('error').get('code'))
+            if self.auth_client is not None:
+                self.check_auth_client(json.loads(e.response.content))
             else:
                 raise RuntimeError(f'Error message {e}')
+        finally:
+            content = request_from_api(
+                rest_url=self.rest_url,
+                method="POST",
+                endpoint="values/get",
+                data=json.dumps([body], default=self.json_serial),
+                headers=self.headers,
+                extended_timeout=True,
+            )
 
         for var in vars:
             # Add default None values
@@ -264,22 +272,33 @@ class OPC_UA:
             var["StatusCode"] = None
             var["StatusSymbol"] = None
 
-        id_to_var_map = {var['Id']: var for var in vars}
+        # Return if no content from server
+        if not isinstance(content, list):
+            return vars
 
+        # Choose first item and return if not successful
+        content = content[0]
+        if content.get("Success") is False:
+            raise RuntimeError(content.get("ErrorMessage"))
 
-        if isinstance(content, list) and content and 'Values' in content[0]:
-            for contline in content[0]["Values"]:
-                contline_id = contline.get("NodeId", {}).get("Id")
-                
-                if contline_id and contline_id in id_to_var_map:
-                    var = id_to_var_map[contline_id]
-                    var["Timestamp"] = contline.get("ServerTimestamp")
-                    if "Value" in contline:
-                        var["Value"] = contline["Value"].get("Body")
-                        var["ValueType"] = self._get_value_type(contline["Value"].get("Type")).get("type")
-                    if "StatusCode" in contline:
-                        var["StatusCode"] = contline["StatusCode"].get("Code")
-                        var["StatusSymbol"] = contline["StatusCode"].get("Symbol")
+        # Return if missing values
+        if not content.get("Values"):
+            return vars
+
+        # Use .get from one dict to the other to ensure None values if something is missing
+        for num, row in enumerate(vars):
+            contline = content["Values"][num]
+            vars[num]["Timestamp"] = contline.get("ServerTimestamp")
+            # Values are not present in the answer if not found
+            if "Value" in contline:
+                vars[num]["Value"] = contline["Value"].get("Body")
+                vars[num]["ValueType"] = self._get_value_type(
+                    contline["Value"].get("Type")
+                ).get("type")
+            # StatusCode is not always present in the answer
+            if "StatusCode" in contline:
+                vars[num]["StatusCode"] = contline["StatusCode"].get("Code")
+                vars[num]["StatusSymbol"] = contline["StatusCode"].get("Symbol")
 
         return vars
 
