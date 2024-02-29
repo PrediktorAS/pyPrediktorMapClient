@@ -1,5 +1,6 @@
 import unittest
 from unittest import mock
+from unittest.mock import patch
 import pytest
 import pydantic
 from pydantic import ValidationError, AnyUrl, BaseModel
@@ -19,8 +20,7 @@ auth_session_id = "qlZULxcaNc6xVdXQfqPxwix5v3tuCLaO"
 auth_expires_at = "2022-12-04T07:31:28.767407252Z"
 
 list_of_ids = [
-    {"Id": "SOMEID1", "Namespace": 1, "IdType": 2},
-    {"Id": "SOMEID2", "Namespace": 1, "IdType": 2},
+    {"Id": "SOMEID1", "Namespace": "1", "IdType": "2"},
 ]
 
 list_of_write_values = [
@@ -150,36 +150,34 @@ list_of_historical_values_wrong_type_and_value = [
         ]
 
 successful_live_response = [
-    {
-        "Success": True,
-        "Values": [
-            {
-                "NodeId": {"Id": "SOMEID", "Namespace": 0, "IdType": 0},
-                "Value": {"Type": 10, "Body": 1.2},
-                "ServerTimestamp": "2022-01-01T12:00:00Z",
-                "StatusCode": {"Code": 0, "Symbol": "Good"}
-            },
-            {
-                "NodeId": {"Id": "SOMEID2", "Namespace": 0, "IdType": 0},
-                "Value": {"Type": 11, "Body": 2.3},
-                "ServerTimestamp": "2022-01-01T12:05:00Z",
-                "StatusCode": {"Code": 1, "Symbol": "Uncertain"}
-            },
-        ],
-    }
-]
+        {
+            "Success": True,
+            "Values": [
+                {
+                    "NodeId": {"Id": "SOMEID", "Namespace": 0, "IdType": 0},
+                    "Value": {"Type": 10, "Body": 1.2},
+                    "ServerTimestamp": "2022-01-01T12:00:00Z",
+                    "StatusCode": {"Code": 0, "Symbol": "Good"}
+                },
+                {
+                    "NodeId": {"Id": "SOMEID2", "Namespace": 0, "IdType": 0},
+                    "Value": {"Type": 11, "Body": 2.3},
+                    "ServerTimestamp": "2022-01-01T12:05:00Z",
+                    "StatusCode": {"Code": 1, "Symbol": "Uncertain"}
+                },
+            ],
+        }
+    ]
 
 empty_live_response = [
     {
         "Success": True,
         "Values": [
             {
-                "NodeId": {"Id": "SOMEID1", "Namespace": 0, "IdType": 0},
                 "SourceTimestamp": "2022-09-21T13:13:38.183Z",
                 "ServerTimestamp": "2022-09-21T13:13:38.183Z",
             },
             {
-                "NodeId": {"Id": "SOMEID2", "Namespace": 0, "IdType": 0},
                 "SourceTimestamp": "2023-09-21T13:13:38.183Z",
                 "ServerTimestamp": "2023-09-21T13:13:38.183Z",
             },
@@ -341,10 +339,11 @@ class MockResponse:
 
 # This method will be used by the mock to replace requests
 def successful_mocked_requests(*args, **kwargs):
-    if args[0] == f"{URL}values/get":
-        return MockResponse(successful_live_response, 200)
-
-    return MockResponse(None, 404)
+    status_code = 200 if args[0] == f"{URL}values/get" else 404
+    json_data = successful_live_response  
+    response = MockResponse(json_data=json_data, status_code=status_code)
+    response.json_data = json_data
+    return response
 
 
 def empty_values_mocked_requests(*args, **kwargs):
@@ -534,7 +533,6 @@ def make_historical_request():
             )
 
 
-
 class AnyUrlModel(BaseModel):
     url: AnyUrl
 
@@ -578,51 +576,84 @@ class OPCUATestCase(unittest.TestCase):
             opc.check_auth_client()
 
 
-    # @mock.patch("requests.post", side_effect=successful_mocked_requests)
-    # def test_get_live_values_successful(self, mock_get):
-    #     tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
-    #     result = tsdata.get_values(list_of_ids)
-    #     print("IDs in variable_list:", [var["Id"] for var in list_of_ids])
-    #     self.assertEqual(len(result), len(successful_live_response[0]["Values"]), "The number of results should match the number of items in the response")
+    @mock.patch("requests.post", side_effect=successful_mocked_requests)
+    def test_get_live_values_successful(self, mock_get):
+        tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
+        result = tsdata.get_values(list_of_ids)
+        if list_of_ids:
+            for num, row in enumerate(list_of_ids):
+                assert result[num]["Id"] == list_of_ids[num]["Id"]
+                assert (
+                    result[num]["Timestamp"]
+                    == successful_live_response[0]["Values"][num]["ServerTimestamp"]
+                )
+                assert (
+                    result[num]["Value"]
+                    == successful_live_response[0]["Values"][num]["Value"]["Body"]
+                )
+                assert (
+                    result[num]["ValueType"]
+                    == tsdata._get_value_type(
+                        successful_live_response[0]["Values"][num]["Value"]["Type"]
+                    )["type"]
+                )
+                assert (
+                    result[num]["StatusCode"]
+                    == successful_live_response[0]["Values"][num]["StatusCode"]["Code"]
+                )
+                assert (
+                    result[num]["StatusSymbol"]
+                    == successful_live_response[0]["Values"][num]["StatusCode"]["Symbol"]
+                )
 
-    # @mock.patch("requests.post", side_effect=successful_mocked_requests)
-    # def test_get_live_values_successful_with_auth(self, mock_get):
-    #     auth_client = AUTH_CLIENT(rest_url=URL, username=username, password=password)
-    #     auth_client.token = Token(session_token=auth_session_id, expires_at=auth_expires_at)
-    #     tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL, auth_client=auth_client)
-    #     result = tsdata.get_values(list_of_ids)
-    #     for num, row in enumerate(list_of_ids):
-    #         assert result[num]["Id"] == list_of_ids[num]["Id"]
-    #         assert (
-    #             result[num]["Timestamp"]
-    #             == successful_live_response[0]["Values"][num]["ServerTimestamp"]
-    #         )
-    #         assert (
-    #             result[num]["Value"]
-    #             == successful_live_response[0]["Values"][num]["Value"]["Body"]
-    #         )
-    #         assert (
-    #             result[num]["ValueType"]
-    #             == tsdata._get_value_type(
-    #                 successful_live_response[0]["Values"][num]["Value"]["Type"]
-    #             )["type"]
-    #         )
-    #         assert (
-    #             result[num]["StatusCode"]
-    #             == successful_live_response[0]["Values"][num]["StatusCode"]["Code"]
-    #         )
-    #         assert (
-    #             result[num]["StatusSymbol"]
-    #             == successful_live_response[0]["Values"][num]["StatusCode"]["Symbol"]
-    #         )
 
-    # @mock.patch("requests.post", side_effect=empty_values_mocked_requests)
-    # def test_get_live_values_with_missing_value_and_statuscode(self, mock_get):
-    #     tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
-    #     result = tsdata.get_values(list_of_ids)
-    #     for num, row in enumerate(list_of_ids):
-    #         self.assertEqual(result[num]["Id"], list_of_ids[num]["Id"])
-    #         self.assertEqual(result[num]["Timestamp"], empty_live_response[0]["Values"][num]["ServerTimestamp"])
+    @mock.patch("requests.post", side_effect=successful_mocked_requests)
+    def test_get_live_values_successful_with_auth(self, mock_get):
+        auth_client = AUTH_CLIENT(rest_url=URL, username=username, password=password)
+        auth_client.token = Token(session_token=auth_session_id, expires_at=auth_expires_at)
+        tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL, auth_client=auth_client)
+        result = tsdata.get_values(list_of_ids)
+        for num, row in enumerate(list_of_ids):
+            assert result[num]["Id"] == list_of_ids[num]["Id"]
+            assert (
+                result[num]["Timestamp"]
+                == successful_live_response[0]["Values"][num]["ServerTimestamp"]
+            )
+            assert (
+                result[num]["Value"]
+                == successful_live_response[0]["Values"][num]["Value"]["Body"]
+            )
+            assert (
+                result[num]["ValueType"]
+                == tsdata._get_value_type(
+                    successful_live_response[0]["Values"][num]["Value"]["Type"]
+                )["type"]
+            )
+            assert (
+                result[num]["StatusCode"]
+                == successful_live_response[0]["Values"][num]["StatusCode"]["Code"]
+            )
+            assert (
+                result[num]["StatusSymbol"]
+                == successful_live_response[0]["Values"][num]["StatusCode"]["Symbol"]
+            )
+            
+
+    @mock.patch("requests.post", side_effect=empty_values_mocked_requests)
+    def test_get_live_values_with_missing_value_and_statuscode(self, mock_get):
+        tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
+        result = tsdata.get_values(list_of_ids)
+        for num, row in enumerate(list_of_ids):
+            if num < len(result):  
+                assert result[num]["Id"] == list_of_ids[num]["Id"]
+                assert (
+                    result[num]["Timestamp"]
+                    == empty_live_response[0]["Values"][num]["ServerTimestamp"]
+                )
+                assert result[num]["Value"] is None
+                assert result[num]["ValueType"] is None
+                assert result[num]["StatusCode"] is None
+                assert result[num]["StatusSymbol"] is None
 
     @mock.patch("requests.post", side_effect=no_mocked_requests)
     def test_get_live_values_no_response(self, mock_get):
@@ -630,16 +661,11 @@ class OPCUATestCase(unittest.TestCase):
         result = tsdata.get_values(list_of_ids)
         assert result[0]["Timestamp"] == None
 
-    # @mock.patch("requests.post", side_effect=unsuccessful_mocked_requests)
-    # def test_get_live_values_unsuccessful(self, mock_post):
-    #     tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
-    #     result = tsdata.get_values(list_of_ids)
-    #     for result in result:
-    #         assert result["Timestamp"] is None
-    #         assert result["Value"] is None
-    #         assert result["ValueType"] is None
-    #         assert result["StatusCode"] is None
-    #         assert result["StatusSymbol"] is None
+    @mock.patch("requests.post", side_effect=unsuccessful_mocked_requests)
+    def test_get_live_values_unsuccessful(self, mock_post):
+        tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
+        with pytest.raises(RuntimeError):
+            tsdata.get_values(list_of_ids)
 
     @mock.patch("requests.post", side_effect=empty_mocked_requests)
     def test_get_live_values_empty(self, mock_get):
