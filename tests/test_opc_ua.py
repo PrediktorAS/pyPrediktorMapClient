@@ -3,10 +3,11 @@ from unittest import mock
 from unittest.mock import patch
 import pytest
 import pydantic
-from pydantic import ValidationError, AnyUrl, BaseModel
-from copy import deepcopy
 import datetime
 import pandas.api.types as ptypes
+from pydantic import ValidationError, AnyUrl, BaseModel
+from typing import List
+from copy import deepcopy
 
 from pyprediktormapclient.opc_ua import OPC_UA, Variables
 from pyprediktormapclient.auth_client import AUTH_CLIENT, Token
@@ -324,7 +325,7 @@ class Variables(BaseModel):
 class WriteHistoricalVariables(BaseModel):
     NodeId: Variables
     PerformInsertReplace: int
-    UpdateValues: list[Value]
+    UpdateValues: List[Value]
 
 class MockResponse:
     def __init__(self, json_data, status_code):
