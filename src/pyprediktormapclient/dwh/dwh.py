@@ -79,7 +79,7 @@ class DWH(Db, IDWH):
     Private
     """
 
-    @validate_call
+    
     def __initialize_context_services(self) -> None:
         """
         Initialise all services defined in `context` folder. These are methods
@@ -96,6 +96,9 @@ class DWH(Db, IDWH):
                 for attribute_name in dir(module):
                     attribute = getattr(module, attribute_name)
 
-                    if isinstance(attribute, type) and attribute is not IDWH:
+                    if self._is_attr_valid_service_class(attribute):
                         service_name = modname.split(".")[-1]
                         setattr(self, service_name, attribute(self))
+
+    def _is_attr_valid_service_class(self, attribute) -> bool:
+        return isinstance(attribute, type) and issubclass(attribute, IDWH) and attribute is not IDWH

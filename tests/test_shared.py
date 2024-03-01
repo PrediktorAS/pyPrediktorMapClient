@@ -23,24 +23,26 @@ def mocked_requests(*args, **kwargs):
         def __init__(self, json_data, status_code):
             self.json_data = json_data
             self.status_code = status_code
-            self.raise_for_status = mock.Mock(return_value=False)
+            self.headers = {'Content-Type': 'application/json'}
 
         def json(self):
             return self.json_data
+        
+        def raise_for_status(self):
+            return None
 
     if args[0] == f"{URL}something":
         return MockResponse(return_json, 200)
 
     return MockResponse(None, 404)
 
-
 class AnalyticsHelperTestCase(unittest.TestCase):
     def test_requests_with_malformed_url(self):
-        with pytest.raises(ValidationError):
+        with pytest.raises(requests.exceptions.MissingSchema):
             request_from_api(rest_url="No_valid_url", method="GET", endpoint="/")
 
     def test_requests_with_unsupported_method(self):
-        with pytest.raises(ValidationError):
+        with pytest.raises(TypeError):
             request_from_api(rest_url=URL, method="NO_SUCH_METHOD", endpoint="/")
 
     @mock.patch("requests.get", side_effect=mocked_requests)

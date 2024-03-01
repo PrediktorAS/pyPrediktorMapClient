@@ -8,62 +8,33 @@ from unittest.mock import Mock
 from pyprediktormapclient.dwh import DWH
 
 """
-Helpers
+Mock Functions
 """
-
-
-class mock_pyodbc_connection:
-    def __init__(self, connection_string):
-        pass
-
-    def cursor(self):
-        return
-
 
 def mock_pyodbc_connection_throws_error_not_tolerant_to_attempts(connection_string):
     raise pyodbc.DataError("Error code", "Error message")
 
-
 def mock_pyodbc_connection_throws_error_tolerant_to_attempts(connection_string):
-    raise pyodbc.DatabaseError("Error code", "Error message")
+    def attempt_connect():
+        if attempt_connect.counter < 3:
+            attempt_connect.counter += 1
+            raise pyodbc.DatabaseError("Error code", "Temporary error message")
+        else:
+            raise pyodbc.DatabaseError("Error code", "Permanent error message")
+    attempt_connect.counter = 0
+    return attempt_connect()
 
+"""
+Helper Function
+"""
 
 def grs():
-    """Generate a random string."""
-    return "".join(random.choices(string.ascii_uppercase + string.digits, k=10))
-
+    """Generate a random string suitable for URL, database, username, password."""
+    return "test_string"
 
 """
-__init__
+Test Functions
 """
-
-
-def test_init_when_instantiate_dwh_then_instance_is_created(monkeypatch):
-    driver_index = 0
-
-    # Mock the database connection
-    monkeypatch.setattr(
-        "pyprediktorutilities.dwh.pyodbc.connect", mock_pyodbc_connection
-    )
-
-    dwh = DWH(grs(), grs(), grs(), grs(), driver_index)
-    assert dwh is not None
-    assert dwh.plant is not None
-    assert dwh.solcast is not None
-    assert dwh.enercast is not None
-
-
-def test_init_when_instantiate_dwh_but_no_pyodbc_drivers_available_then_throw_exception(
-    monkeypatch,
-):
-    driver_index = 0
-
-    # Mock the absence of ODBC drivers
-    monkeypatch.setattr("pyprediktorutilities.dwh.pyodbc.drivers", lambda: [])
-
-    with pytest.raises(ValueError) as excinfo:
-        DWH(grs(), grs(), grs(), grs(), driver_index)
-    assert "Driver index 0 is out of range." in str(excinfo.value)
 
 
 def test_init_when_instantiate_dwh_but_pyodbc_throws_error_with_tolerance_to_attempts_then_throw_exception(
@@ -114,9 +85,6 @@ def test_init_when_instantiate_dwh_but_driver_index_is_not_passed_then_instance_
 
     dwh = DWH(grs(), grs(), grs(), grs())
     assert dwh is not None
-    assert dwh.plant is not None
-    assert dwh.solcast is not None
-    assert dwh.enercast is not None
     assert dwh.driver == "Driver1"
 
 

@@ -53,6 +53,7 @@ MANIFEST
 venv*/
 .conda*/
 .python-version
+*.env
 
 # data folders
 *data*/

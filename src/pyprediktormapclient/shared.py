@@ -1,9 +1,11 @@
 import requests
-from pydantic import AnyUrl, validate_call
+from pydantic import AnyUrl
 from typing import Literal
+from pydantic import ValidationError
 
+class Config:
+        arbitrary_types_allowed = True
 
-@validate_call
 def request_from_api(
     rest_url: AnyUrl,
     method: Literal["GET", "POST"],
@@ -12,6 +14,7 @@ def request_from_api(
     params: dict = None,
     headers: dict = None,
     extended_timeout: bool = False,
+    session: requests.Session = None,
 ) -> str:
     """Function to perform the request to the ModelIndex server
 
@@ -26,13 +29,25 @@ def request_from_api(
     """
     request_timeout = (3, 300 if extended_timeout else 27)
     combined_url = f"{rest_url}{endpoint}"
+
+    # Use session if provided, else use requests
+    request_method = session if session else requests
+
     if method == "GET":
-        result = requests.get(combined_url, timeout=request_timeout, params=params, headers=headers)
+        result = request_method.get(combined_url, timeout=request_timeout, params=params, headers=headers)
 
     if method == "POST":
-        result = requests.post(
+        result = request_method.post(
             combined_url, data=data, headers=headers, timeout=request_timeout, params=params
         )
-
+    
+    if method not in ["GET", "POST"]:
+        raise ValidationError("Unsupported method")
+    
     result.raise_for_status()
-    return result.json()
+
+    if 'application/json' in result.headers.get('Content-Type', ''):
+        return result.json()
+
+    else:
+        return {"error": "Non-JSON response", "content": result.text}

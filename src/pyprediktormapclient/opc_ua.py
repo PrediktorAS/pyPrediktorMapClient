@@ -11,17 +11,8 @@ from pydantic_core import Url
 from pyprediktormapclient.shared import request_from_api
 from requests import HTTPError
 import asyncio
-import multiprocessing
-from functools import partial
-import concurrent.futures
-import os
-import uuid
 import requests
-from requests import Session
-from concurrent.futures import ThreadPoolExecutor
-import threading
 import aiohttp
-from pydantic import validate_call
 
 
 logger = logging.getLogger(__name__)
@@ -131,6 +122,9 @@ class WriteReturn(BaseModel):
     TimeStamp: str
     Success: bool
 
+class Config:
+        arbitrary_types_allowed = True
+
 class OPC_UA:
     """Helper functions to access the OPC UA REST Values API server
 
@@ -151,8 +145,8 @@ class OPC_UA:
         arbitrary_types_allowed = True
 
 
-    @validate_call
-    def __init__(self, rest_url: AnyUrl, opcua_url: AnyUrl, namespaces: List = None, auth_client: object = None):
+    
+    def __init__(self, rest_url: AnyUrl, opcua_url: AnyUrl, namespaces: List = None, auth_client: object = None, session: requests.Session = None):
         """Class initializer
 
         Args:
@@ -164,11 +158,16 @@ class OPC_UA:
         """
         self.rest_url = rest_url
         self.opcua_url = opcua_url
-        self.headers = {"Content-Type": "application/json"}
+        self.headers = {
+            "Content-Type": "application/json",
+            "Accept": "text/plain"
+        }
         self.auth_client = auth_client
+        self.session = session
+        
         if self.auth_client is not None:
             if self.auth_client.token is not None:
-                self.headers["Authorization"] = f"Bearer {self.auth_client.token.access_token}"
+                self.headers["Authorization"] = f"Bearer {self.auth_client.token.session_token}"
         self.body = {"Connection": {"Url": self.opcua_url, "AuthenticationType": 1}}
         if namespaces:
             self.body["ClientNamespaces"] = namespaces
@@ -185,11 +184,11 @@ class OPC_UA:
     def check_auth_client(self, content):
         if (content.get('error').get('code') == 404):
             self.auth_client.request_new_ory_token()
-            self.headers["Authorization"] = f"Bearer {self.auth_client.token.access_token}"
+            self.headers["Authorization"] = f"Bearer {self.auth_client.token.session_token}"
         else:
             raise RuntimeError(content.get("ErrorMessage"))
 
-    @validate_call
+    
     def _get_value_type(self, id: int) -> Dict:
         """Internal function to get the type of a value from the OPC UA return,as documentet at
         https://docs.prediktor.com/docs/opcuavaluesrestapi/datatypes.html#variant
@@ -204,7 +203,7 @@ class OPC_UA:
             {"id": None, "type": None, "description": None},
         )
 
-    def _get_variable_list_as_list(self, variable_list: List) -> List:
+    def _get_variable_list_as_list(self, variable_list: list) -> list:
         """Internal function to convert a list of pydantic Variable models to a
         list of dicts
 
@@ -216,12 +215,18 @@ class OPC_UA:
         """
         new_vars = []
         for var in variable_list:
-            # Convert pydantic model to dict
-            new_vars.append(var.model_dump())
+            if hasattr(var, 'model_dump'):
+                # Convert pydantic model to dict
+                new_vars.append(var.model_dump())
+            elif isinstance(var, dict):
+                # If var is already a dict, append as is
+                new_vars.append(var)
+            else:
+                raise TypeError("Unsupported type in variable_list")
 
-        return new_vars
+            return new_vars
 
-    @validate_call
+    
     def get_values(self, variable_list: List[Variables]) -> List:
         """Request realtime values from the OPC UA server
 
@@ -297,7 +302,7 @@ class OPC_UA:
 
         return vars
 
-    @validate_call
+    
     def get_historical_aggregated_values(
         self,
         start_time: datetime,
@@ -396,7 +401,7 @@ class OPC_UA:
 
         return df_result
 
-    @validate_call
+    
     async def get_historical_aggregated_values_async(
         self,
         start_time: datetime,
@@ -440,7 +445,7 @@ class OPC_UA:
 
         return result_df
     
-    @validate_call
+    
     async def make_async_api_request(self, start_time: datetime, end_time: datetime, pro_interval: int, agg_name: str, variable_list: List[Variables]) -> dict:
         """Make API request for the given time range and variable list"""
 
@@ -482,7 +487,7 @@ class OPC_UA:
 
         return content
 
-    @validate_call
+    
     def generate_time_batches(self, start_time: datetime, end_time: datetime, pro_interval: int, batch_size: int) -> List[tuple]:
         """Generate time batches based on start time, end time, processing interval, and batch size"""
 
@@ -501,7 +506,7 @@ class OPC_UA:
 
         return time_batches
 
-    @validate_call
+    
     def generate_variable_batches(self, variable_list: List[Variables], batch_size: int) -> List[List[Variables]]:
         """Generate variable batches based on the variable list and batch size"""
 
@@ -511,7 +516,7 @@ class OPC_UA:
 
         return variable_batches
 
-    @validate_call
+    
     def process_api_response(self, response: dict) -> pd.DataFrame:
         """Process the API response and return the result dataframe"""
 
@@ -552,7 +557,7 @@ class OPC_UA:
         return df_result
 
 
-    @validate_call
+    
     def write_values(self, variable_list: List[WriteVariables]) -> List:
         """Request to write realtime values to the OPC UA server
 
@@ -602,7 +607,7 @@ class OPC_UA:
 
         return vars
 
-    @validate_call
+
     def write_historical_values(self, variable_list: List[WriteHistoricalVariables]) -> List:
         """Request to write realtime values to the OPC UA server
 
