@@ -3,8 +3,8 @@ import logging
 import importlib
 from typing import Dict
 from pydantic import validate_call
+from pyprediktorutilities import Dwh as Db
 
-from .db import Db
 from . import context
 from .idwh import IDWH
 
@@ -65,17 +65,11 @@ class DWH(Db, IDWH):
 
     @validate_call
     def version(self) -> Dict:
-        """Get the DWH version.
+        """
+        Get the DWH version.
 
         Returns:
-        Dict: A dictionary with the following keys (or similar):
-                    DWHVersion,
-                    UpdateDate,
-                    ImplementedDate,
-                    Comment,
-                    MajorVersionNo,
-                    MinorVersionNo,
-                    InterimVersionNo
+            Dict: A dictionary with the following keys (or similar): DWHVersion, UpdateDate, ImplementedDate, Comment, MajorVersionNo, MinorVersionNo, InterimVersionNo
         """
         query = "SET NOCOUNT ON; EXEC [dbo].[GetVersion]"
         results = self.fetch(query)

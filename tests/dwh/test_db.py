@@ -11,9 +11,6 @@ from pandas.testing import assert_frame_equal
 """
 Helpers
 """
-
-class Config:
-        arbitrary_types_allowed = True
         
 class mock_pyodbc_connection:
     def __init__(self, connection_string):
