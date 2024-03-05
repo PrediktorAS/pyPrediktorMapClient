@@ -5,7 +5,7 @@ import datetime
 import copy
 import pandas as pd
 from datetime import date, datetime, timedelta
-from typing import Dict, List, Union, Optional
+from typing import Dict, List, Any, Union, Optional
 from pydantic import BaseModel, AnyUrl, validate_call
 from pydantic_core import Url
 from pyprediktormapclient.shared import request_from_api
@@ -303,103 +303,169 @@ class OPC_UA:
         return vars
 
     
-    def get_historical_aggregated_values(
-        self,
-        start_time: datetime,
-        end_time: datetime,
-        pro_interval: int,
-        agg_name: str,
-        variable_list: List[Variables],
-    ) -> pd.DataFrame:
-        """Request historical aggregated values from the OPC UA server
+    def _check_content(self, content: Dict[str, Any]) -> None:
+        """Check the content returned from the server.
 
         Args:
-            start_time (datetime.datetime): start time of requested data
-            end_time (datetime.datetime): end time of requested data
-            pro_interval (int): interval time of processing in milliseconds
-            agg_name (str): name of aggregation
-            variable_list (list): A list of variables you want, containing keys "Id", "Namespace" and "IdType"
-        Returns:
-            pd.DataFrame: Columns in the DF are "StatusCode", "StatusSymbol", "ValueType", "Value", "Timestamp", "IdType", "Id", "Namespace"
+            content (dict): The content returned from the server.
+
+        Raises:
+            RuntimeError: If the content is not a dictionary, if the request was not successful, or if the content does not contain 'HistoryReadResults'.
         """
-        # Create a new variable list to remove pydantic models
+        if not isinstance(content, dict):
+            raise RuntimeError("No content returned from the server")
+        if not content.get("Success"):
+            raise RuntimeError(content.get("ErrorMessage"))
+        if "HistoryReadResults" not in content:
+            raise RuntimeError(content.get("ErrorMessage"))
+
+    def _process_df(self, df_result: pd.DataFrame, columns: Dict[str, str]) -> pd.DataFrame:
+        """
+        Process the DataFrame returned from the server.
+        """
+        for i, row in df_result.iterrows():
+            if not math.isnan(row["Value.Type"]):
+                df_result.at[i, "Value.Type"] = self._get_value_type(int(row["Value.Type"])).get("type")
+
+        df_result.rename(
+            columns=columns, 
+            errors="raise", 
+            inplace=True
+        )
+
+        return df_result
+
+    def get_historical_raw_values(self, 
+        start_time: datetime, 
+        end_time: datetime, 
+        variable_list: List[Variables], 
+        limit_start_index: Union[int, None] = None, 
+        limit_num_records: Union[int, None] = None
+    ) -> pd.DataFrame:
+        """
+        Get historical raw values from the OPC UA server.
+
+        Args:
+            start_time (datetime): The start time of the requested data.
+            end_time (datetime): The end time of the requested data.
+            variable_list (list): A list of variables to request.
+            limit_start_index (int, optional): The start index for limiting the number of records. Defaults to None.
+            limit_num_records (int, optional): The number of records to limit to. Defaults to None.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing the historical raw values.
+        """
         vars = self._get_variable_list_as_list(variable_list)
 
-        extended_variables = []
-        for var in vars:
-            extended_variables.append(
-                {
-                    "NodeId": var,
-                    "AggregateName": agg_name,
-                }
-            )
-        body = copy.deepcopy(self.body)
-        body["StartTime"] = start_time.strftime("%Y-%m-%dT%H:%M:%SZ")
-        body["EndTime"] = end_time.strftime("%Y-%m-%dT%H:%M:%SZ")
-        body["ProcessingInterval"] = pro_interval
-        body["ReadValueIds"] = extended_variables
-        body["AggregateName"] = agg_name
+        extended_variables = [{"NodeId": var} for var in vars]
+        body = {
+            **self.body, 
+            "StartTime": start_time.strftime("%Y-%m-%dT%H:%M:%SZ"), 
+            "EndTime": end_time.strftime("%Y-%m-%dT%H:%M:%SZ"), 
+            "ReadValueIds": extended_variables}
+        
+        if limit_start_index is not None and limit_num_records is not None:
+            body["Limit"] = {"StartIndex": limit_start_index, "NumRecords": limit_num_records}
         try:
-            #Try making the request, if failes check if it is due to ory client
             content = request_from_api(
-                rest_url=self.rest_url,
-                method="POST",
-                endpoint="values/historicalaggregated",
-                data=json.dumps(body, default=self.json_serial),
-                headers=self.headers,
-                extended_timeout=True,
+                rest_url=self.rest_url, 
+                method="POST", 
+                endpoint="values/historical", 
+                data=json.dumps(body, default=self.json_serial), 
+                headers=self.headers, 
+                extended_timeout=True)
+            
+        except HTTPError as e:
+            if self.auth_client is not None:
+                self.check_auth_client(json.loads(e.response.content))
+            else:
+                raise RuntimeError(f'Error message {e}')
+            
+        self._check_content(content)
+
+        df_result = pd.json_normalize(
+            content, 
+            record_path=['HistoryReadResults', 'DataValues'], 
+            meta=[['HistoryReadResults', 'NodeId', 'IdType'], ['HistoryReadResults', 'NodeId','Id'],['HistoryReadResults', 'NodeId','Namespace']
+            ]
+        )
+
+        columns = {
+            "Value.Type": "ValueType",
+            "Value.Body": "Value",
+            "SourceTimestamp": "Timestamp",
+            "HistoryReadResults.NodeId.IdType": "IdType",
+            "HistoryReadResults.NodeId.Id": "Id",
+            "HistoryReadResults.NodeId.Namespace": "Namespace",
+        }
+        return self._process_df(df_result, columns)
+
+    def get_historical_aggregated_values(self, 
+        start_time: datetime, 
+        end_time: datetime, 
+        pro_interval: int, 
+        agg_name: str, 
+        variable_list: List[Variables]
+    ) -> pd.DataFrame:
+        """
+        Request historical aggregated values from the OPC UA server.
+
+        Args:
+            start_time (datetime): Start time of requested data.
+            end_time (datetime): End time of requested data.
+            pro_interval (int): Interval time of processing in milliseconds.
+            agg_name (str): Name of aggregation.
+            variable_list (List[Variables]): A list of variables you want, containing keys "Id", "Namespace" and "IdType".
+
+        Returns:
+            pd.DataFrame: DataFrame with the historical aggregated values. Columns in the DataFrame are "StatusCode", 
+            "StatusSymbol", "ValueType", "Value", "Timestamp", "IdType", "Id", "Namespace".
+        """
+        vars = self._get_variable_list_as_list(variable_list)
+        extended_variables = [{"NodeId": var, "AggregateName": agg_name} for var in vars]
+
+        body = {
+            **self.body, 
+            "StartTime": start_time.strftime("%Y-%m-%dT%H:%M:%SZ"), 
+            "EndTime": end_time.strftime("%Y-%m-%dT%H:%M:%SZ"), 
+            "ProcessingInterval": pro_interval, 
+            "ReadValueIds": extended_variables, 
+            "AggregateName": agg_name
+        }
+        try:
+            content = request_from_api(
+                rest_url=self.rest_url, 
+                method="POST", 
+                endpoint="values/historicalaggregated", 
+                data=json.dumps(body, default=self.json_serial), 
+                headers=self.headers, 
+                extended_timeout=True
             )
         except HTTPError as e:
             if self.auth_client is not None:
                 self.check_auth_client(json.loads(e.response.content))
             else:
                 raise RuntimeError(f'Error message {e}')
-        finally:
-            content = request_from_api(
-                rest_url=self.rest_url,
-                method="POST",
-                endpoint="values/historicalaggregated",
-                data=json.dumps(body, default=self.json_serial),
-                headers=self.headers,
-                extended_timeout=True,
-            )
+            
+        self._check_content(content)
 
-        # Return if no content from server
-        if not isinstance(content, dict):
-            raise RuntimeError("No content returned from the server")
-
-        # Return if not successful, but check ory status id ory is enabled
-        if content.get("Success") is False:
-            raise RuntimeError(content.get("ErrorMessage"))
-
-        # Check for HistoryReadResults
-        if not "HistoryReadResults" in content:
-            raise RuntimeError(content.get("ErrorMessage"))
-
-        df_result = pd.json_normalize(content, record_path=['HistoryReadResults', 'DataValues'], meta=[['HistoryReadResults', 'NodeId', 'IdType'], ['HistoryReadResults', 'NodeId','Id'],['HistoryReadResults', 'NodeId','Namespace']] )
-
-        for i, row in df_result.iterrows():
-            if not math.isnan(row["Value.Type"]):
-                df_result.at[i, "Value.Type"] = self._get_value_type(int(row["Value.Type"])).get(
-                    "type"
-                )
-
-        df_result.rename(
-            columns={
-                "Value.Type": "ValueType",
-                "Value.Body": "Value",
-                "StatusCode.Symbol": "StatusSymbol",
-                "StatusCode.Code": "StatusCode",
-                "SourceTimestamp": "Timestamp",
-                "HistoryReadResults.NodeId.IdType": "Id",
-                "HistoryReadResults.NodeId.Namespace": "Namespace",
-            },
-            errors="raise",
-            inplace=True,
+        df_result = pd.json_normalize(
+            content, 
+            record_path=['HistoryReadResults', 'DataValues'], 
+            meta=[['HistoryReadResults', 'NodeId', 'IdType'], ['HistoryReadResults', 'NodeId','Id'],['HistoryReadResults', 'NodeId','Namespace']
+            ]
         )
-
-
-        return df_result
+        columns = {
+            "Value.Type": "ValueType",
+            "Value.Body": "Value",
+            "StatusCode.Symbol": "StatusSymbol",
+            "StatusCode.Code": "StatusCode",
+            "SourceTimestamp": "Timestamp",
+            "HistoryReadResults.NodeId.IdType": "IdType",
+            "HistoryReadResults.NodeId.Id": "Id",
+            "HistoryReadResults.NodeId.Namespace": "Namespace",
+        }
+        return self._process_df(df_result, columns)
 
     
     async def get_historical_aggregated_values_async(
