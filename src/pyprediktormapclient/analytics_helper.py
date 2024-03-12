@@ -274,12 +274,14 @@ class AnalyticsHelper:
 
         return variables_frame
 
-    def variables_as_list(self, include_only: List = []) -> List:
+    def variables_as_list(self, include_only: List = [], event_type_node_id: bool = False) -> List:
         """Extracts variables as a list. If there are names listed in the include_only
-        argument, only variables matching that name will be encluded.
+        argument, only variables matching that name will be included. The variable node 'Id' will be modified if 
+        the event_type_node_id is True i.e. node is required for reading historical event types.
 
         Args:
             include_only (list): A list of variable names (str) that should be included
+            event_type_node_id (bool): Whether to modify the 'Id' field for event types node id
 
         Returns:
             list: Unique types
@@ -290,4 +292,11 @@ class AnalyticsHelper:
             variable_dataframe = variable_dataframe[
                 variable_dataframe.VariableName.isin(include_only)
             ]
-        return variable_dataframe["VariableIdSplit"].to_list()
+        # Modify the 'Id' field for the event types node id
+        variable_list = variable_dataframe["VariableIdSplit"].to_list()
+        if event_type_node_id:
+            for item in variable_list:
+                parts = item['Id'].split('.')
+                new_id = '.'.join(parts[:-2])
+                item['Id'] = new_id
+        return variable_list
