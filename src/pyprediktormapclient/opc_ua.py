@@ -225,6 +225,166 @@ class OPC_UA:
                 raise TypeError("Unsupported type in variable_list")
 
             return new_vars
+        
+    def get_event_types(self, 
+        base_event_type_id: str = "0:0:2782"
+    ) -> pd.DataFrame:
+        """
+        Fetches event types based on the provided event type id or by default uses base event type id for all event types.
+
+        Args:
+            base_event_type_id (str): The base event type id in the format 'namespace:id_type:id'.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing the BrowseName, Id, and Namespace of each event type.
+        """
+        
+        namespace, id_type, id = map(int, base_event_type_id.split(':'))
+
+        body = copy.deepcopy(self.body)
+        body["BaseEventType"] = {
+            "Id": str(id),
+            "Namespace": namespace,
+            "IdType": id_type
+        }
+
+        try:
+            content = request_from_api(
+                rest_url=self.rest_url,
+                method="POST",
+                endpoint="events/types",
+                data=json.dumps(body, default=self.json_serial),
+                headers=self.headers,
+                extended_timeout=True,
+            )
+
+        except HTTPError as e:
+            if self.auth_client is not None:
+                self.check_auth_client(json.loads(e.response.content))
+            else:
+                raise RuntimeError(f'Error message {e}')
+        
+        df_result = pd.DataFrame(content['EventTypes'])
+
+        df_result['BrowseName'] = df_result['BrowseName'].apply(lambda x: x.get('Name', None))
+        df_result['Id'] = df_result['NodeId'].apply(lambda x: x.get('Id', None))
+        df_result['Namespace'] = df_result['NodeId'].apply(lambda x: x.get('Namespace'))
+
+        df_result['Namespace'] = df_result['Namespace'].fillna(0).astype(int)
+        df_result.drop(columns=['NodeId', 'DisplayName'], inplace=True)
+
+        return df_result
+    
+    def get_event_type_id_from_name(self, event_type_name: str) -> str:
+        """Get event type id and namespace from type name
+
+        Args:
+            type_name (str): event type name
+
+        Returns:
+            str: an object of event type id and namespace in the form of a tuple
+        """
+        df_result = self.get_event_types()
+        event_type = df_result[df_result["BrowseName"] == event_type_name]
+        
+        if not event_type.empty:
+            event_type_id, namespace = event_type[["Id", "Namespace"]].values[0]
+        else:
+            event_type_id = None
+        
+        event_type_id = f"{namespace}:0:{event_type_id}"
+
+        return event_type_id
+    
+    def read_historical_events(self,
+        start_time: datetime,
+        end_time: datetime,
+        variable_list: List[Variables],
+        fields_list: List[str],
+        event_type_name: str,
+        limit_start_index: Union[int, None] = None,
+        limit_num_records: Union[int, None] = None,
+    ) -> pd.DataFrame:
+        """
+        Reads historical events from an API.
+
+        Args:
+            start_time (datetime): The start time for the historical data.
+            end_time (datetime): The end time for the historical data.
+            variable_list (List[Variables]): A list of variables to include in the request.
+            fields_list (List[str]): A list of fields to include in the request.
+            event_type_name (str, optional): The name of the event type to filter by. Defaults to None.
+            limit_start_index (Union[int, None], optional): The starting index for the limit. Defaults to None.
+            limit_num_records (Union[int, None], optional): The number of records for the limit. Defaults to None.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing the historical events.
+        """
+        
+        # Create a new variable list to remove pydantic models
+        vars = self._get_variable_list_as_list(variable_list)
+
+        extended_variables = []
+        for var in vars:
+            extended_variables.append(
+                {
+                    "NodeId": var,
+                }
+            )
+
+        body = copy.deepcopy(self.body)
+        body["StartTime"] = start_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+        body["EndTime"] = end_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+        body["Fields"] = fields_list
+        body["ReadValueIds"] = extended_variables
+
+        event_type_noded_id = self.get_event_type_id_from_name(event_type_name)
+
+        if event_type_noded_id:
+            body["WhereClause"] = {
+                "EventTypeNodedId": {
+                    "Id": int(event_type_noded_id.split(":")[2]),
+                    "Namespace": int(event_type_noded_id.split(":")[0]),
+                    "IdType": int(event_type_noded_id.split(":")[1])
+                }
+            }
+        if limit_start_index is not None and limit_num_records is not None:
+            body["Limit"] = {
+                "StartIndex": limit_start_index,
+                "NumRecords": limit_num_records
+            }
+
+        content = request_from_api(
+            rest_url=self.rest_url,
+            method="POST",
+            endpoint="events/read",
+            data=json.dumps(body, default=self.json_serial),
+            headers=self.headers,
+            extended_timeout=True,
+        )
+
+        df_result = pd.json_normalize(content, record_path=["EventsResult"])
+        df_hist_event = df_result.explode('HistoryEvents')
+        df_hist_event_normalized = pd.json_normalize(df_hist_event['HistoryEvents'])
+        df_hist_event_normalized = df_hist_event_normalized[fields_list]
+
+        df_final = pd.concat([df_hist_event[df_hist_event.columns.difference(['HistoryEvents'])].reset_index(drop=True), df_hist_event_normalized.reset_index(drop=True)], axis=1)
+        new_columns = fields_list + [col for col in df_final.columns if col not in fields_list]
+        df_final = df_final[new_columns]
+        df_final.rename(
+                columns={
+                    "NodeId.Id": "Id",
+                    "NodeId.IdType": "IdType",
+                    "NodeId.Namespace": "Namespace",
+                    "StatusCode.Code": "StatusCode",
+                    "StatusCode.Symbol": "Quality",
+                },
+                errors="raise",
+                inplace=True,
+            )
+
+        df_final.drop(columns=["IdType", "Namespace", "StatusCode", "Quality"], inplace=True)
+        return df_final
 
     
     def get_values(self, variable_list: List[Variables]) -> List:
