@@ -224,7 +224,7 @@ class OPC_UA:
             else:
                 raise TypeError("Unsupported type in variable_list")
 
-            return new_vars
+        return new_vars
 
     
     def get_values(self, variable_list: List[Variables]) -> List:
