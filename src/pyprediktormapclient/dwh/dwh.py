@@ -3,7 +3,7 @@ import logging
 import importlib
 from typing import Dict
 from pydantic import validate_call
-from pyprediktorutilities import Dwh as Db
+from pyprediktorutilities.dwh.dwh import Dwh as Db
 
 from . import context
 from .idwh import IDWH

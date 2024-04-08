@@ -5,7 +5,7 @@ import pyodbc
 import logging
 import datetime
 from unittest.mock import Mock
-from pyprediktormapclient.dwh import DWH
+from pyprediktormapclient.dwh.dwh import DWH
 
 """
 Mock Functions
@@ -44,7 +44,7 @@ def test_init_when_instantiate_dwh_but_pyodbc_throws_error_with_tolerance_to_att
 
     # Mock the database connection
     monkeypatch.setattr(
-        "pyprediktorutilities.dwh.pyodbc.connect",
+        "pyprediktorutilities.dwh.dwh.pyodbc.connect",
         mock_pyodbc_connection_throws_error_not_tolerant_to_attempts,
     )
 
@@ -59,7 +59,7 @@ def test_init_when_instantiate_dwh_but_pyodbc_throws_error_tolerant_to_attempts_
 
     # Mock the database connection
     monkeypatch.setattr(
-        "pyprediktorutilities.dwh.pyodbc.connect",
+        "pyprediktorutilities.dwh.dwh.pyodbc.connect",
         mock_pyodbc_connection_throws_error_tolerant_to_attempts,
     )
 
@@ -99,7 +99,7 @@ def test_version_when_version_data_is_returned_then_return_version_data(monkeypa
         (
             "2.3.1",
             datetime.datetime(2023, 11, 14, 7, 5, 19, 830000),
-            "Updated DWH from procs",
+            "Updated Dwh from procs",
             2,
             3,
             1,
@@ -110,7 +110,7 @@ def test_version_when_version_data_is_returned_then_return_version_data(monkeypa
     expected_result = {
         "DWHVersion": "2.3.1",
         "UpdateDate": datetime.datetime(2023, 11, 14, 7, 5, 19, 830000),
-        "Comment": "Updated DWH from procs",
+        "Comment": "Updated Dwh from procs",
         "MajorVersionNo": 2,
         "MinorVersionNo": 3,
         "InterimVersionNo": 1,
