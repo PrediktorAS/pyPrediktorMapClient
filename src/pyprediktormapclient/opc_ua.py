@@ -227,17 +227,13 @@ class OPC_UA:
             return new_vars
         
     def get_event_types(self, 
-        base_event_type_id: str = "0:0:2782"
+        event_type_name: str = None,
     ) -> pd.DataFrame:
         """
-        Fetches event types based on the provided event type id or by default uses base event type id for all event types.
-
-        Args:
-            base_event_type_id (str): The base event type id in the format 'namespace:id_type:id'.
-
-        Returns:
-            pd.DataFrame: A DataFrame containing the BrowseName, Id, and Namespace of each event type.
+        Fetches all the event types by default and specific event types based on the provided event type name.
         """
+        # Default to use base event type id to get all the event types
+        base_event_type_id: str = "0:0:2782"
         
         namespace, id_type, id = map(int, base_event_type_id.split(':'))
 
@@ -273,10 +269,15 @@ class OPC_UA:
         df_result['Namespace'] = df_result['Namespace'].fillna(0).astype(int)
         df_result.drop(columns=['NodeId', 'DisplayName'], inplace=True)
 
+        if event_type_name is not None:
+            node_id = df_result.loc[df_result['BrowseName'] == event_type_name, 'Id'].values[0]
+            df_result = df_result[df_result['Id'] == node_id]
+
         return df_result
     
     def get_event_type_id_from_name(self, event_type_name: str) -> str:
-        """Get event type id and namespace from type name
+        """
+        Get event type id and namespace from type name
 
         Args:
             type_name (str): event type name
@@ -300,8 +301,8 @@ class OPC_UA:
         start_time: datetime,
         end_time: datetime,
         variable_list: List[Variables],
-        fields_list: List[str],
         event_type_name: str,
+        fields_list: List[str] = None,
         limit_start_index: Union[int, None] = None,
         limit_num_records: Union[int, None] = None,
     ) -> pd.DataFrame:
@@ -343,9 +344,9 @@ class OPC_UA:
         if event_type_noded_id:
             body["WhereClause"] = {
                 "EventTypeNodedId": {
-                    "Id": int(event_type_noded_id.split(":")[2]),
-                    "Namespace": int(event_type_noded_id.split(":")[0]),
-                    "IdType": int(event_type_noded_id.split(":")[1])
+                    "Id": (event_type_noded_id.split(":")[2]),
+                    "Namespace": (event_type_noded_id.split(":")[0]),
+                    "IdType": (event_type_noded_id.split(":")[1])
                 }
             }
         if limit_start_index is not None and limit_num_records is not None:
@@ -388,7 +389,8 @@ class OPC_UA:
 
     
     def get_values(self, variable_list: List[Variables]) -> List:
-        """Request realtime values from the OPC UA server
+        """
+        Request realtime values from the OPC UA server
 
         Args:
             variable_list (list): A list of variables you want, containing keys "Id", "Namespace" and "IdType"
@@ -464,7 +466,8 @@ class OPC_UA:
 
     
     def _check_content(self, content: Dict[str, Any]) -> None:
-        """Check the content returned from the server.
+        """
+        Check the content returned from the server.
 
         Args:
             content (dict): The content returned from the server.
