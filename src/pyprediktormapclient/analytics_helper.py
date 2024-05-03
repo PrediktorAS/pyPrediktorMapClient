@@ -274,14 +274,12 @@ class AnalyticsHelper:
 
         return variables_frame
 
-    def variables_as_list(self, include_only: List = [], event_type_node_id: bool = False) -> List:
+    def variables_as_list(self, include_only: List = []) -> List:
         """Extracts variables as a list. If there are names listed in the include_only
-        argument, only variables matching that name will be included. The variable node 'Id' will be modified if 
-        the event_type_node_id is True i.e. node is required for reading historical event types.
+        argument, only variables matching that name will be included. 
 
         Args:
             include_only (list): A list of variable names (str) that should be included
-            event_type_node_id (bool): Whether to modify the 'Id' field for event types node id
 
         Returns:
             list: Unique types
@@ -292,11 +290,31 @@ class AnalyticsHelper:
             variable_dataframe = variable_dataframe[
                 variable_dataframe.VariableName.isin(include_only)
             ]
-        # Modify the 'Id' field for the event types node id
-        variable_list = variable_dataframe["VariableIdSplit"].to_list()
-        if event_type_node_id:
-            for item in variable_list:
-                parts = item['Id'].split('.')
-                new_id = '.'.join(parts[:-2])
-                item['Id'] = new_id
-        return variable_list
+        return variable_dataframe["VariableIdSplit"].to_list()
+    
+
+    def create_read_value_ids_list_for_event_types(self, json_data):
+        """
+        Create a list of NodeId dictionaries from a JSON response.
+
+        The function extracts the 'Id' field from the JSON response, splits it into namespace, id type, and id,
+        and creates a NodeId dictionary for each id. It then removes any duplicates from the list of NodeId dictionaries.
+        """
+        # Extracting Id column from the dataframe
+        json_df = json_data.variables_as_dataframe()
+        node_ids_list = json_df['Id'].tolist()
+
+        node_id_dicts = []
+        for id_str in node_ids_list:
+            parts = id_str.split(":")
+            node_id_dict = {
+                "NodeId": {
+                    "Id": parts[2],
+                    "Namespace": int(parts[0]),
+                    "IdType": int(parts[1]),
+                }
+            }
+            node_id_dicts.append(node_id_dict)
+
+        node_id_dicts = [json.loads(t) for t in set(json.dumps(d) for d in node_id_dicts)]
+        return node_id_dicts

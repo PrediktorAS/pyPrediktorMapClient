@@ -224,7 +224,7 @@ class OPC_UA:
             else:
                 raise TypeError("Unsupported type in variable_list")
 
-            return new_vars
+        return new_vars
         
     def get_event_types(self, 
         event_type_name: str = None,
@@ -243,6 +243,8 @@ class OPC_UA:
             "Namespace": namespace,
             "IdType": id_type
         }
+
+        print(json.dumps(body, default=self.json_serial))
 
         try:
             content = request_from_api(
@@ -300,8 +302,8 @@ class OPC_UA:
     def read_historical_events(self,
         start_time: datetime,
         end_time: datetime,
-        variable_list: List[Variables],
         event_type_name: str,
+        event_type_node_ids: list[str],
         fields_list: List[str] = None,
         limit_start_index: Union[int, None] = None,
         limit_num_records: Union[int, None] = None,
@@ -321,23 +323,11 @@ class OPC_UA:
         Returns:
             pd.DataFrame: A DataFrame containing the historical events.
         """
-        
-        # Create a new variable list to remove pydantic models
-        vars = self._get_variable_list_as_list(variable_list)
-
-        extended_variables = []
-        for var in vars:
-            extended_variables.append(
-                {
-                    "NodeId": var,
-                }
-            )
 
         body = copy.deepcopy(self.body)
         body["StartTime"] = start_time.strftime("%Y-%m-%dT%H:%M:%SZ")
         body["EndTime"] = end_time.strftime("%Y-%m-%dT%H:%M:%SZ")
         body["Fields"] = fields_list
-        body["ReadValueIds"] = extended_variables
 
         event_type_noded_id = self.get_event_type_id_from_name(event_type_name)
 
@@ -349,6 +339,7 @@ class OPC_UA:
                     "IdType": (event_type_noded_id.split(":")[1])
                 }
             }
+            
         if limit_start_index is not None and limit_num_records is not None:
             body["Limit"] = {
                 "StartIndex": limit_start_index,
