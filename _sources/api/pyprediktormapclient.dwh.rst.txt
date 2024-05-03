@@ -12,6 +12,14 @@ Subpackages
 Submodules
 ----------
 
+pyprediktormapclient.dwh.db module
+----------------------------------
+
+.. automodule:: pyprediktormapclient.dwh.db
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 pyprediktormapclient.dwh.dwh module
 -----------------------------------
 
