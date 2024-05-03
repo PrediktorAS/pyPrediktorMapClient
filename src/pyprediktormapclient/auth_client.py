@@ -118,7 +118,7 @@ class AUTH_CLIENT:
         if self.token is None or self.token.expires_at is None:
             return True
 
-        return datetime.datetime.utcnow() > self.token.expires_at
+        return datetime.datetime.now(datetime.timezone.utc) > self.token.expires_at
 
     def request_new_ory_token(self) -> None:
         """Request Ory token
