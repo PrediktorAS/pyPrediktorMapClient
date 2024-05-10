@@ -1,8 +1,6 @@
 # Introduction
 
-
     Helper functions for Prediktor Map Services
-
 
 Helper functions for communicating with Prediktors OPC UA ModelIndex REST-API
 and OPC UA Values REST-API. Typically used for data anlytics purposes, you'll
@@ -12,60 +10,119 @@ Install is primarily done through PyPi with `pip install pyPrediktorMapClient`.
 If you want to contribute or need run the Jupyter Notebooks in the `notebooks`
 folder locally, please clone this repository.
 
-
-
 # Development
+
 If you'd like to contribute to pyPrediktorMapClient, please follow the steps below.
 
 ## Get the code
+
 1. First clone the repository and navigate to the main folder of repository.
+
 ```
 git clone git@github.com:PrediktorAS/pyPrediktorMapClient.git
 ```
 
 ## Setup
+
 2. Create Virtual environment
+
 ```
 python3 -m venv .venv
 source .venv/bin/activate
 ```
 
 3. Install dependencies
-As this is a python package, dependencies are in setyp.py _(actually in setup.cfg,
-as this is a pyScaffold project)_. Requirements.txt will perform the correct
-installation and add a couple of additional packages.
+   As this is a python package, dependencies are in setyp.py _(actually in setup.cfg,
+   as this is a pyScaffold project)_. Requirements.txt will perform the correct
+   installation and add a couple of additional packages.
 
 ```
 pip install -r requirements.txt
 ```
 
 ## Run and build
+
 4. Run tests
+
 ```
 tox
 ```
 
 5. Do your changes
-Add your changes and create a new PR to be approved.
+   Add your changes and create a new PR to be approved.
 
 6. Build
+
 ```
 tox -e build
 ```
 
 ## Changes
+
 7. Please apply your changes. If they will facilitate the work of the person using pyPrediktorMapClient, especially the new features you've implemented, ensure that you describe your changes comprehensively and provide guidance in the README.md file under the chapter `Manual - How to Use` (check below).
 
 8. Commit your changes to a new branch, push and create a new pull request for review.
 
-## Publish
-9. Publish to PyPi test and live
+## Publish on PyPi
+
+9. Open [https://pypi.org/](https://pypi.org/) and log in.
+10. Open [https://pypi.org/manage/account/](https://pypi.org/manage/account/) and generate a new API token but only if you don't have one already. Keep the API key on your local machine because once generated it will be visible only once. Delete API keys that are no longer used!
+11. In your code editor, open the root directory of the current project and clean the content of folder `dist`.
+12. Create a new tag and push it to the GitHub repository. For instance, if the latest tag is `0.6.7` the new tag should be `0.6.8`. Alternatively, if the changes are major, you can set the new tag to `0.7.0`.
+
+Use the following commands to create the tag and to publish it.
+
 ```
-tox -e publish
-tox -e publish -- --repository pypi
+git tag 0.6.8
+git push origin 0.6.8
 ```
 
+13. Create a new build. Be aware that `tox.ini` file is configured in a way to get latest tag from the repository. That tag is going to be used to label the new build.
+
+```
+tox -e build
+```
+
+14. Be sure that twine is installed. If not, run the following command:
+
+```
+python3 -m pip install twine
+```
+
+or
+
+```
+python -m pip install twine
+```
+
+15. Publish the build on PyPi:
+
+```
+python3 -m twine upload -u __token__ -p API_KEY dist/*
+```
+
+Replace API_KEY with the API key you generated earlier or a key you already have.
+
+16. Check if the new version has been release - [Release history](https://pypi.org/project/pyPrediktorMapClient/#history).
+
+Once that's done, we have to publish a new release in the GitHub repository.
+
+17. Open the list of released published on the [GitHub repository](https://github.com/PrediktorAS/pyPrediktorMapClient/releases). Draft a new release by pressing "Draft a new release".
+
+Use the newly created tag which in our example is 0.6.8. Add detailed descrption about the new changes.
+
+In the descrition you can also add a link pointing to PyPi release.
+
+Once the draft is created, publish it in order to be visible to the public.
+
+tox -e build
+
+Publish to PyPi test and live.
+
+We are ready!
+
 ## Possible errors
+
 When running `tox` command it may happen to face the following error (or similar):
 
 ```
@@ -82,12 +139,14 @@ E   ImportError: dlopen(/PATH_TO_PROJECT/pyPrediktorMapClient/.tox/default/lib/p
 ```
 
 A possible solution is to rebuild pyodbc via:
+
 ```
 pip uninstall pyodbc
 pip install --force-reinstall --no-binary :all: pyodbc
 ```
 
 on Mac:
+
 ```
 export LDFLAGS="-L/opt/homebrew/lib"
 export CPPFLAGS="-I/opt/homebrew/include"
@@ -99,11 +158,12 @@ installation paths and then rebuild pyodbc. In that way we make sure
 the build environment knows where to find the unixODBC headers and libraries.
 Also, make sure to run these commands within the activated tox environment.
 
-
-
 # Manual - How to Use
+
 ## ModelIndex
+
 Example:
+
 ```
 from pyprediktormapclient.model_index import ModelIndex
 from pyprediktormapclient.opc_ua import OPC_UA
@@ -115,14 +175,18 @@ obj_types = model.get_object_types()
 ```
 
 ## DWH
+
 ### Introduction
+
 Helper functions to access a PowerView Data Warehouse or other SQL databases. This class is a wrapper around pyodbc and you can use all pyodbc methods as well as the provided methods. Look at the pyodbc documentation and use the cursor attribute to access the pyodbc cursor.
 
 ### Architecture of the DWH component
+
 Here is a diagram that illustrates the architecture of the DWH component:
 ![My Image](./diagram-dwh.png)
 
 ### Initialisation
+
 When initialising DWH you have to pass the patameters below following the same order:
 
 - SQL_SERVER
@@ -148,6 +212,7 @@ available_drivers = pyodbc.drivers()
 ```
 
 Let's say that list contains the following drivers:
+
 ```
 [
     'ODBC Driver 18 for SQL Server',
@@ -164,6 +229,7 @@ dwh = DWH(SQL_SERVER, SQL_DATABASE, SQL_USER, SQL_PASSWORD, driver_index)
 ```
 
 ### Low level usage
+
 ```
 from pyprediktormapclient.dwh import DWH
 
@@ -173,8 +239,11 @@ dwh.execute("INSERT INTO mytable VALUES (1, 'test')")
 ```
 
 ### High level usage
+
 #### Database version
+
 Get the database version:
+
 ```
 from pyprediktormapclient.dwh import DWH
 
@@ -183,6 +252,7 @@ database_version = dwh.version()
 ```
 
 #### Plant
+
 ```
 from pyprediktormapclient.dwh import DWH
 
@@ -209,6 +279,7 @@ dwh.plant.insert_log(
 ```
 
 #### Solcast
+
 ```
 from pyprediktormapclient.dwh import DWH
 
@@ -222,6 +293,7 @@ dwh.solcast.upsert_forecast_data(plantname, solcast_forecast_data)
 ```
 
 #### Enercast
+
 ```
 from pyprediktormapclient.dwh import DWH
 
@@ -237,6 +309,7 @@ dwh.enercast.upsert_forecast_data(enercast_forecast_data)
 ```
 
 ## Want to know more?
+
 Further information, documentation and module reference on
 [the documentation site](https://prediktoras.github.io/pyPrediktorMapClient)
 and check out the jypiter notebooks in the notebooks folder.
