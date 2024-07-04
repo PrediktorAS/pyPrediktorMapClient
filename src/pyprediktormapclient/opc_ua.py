@@ -323,9 +323,13 @@ class OPC_UA:
         """
         Process the DataFrame returned from the server.
         """
+        if "Value.Type" not in df_result.columns or df_result["Value.Type"].dtype != 'object':
+            df_result["Value.Type"] = df_result["Value.Type"].astype('object')
+
         for i, row in df_result.iterrows():
             if not math.isnan(row["Value.Type"]):
-                df_result.at[i, "Value.Type"] = self._get_value_type(int(row["Value.Type"])).get("type")
+                value_type = self._get_value_type(int(row["Value.Type"])).get("type")
+                df_result.at[i, "Value.Type"] = str(value_type)
 
         df_result.rename(
             columns=columns, 
