@@ -156,6 +156,7 @@ class OPC_UA:
         Returns:
             Object: The initialized class object
         """
+        self.TYPE_DICT = {t["id"]: t["type"] for t in TYPE_LIST}
         self.rest_url = rest_url
         self.opcua_url = opcua_url
         self.headers = {
@@ -323,9 +324,8 @@ class OPC_UA:
         """
         Process the DataFrame returned from the server.
         """
-        for i, row in df_result.iterrows():
-            if not math.isnan(row["Value.Type"]):
-                df_result.at[i, "Value.Type"] = self._get_value_type(int(row["Value.Type"])).get("type")
+        if "Value.Type" in df_result.columns:
+            df_result["Value.Type"] = df_result["Value.Type"].replace(self.TYPE_DICT)
 
         df_result.rename(
             columns=columns, 
@@ -602,9 +602,8 @@ class OPC_UA:
                                       meta=[['HistoryReadResults', 'NodeId', 'IdType'], ['HistoryReadResults', 'NodeId','Id'],
                                             ['HistoryReadResults', 'NodeId','Namespace']] )
 
-        for i, row in df_result.iterrows():
-            if not math.isnan(row["Value.Type"]):
-                df_result.at[i, "Value.Type"] = self._get_value_type(int(row["Value.Type"])).get("type")
+        if "Value.Type" in df_result.columns:
+            df_result["Value.Type"] = df_result["Value.Type"].replace(self.TYPE_DICT)
 
         df_result.rename(
             columns={
