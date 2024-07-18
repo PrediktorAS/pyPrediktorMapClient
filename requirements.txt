@@ -1,5 +1,7 @@
 sphinx_rtd_theme
 tox
 ipykernel
+tqdm
+tenacity
 -e .
 python-dotenv
