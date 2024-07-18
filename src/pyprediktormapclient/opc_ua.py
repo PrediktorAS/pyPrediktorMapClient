@@ -156,6 +156,7 @@ class OPC_UA:
         Returns:
             Object: The initialized class object
         """
+        self.TYPE_DICT = {t["id"]: t["type"] for t in TYPE_LIST}
         self.rest_url = rest_url
         self.opcua_url = opcua_url
         self.headers = {
@@ -323,19 +324,62 @@ class OPC_UA:
         """
         Process the DataFrame returned from the server.
         """
-        if "Value.Type" not in df_result.columns or df_result["Value.Type"].dtype != 'object':
-            df_result["Value.Type"] = df_result["Value.Type"].astype('object')
-
-        for i, row in df_result.iterrows():
-            if not math.isnan(row["Value.Type"]):
-                value_type = self._get_value_type(int(row["Value.Type"])).get("type")
-                df_result.at[i, "Value.Type"] = str(value_type)
+        if "Value.Type" in df_result.columns:
+            df_result["Value.Type"] = df_result["Value.Type"].replace(self.TYPE_DICT)
 
         df_result.rename(
             columns=columns, 
             errors="raise", 
             inplace=True
         )
+
+        return df_result
+    
+    def _prepare_body(self, start_time: datetime, end_time: datetime, variables: List[Dict[str, str]], additional_params: Dict = None) -> Dict:
+        """
+        Prepare the request body for the API call.
+        """
+        body = {
+            **self.body, 
+            "StartTime": start_time.strftime("%Y-%m-%dT%H:%M:%SZ"), 
+            "EndTime": end_time.strftime("%Y-%m-%dT%H:%M:%SZ"), 
+            "ReadValueIds": variables
+        }
+        if additional_params:
+            body.update(additional_params)
+        return body
+    
+    def _fetch_data(self, endpoint: str, body: Dict) -> pd.DataFrame:
+        """
+        Fetch data from the API and return it as a DataFrame.
+        """
+        try:
+            content = request_from_api(
+                rest_url=self.rest_url, 
+                method="POST", 
+                endpoint=endpoint, 
+                data=json.dumps(body, default=self.json_serial), 
+                headers=self.headers, 
+                extended_timeout=True
+            )
+        except HTTPError as e:
+            if self.auth_client is not None:
+                self.check_auth_client(json.loads(e.response.content))
+            else:
+                raise RuntimeError(f'Error message {e}')
+
+        self._check_content(content)
+
+        def process_content(content):
+            df = pd.json_normalize(content["DataValues"])
+
+            for i, j in content["NodeId"].items():
+                df[f"HistoryReadResults.NodeId.{i}"] = j
+
+            return df
+
+        df_result = pd.concat((process_content(r) for r in content["HistoryReadResults"]))
+        df_result.reset_index(inplace=True, drop=True)
 
         return df_result
 
@@ -360,39 +404,14 @@ class OPC_UA:
             pd.DataFrame: A DataFrame containing the historical raw values.
         """
         vars = self._get_variable_list_as_list(variable_list)
-
         extended_variables = [{"NodeId": var} for var in vars]
-        body = {
-            **self.body, 
-            "StartTime": start_time.strftime("%Y-%m-%dT%H:%M:%SZ"), 
-            "EndTime": end_time.strftime("%Y-%m-%dT%H:%M:%SZ"), 
-            "ReadValueIds": extended_variables}
         
+        additional_params = {}
         if limit_start_index is not None and limit_num_records is not None:
-            body["Limit"] = {"StartIndex": limit_start_index, "NumRecords": limit_num_records}
-        try:
-            content = request_from_api(
-                rest_url=self.rest_url, 
-                method="POST", 
-                endpoint="values/historical", 
-                data=json.dumps(body, default=self.json_serial), 
-                headers=self.headers, 
-                extended_timeout=True)
-            
-        except HTTPError as e:
-            if self.auth_client is not None:
-                self.check_auth_client(json.loads(e.response.content))
-            else:
-                raise RuntimeError(f'Error message {e}')
-            
-        self._check_content(content)
-
-        df_result = pd.json_normalize(
-            content, 
-            record_path=['HistoryReadResults', 'DataValues'], 
-            meta=[['HistoryReadResults', 'NodeId', 'IdType'], ['HistoryReadResults', 'NodeId','Id'],['HistoryReadResults', 'NodeId','Namespace']
-            ]
-        )
+            additional_params["Limit"] = {"StartIndex": limit_start_index, "NumRecords": limit_num_records}
+        
+        body = self._prepare_body(start_time, end_time, extended_variables, additional_params)
+        df_result = self._fetch_data("values/historical", body)
 
         columns = {
             "Value.Type": "ValueType",
@@ -428,37 +447,14 @@ class OPC_UA:
         vars = self._get_variable_list_as_list(variable_list)
         extended_variables = [{"NodeId": var, "AggregateName": agg_name} for var in vars]
 
-        body = {
-            **self.body, 
-            "StartTime": start_time.strftime("%Y-%m-%dT%H:%M:%SZ"), 
-            "EndTime": end_time.strftime("%Y-%m-%dT%H:%M:%SZ"), 
+        additional_params = {
             "ProcessingInterval": pro_interval, 
-            "ReadValueIds": extended_variables, 
             "AggregateName": agg_name
         }
-        try:
-            content = request_from_api(
-                rest_url=self.rest_url, 
-                method="POST", 
-                endpoint="values/historicalaggregated", 
-                data=json.dumps(body, default=self.json_serial), 
-                headers=self.headers, 
-                extended_timeout=True
-            )
-        except HTTPError as e:
-            if self.auth_client is not None:
-                self.check_auth_client(json.loads(e.response.content))
-            else:
-                raise RuntimeError(f'Error message {e}')
-            
-        self._check_content(content)
-
-        df_result = pd.json_normalize(
-            content, 
-            record_path=['HistoryReadResults', 'DataValues'], 
-            meta=[['HistoryReadResults', 'NodeId', 'IdType'], ['HistoryReadResults', 'NodeId','Id'],['HistoryReadResults', 'NodeId','Namespace']
-            ]
-        )
+        
+        body = self._prepare_body(start_time, end_time, extended_variables, additional_params)
+        df_result = self._fetch_data("values/historicalaggregated", body)
+        
         columns = {
             "Value.Type": "ValueType",
             "Value.Body": "Value",
@@ -486,10 +482,7 @@ class OPC_UA:
         # Configure the logging
         logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
-        logging.info("Generating time batches...")
         time_batches = self.generate_time_batches(start_time, end_time, pro_interval, batch_size)
-
-        logging.info("Generating variable batches...")
         variable_batches = self.generate_variable_batches(variable_list, batch_size)
 
         # Creating tasks for each API request and gathering the results
@@ -521,7 +514,6 @@ class OPC_UA:
 
         # Creating a new variable list to remove pydantic models
         vars = self._get_variable_list_as_list(variable_list)
-
         extended_variables = [
             {
                     "NodeId": var,
@@ -530,14 +522,16 @@ class OPC_UA:
             for var in vars
 
         ]
-
-        body = copy.deepcopy(self.body)
-        body["StartTime"] = start_time.strftime("%Y-%m-%dT%H:%M:%SZ")
-        body["EndTime"] = end_time.strftime("%Y-%m-%dT%H:%M:%SZ")
-        body["ProcessingInterval"] = pro_interval
-        body["ReadValueIds"] = extended_variables
-        body["AggregateName"] = agg_name
-
+        additional_params = {
+            "ProcessingInterval": pro_interval, 
+            "AggregateName": agg_name
+        }
+        body = self._prepare_body(
+            start_time, 
+            end_time, 
+            extended_variables, 
+            additional_params
+        )
         try:
             # Make API request using aiohttp session
             async with aiohttp.ClientSession() as session:
@@ -555,6 +549,7 @@ class OPC_UA:
             else:
                 raise RuntimeError(f'Error message {e}')
 
+        self._check_content(content)
         return content
 
     
@@ -587,45 +582,36 @@ class OPC_UA:
         return variable_batches
 
     
-    def process_api_response(self, response: dict) -> pd.DataFrame:
+    def process_api_response(self, content: dict) -> pd.DataFrame:
         """Process the API response and return the result dataframe"""
-
-        # Return if no content from server
-        if not isinstance(response, dict):
-            raise RuntimeError("No content returned from the server")
-
-        # Return if not successful, but check ory status id ory is enabled
-        if response.get("Success") is False:
-            raise RuntimeError(response.get("ErrorMessage"))
-
-        # Check for HistoryReadResults
-        if not "HistoryReadResults" in response:
-            raise RuntimeError(response.get("ErrorMessage"))
         
-        df_result = pd.json_normalize(response, record_path=['HistoryReadResults', 'DataValues'], 
-                                      meta=[['HistoryReadResults', 'NodeId', 'IdType'], ['HistoryReadResults', 'NodeId','Id'],
-                                            ['HistoryReadResults', 'NodeId','Namespace']] )
+        df_result_list = []
+        for data in content["HistoryReadResults"]:
+            df = pd.json_normalize(data["DataValues"])
 
-        for i, row in df_result.iterrows():
-            if not math.isnan(row["Value.Type"]):
-                value_type = self._get_value_type(int(row["Value.Type"])).get("type")
-                df_result.at[i, "Value.Type"] = str(value_type)
+            for i, j in data["NodeId"].items():
+                df[f"HistoryReadResults.NodeId.{i}"] = j
+            
+            df_result_list.append(df)
+        
+        if df_result_list:
+            df_result = pd.concat(df_result_list)
+            df_result.reset_index(inplace=True, drop=True)
 
-        df_result.rename(
-            columns={
+            columns = {
                 "Value.Type": "ValueType",
                 "Value.Body": "Value",
                 "StatusCode.Symbol": "StatusSymbol",
                 "StatusCode.Code": "StatusCode",
                 "SourceTimestamp": "Timestamp",
-                "HistoryReadResults.NodeId.IdType": "Id",
+                "HistoryReadResults.NodeId.IdType": "IdType",
+                "HistoryReadResults.NodeId.Id": "Id",
                 "HistoryReadResults.NodeId.Namespace": "Namespace",
-            },
-            errors="raise",
-            inplace=True,
-        )
-
-        return df_result
+            }
+            
+            return self._process_df(df_result, columns)
+        else:
+            return pd.DataFrame()
 
 
     
