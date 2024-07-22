@@ -6,10 +6,12 @@ import copy
 import pandas as pd
 from datetime import date, datetime, timedelta
 from typing import Dict, List, Any, Union, Optional
-from pydantic import BaseModel, AnyUrl, validate_call
+from pydantic import BaseModel, AnyUrl, validate_call, ValidationError
 from pydantic_core import Url
-from pyprediktormapclient.shared import request_from_api
+from pyprediktormapclient.shared import request_from_api, request_from_api_async, ClientPool
 from requests import HTTPError
+from aiohttp import ClientSession
+from asyncio import Semaphore
 import asyncio
 import requests
 import aiohttp
@@ -466,6 +468,44 @@ class OPC_UA:
             "HistoryReadResults.NodeId.Namespace": "Namespace",
         }
         return self._process_df(df_result, columns)
+    
+    async def _fetch_data_async(self, endpoint: str, body: Dict, max_retries:int, retry_delay:int) -> pd.DataFrame:
+        """
+        Fetch data from the API and return it as a DataFrame.
+        """
+        for attempt in range(max_retries):
+            try:
+                async with ClientSession() as session:
+                    async with session.post(
+                        url=self.rest_url + endpoint,
+                        json=body,
+                        headers=self.headers
+                    ) as response:
+                        response.raise_for_status()
+                        content = await response.json()
+            except aiohttp.ClientError as e:
+                if attempt < max_retries - 1:
+                    wait_time = retry_delay * (2 ** attempt)
+                    logger.warning(f"Request failed. Retrying in {wait_time} seconds...")
+                    await asyncio.sleep(wait_time)
+                else:
+                    logger.error(f"Max retries reached. Error: {e}")
+                    raise RuntimeError(f'Error message {e}')
+        self._check_content(content)
+
+        df_list = []
+        for item in content["HistoryReadResults"]:
+            df = pd.json_normalize(item["DataValues"])
+            for key, value in item["NodeId"].items():
+                df[f"HistoryReadResults.NodeId.{key}"] = value
+            df_list.append(df)
+        
+        if df_list:
+            df_result = pd.concat(df_list)
+            df_result.reset_index(inplace=True, drop=True)
+            return df_result
+        
+        return df_result
 
     
     async def get_historical_aggregated_values_async(
@@ -475,129 +515,165 @@ class OPC_UA:
         pro_interval: int,
         agg_name: str,
         variable_list: List[Variables],
-        batch_size: int = 1000
+        max_data_points: int = 10000,
+        max_retries: int = 3,
+        retry_delay: int = 5,
+        max_concurrent_requests: int = 10
     ) -> pd.DataFrame:
         """Request historical aggregated values from the OPC UA server with batching"""
 
-        # Configure the logging
-        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-
-        time_batches = self.generate_time_batches(start_time, end_time, pro_interval, batch_size)
-        variable_batches = self.generate_variable_batches(variable_list, batch_size)
-
-        # Creating tasks for each API request and gathering the results
-        tasks = []
-
-        for time_batch_start, time_batch_end in time_batches:
-            for variable_sublist in variable_batches:
-                task = self.make_async_api_request(time_batch_start, time_batch_end, pro_interval, agg_name, variable_sublist)
-                tasks.append(asyncio.create_task(task)) 
+        total_time_range_ms = (end_time - start_time).total_seconds() * 1000
+        estimated_intervals = total_time_range_ms / pro_interval
         
-        # Execute all tasks concurrently and gather their results
-        responses = await asyncio.gather(*tasks)
-        
-        # Processing the API responses
-        result_list = []
-        for idx, batch_response in enumerate(responses):
-            logging.info(f"Processing API response {idx+1}/{len(responses)}...")
-            batch_result = self.process_api_response(batch_response)
-            result_list.append(batch_result)
+        max_variables_per_batch = max(1, int(max_data_points / estimated_intervals))
+        max_time_batches = max(1, int(estimated_intervals / max_data_points))
+        time_batch_size_ms = total_time_range_ms / max_time_batches
 
-        logging.info("Concatenating results...")        
-        result_df = pd.concat(result_list, ignore_index=True)
-
-        return result_df
-    
-    
-    async def make_async_api_request(self, start_time: datetime, end_time: datetime, pro_interval: int, agg_name: str, variable_list: List[Variables]) -> dict:
-        """Make API request for the given time range and variable list"""
-
-        # Creating a new variable list to remove pydantic models
-        vars = self._get_variable_list_as_list(variable_list)
-        extended_variables = [
-            {
-                    "NodeId": var,
-                    "AggregateName": agg_name,
-            }
-            for var in vars
-
-        ]
-        additional_params = {
-            "ProcessingInterval": pro_interval, 
-            "AggregateName": agg_name
-        }
-        body = self._prepare_body(
-            start_time, 
-            end_time, 
-            extended_variables, 
-            additional_params
-        )
-        try:
-            # Make API request using aiohttp session
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    f"{self.rest_url}values/historicalaggregated",
-                    data=json.dumps(body, default=str),
-                    headers=self.headers,
-                    timeout=aiohttp.ClientTimeout(total=None)  
-                ) as response:
-                    response.raise_for_status()
-                    content = await response.json()
-        except aiohttp.ClientResponseError as e:
-            if self.auth_client is not None:
-                self.check_auth_client(await e.json())
-            else:
-                raise RuntimeError(f'Error message {e}')
-
-        self._check_content(content)
-        return content
-
-    
-    def generate_time_batches(self, start_time: datetime, end_time: datetime, pro_interval: int, batch_size: int) -> List[tuple]:
-        """Generate time batches based on start time, end time, processing interval, and batch size"""
-
-        total_time_range = end_time - start_time
-        pro_interval_seconds = (pro_interval / 1000)
-        total_data_points = (total_time_range.total_seconds() // pro_interval_seconds) + 1
-
-        total_batches = math.ceil(total_data_points / batch_size)
-        actual_batch_size = math.ceil(total_data_points / total_batches)
-
-        time_batches = [
-            (start_time + timedelta(seconds=(i * actual_batch_size * pro_interval_seconds)),
-            start_time + timedelta(seconds=((i + 1) * actual_batch_size * pro_interval_seconds)) - timedelta(seconds=pro_interval_seconds))
-            for i in range(total_batches)
-        ]
-
-        return time_batches
-
-    
-    def generate_variable_batches(self, variable_list: List[Variables], batch_size: int) -> List[List[Variables]]:
-        """Generate variable batches based on the variable list and batch size"""
-
+        extended_variables = [{"NodeId": var, "AggregateName": agg_name} for var in variable_list]
         variable_batches = [
-            variable_list[i:i + batch_size] for i in range(0, len(variable_list), batch_size)
+            extended_variables[i:i + max_variables_per_batch] for i in range(0, len(extended_variables), max_variables_per_batch)
         ]
 
-        return variable_batches
+        all_results = []
+        semaphore = Semaphore(max_concurrent_requests)
 
+        async def process_batch(variables, time_batch):
+            async with semaphore:
+                batch_start_ms = time_batch * time_batch_size_ms
+                batch_end_ms = min((time_batch + 1) * time_batch_size_ms, total_time_range_ms)
+                batch_start = start_time + timedelta(milliseconds=batch_start_ms)
+                batch_end = start_time + timedelta(milliseconds=batch_end_ms)
+
+                additional_params = {
+                    "ProcessingInterval": pro_interval, 
+                    "AggregateName": agg_name
+                }
+                body = self._prepare_body(
+                    batch_start, 
+                    batch_end, 
+                    variables, 
+                    additional_params
+                )
+                df_result = await self._fetch_data_async("values/historicalaggregated", body, max_retries, retry_delay)
+                return df_result
+
+        tasks = [
+            process_batch(variables, time_batch)
+            for variables in variable_batches
+            for time_batch in range(max_time_batches)
+        ]
+
+        results = await asyncio.gather(*tasks)
+        all_results.extend(results)
+
+        logger.info("Combining all batches...")
+        combined_df = pd.concat(results, ignore_index=True)
+        
+        columns = {
+        "Value.Type": "ValueType",
+        "Value.Body": "Value",
+        "StatusCode.Symbol": "StatusSymbol",
+        "StatusCode.Code": "StatusCode",
+        "SourceTimestamp": "Timestamp",
+        "HistoryReadResults.NodeId.IdType": "IdType",
+        "HistoryReadResults.NodeId.Id": "Id",
+        "HistoryReadResults.NodeId.Namespace": "Namespace",
+        }
+        return self._process_df(combined_df, columns)
     
-    def process_api_response(self, content: dict) -> pd.DataFrame:
-        """Process the API response and return the result dataframe"""
-        
-        df_result_list = []
-        for data in content["HistoryReadResults"]:
-            df = pd.json_normalize(data["DataValues"])
 
-            for i, j in data["NodeId"].items():
-                df[f"HistoryReadResults.NodeId.{i}"] = j
-            
-            df_result_list.append(df)
-        
-        if df_result_list:
-            df_result = pd.concat(df_result_list)
-            df_result.reset_index(inplace=True, drop=True)
+    async def get_historical_aggregated_values_batch_time_vars_async(
+        self,
+        start_time: datetime,
+        end_time: datetime,
+        pro_interval: int,
+        agg_name: str,
+        variable_list: List[str],
+        max_data_points: int = 100000,
+        max_retries: int = 3,
+        retry_delay: int = 5,
+        max_concurrent_requests: int = 50
+    ) -> pd.DataFrame:
+        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+        logger = logging.getLogger(__name__)
 
+        total_time_range_ms = (end_time - start_time).total_seconds() * 1000
+        estimated_intervals = total_time_range_ms / pro_interval
+        
+        max_variables_per_batch = max(1, int(max_data_points / estimated_intervals))
+        max_time_batches = max(1, int(estimated_intervals / max_data_points))
+        time_batch_size_ms = total_time_range_ms / max_time_batches
+
+        extended_variables = [{"NodeId": var, "AggregateName": agg_name} for var in variable_list]
+        variable_batches = [
+            extended_variables[i:i + max_variables_per_batch] for i in range(0, len(extended_variables), max_variables_per_batch)
+        ]
+
+        all_results = []
+        semaphore = Semaphore(max_concurrent_requests)
+        client_pool = ClientPool(max_concurrent_requests, self.rest_url, self.headers)
+
+        async def process_batch(variables, time_batch):
+            async with semaphore:
+                batch_start_ms = time_batch * time_batch_size_ms
+                batch_end_ms = min((time_batch + 1) * time_batch_size_ms, total_time_range_ms)
+                batch_start = start_time + timedelta(milliseconds=batch_start_ms)
+                batch_end = start_time + timedelta(milliseconds=batch_end_ms)
+
+                body = {
+                    **self.body,
+                    "StartTime": batch_start.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+                    "EndTime": batch_end.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+                    "ProcessingInterval": pro_interval,
+                    "ReadValueIds": variables,
+                    "AggregateName": agg_name
+                }
+
+                for attempt in range(max_retries):
+                    try:
+                        content = await request_from_api_async(
+                            client_pool,
+                            method="POST",
+                            endpoint=f"/values/historicalaggregated",
+                            data=json.dumps(body, default=self.json_serial),
+                            extended_timeout=True
+                        )
+                        break
+                    except (aiohttp.ClientError, ValidationError) as e:
+                        if attempt < max_retries - 1:
+                            wait_time = retry_delay * (2 ** attempt)
+                            logger.warning(f"Request failed. Retrying in {wait_time} seconds...")
+                            await asyncio.sleep(wait_time)
+                        else:
+                            logger.error(f"Max retries reached. Error: {e}")
+                            raise RuntimeError(f'Error message {e}')
+
+                self._check_content(content)
+
+                df_list = []
+                for item in content["HistoryReadResults"]:
+                    df = pd.json_normalize(item["DataValues"])
+                    for key, value in item["NodeId"].items():
+                        df[f"HistoryReadResults.NodeId.{key}"] = value
+                    df_list.append(df)
+                
+                if df_list:
+                    df_result = pd.concat(df_list)
+                    df_result.reset_index(inplace=True, drop=True)
+                    return df_result
+
+        tasks = [
+            process_batch(variables, time_batch)
+            for variables in variable_batches
+            for time_batch in range(max_time_batches)
+        ]
+
+        try:
+            results = await asyncio.gather(*tasks)
+            all_results.extend(results)
+
+            logger.info("Combining all batches...")
+            combined_df = pd.concat(all_results, ignore_index=True)
             columns = {
                 "Value.Type": "ValueType",
                 "Value.Body": "Value",
@@ -608,12 +684,9 @@ class OPC_UA:
                 "HistoryReadResults.NodeId.Id": "Id",
                 "HistoryReadResults.NodeId.Namespace": "Namespace",
             }
-            
-            return self._process_df(df_result, columns)
-        else:
-            return pd.DataFrame()
-
-
+            return self._process_df(combined_df, columns)
+        finally:
+            await client_pool.close_all()
     
     def write_values(self, variable_list: List[WriteVariables]) -> List:
         """Request to write realtime values to the OPC UA server
