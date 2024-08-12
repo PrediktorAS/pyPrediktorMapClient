@@ -4,7 +4,7 @@ import copy
 import pandas as pd
 import requests
 from datetime import date, datetime, timedelta
-from typing import Dict, List, Any, Union, Optional
+from typing import Dict, List, Any, Union, Optional, Callable
 from pydantic import BaseModel, AnyUrl
 from pydantic_core import Url
 from pyprediktormapclient.shared import request_from_api
@@ -13,6 +13,9 @@ import asyncio
 import aiohttp
 from aiohttp import ClientSession
 from asyncio import Semaphore
+import nest_asyncio
+
+nest_asyncio.apply()
 
 
 logger = logging.getLogger(__name__)
@@ -122,6 +125,12 @@ class WriteReturn(BaseModel):
     TimeStamp: str
     Success: bool
 
+
+class AsyncIONotebookHelper:
+    @staticmethod
+    def run_coroutine(coroutine):
+        return asyncio.run(coroutine)
+
 class Config:
         arbitrary_types_allowed = True
 
@@ -164,6 +173,7 @@ class OPC_UA:
         }
         self.auth_client = auth_client
         self.session = session
+        self.helper = AsyncIONotebookHelper()
         
         if self.auth_client is not None:
             if self.auth_client.token is not None:
@@ -334,154 +344,20 @@ class OPC_UA:
 
         return df_result
     
-    def _prepare_body(self, start_time: datetime, end_time: datetime, variables: List[Dict[str, str]], additional_params: Dict = None) -> Dict:
-        """
-        Prepare the request body for the API call.
-        """
-        body = {
-            **self.body, 
-            "StartTime": start_time.strftime("%Y-%m-%dT%H:%M:%SZ"), 
-            "EndTime": end_time.strftime("%Y-%m-%dT%H:%M:%SZ"), 
-            "ReadValueIds": variables
-        }
-        if additional_params:
-            body.update(additional_params)
-        return body
-    
-    def _fetch_data(self, endpoint: str, body: Dict) -> pd.DataFrame:
-        """
-        Fetch data from the API and return it as a DataFrame.
-        """
-        try:
-            content = request_from_api(
-                rest_url=self.rest_url, 
-                method="POST", 
-                endpoint=endpoint, 
-                data=json.dumps(body, default=self.json_serial), 
-                headers=self.headers, 
-                extended_timeout=True
-            )
-        except HTTPError as e:
-            if self.auth_client is not None:
-                self.check_auth_client(json.loads(e.response.content))
-            else:
-                raise RuntimeError(f'Error message {e}')
-
-        self._check_content(content)
-
-        def process_content(content):
-            df = pd.json_normalize(content["DataValues"])
-
-            for i, j in content["NodeId"].items():
-                df[f"HistoryReadResults.NodeId.{i}"] = j
-
-            return df
-
-        df_result = pd.concat((process_content(r) for r in content["HistoryReadResults"]))
-        df_result.reset_index(inplace=True, drop=True)
-
-        return df_result
-
-    def get_historical_raw_values(self, 
-        start_time: datetime, 
-        end_time: datetime, 
-        variable_list: List[Variables], 
-        limit_start_index: Union[int, None] = None, 
-        limit_num_records: Union[int, None] = None
+    async def get_historical_values(
+        self,
+        start_time: datetime,
+        end_time: datetime,
+        variable_list: List[str],
+        endpoint: str,
+        prepare_variables: Callable[[List[str]], List[dict]],
+        additional_params: dict = None,
+        max_data_points: int = 10000,
+        max_retries: int = 3,
+        retry_delay: int = 5,
+        max_concurrent_requests: int = 30
     ) -> pd.DataFrame:
-        """
-        Get historical raw values from the OPC UA server.
-
-        Args:
-            start_time (datetime): The start time of the requested data.
-            end_time (datetime): The end time of the requested data.
-            variable_list (list): A list of variables to request.
-            limit_start_index (int, optional): The start index for limiting the number of records. Defaults to None.
-            limit_num_records (int, optional): The number of records to limit to. Defaults to None.
-
-        Returns:
-            pd.DataFrame: A DataFrame containing the historical raw values.
-        """
-        vars = self._get_variable_list_as_list(variable_list)
-        extended_variables = [{"NodeId": var} for var in vars]
-        
-        additional_params = {}
-        if limit_start_index is not None and limit_num_records is not None:
-            additional_params["Limit"] = {"StartIndex": limit_start_index, "NumRecords": limit_num_records}
-        
-        body = self._prepare_body(start_time, end_time, extended_variables, additional_params)
-        df_result = self._fetch_data("values/historical", body)
-
-        columns = {
-            "Value.Type": "ValueType",
-            "Value.Body": "Value",
-            "SourceTimestamp": "Timestamp",
-            "HistoryReadResults.NodeId.IdType": "IdType",
-            "HistoryReadResults.NodeId.Id": "Id",
-            "HistoryReadResults.NodeId.Namespace": "Namespace",
-        }
-        return self._process_df(df_result, columns)
-
-    def get_historical_aggregated_values(self, 
-        start_time: datetime, 
-        end_time: datetime, 
-        pro_interval: int, 
-        agg_name: str, 
-        variable_list: List[Variables]
-    ) -> pd.DataFrame:
-        """
-        Request historical aggregated values from the OPC UA server.
-
-        Args:
-            start_time (datetime): Start time of requested data.
-            end_time (datetime): End time of requested data.
-            pro_interval (int): Interval time of processing in milliseconds.
-            agg_name (str): Name of aggregation.
-            variable_list (List[Variables]): A list of variables you want, containing keys "Id", "Namespace" and "IdType".
-
-        Returns:
-            pd.DataFrame: DataFrame with the historical aggregated values. Columns in the DataFrame are "StatusCode", 
-            "StatusSymbol", "ValueType", "Value", "Timestamp", "IdType", "Id", "Namespace".
-        """
-        vars = self._get_variable_list_as_list(variable_list)
-        extended_variables = [{"NodeId": var, "AggregateName": agg_name} for var in vars]
-
-        additional_params = {
-            "ProcessingInterval": pro_interval, 
-            "AggregateName": agg_name
-        }
-        
-        body = self._prepare_body(start_time, end_time, extended_variables, additional_params)
-        df_result = self._fetch_data("values/historicalaggregated", body)
-        
-        columns = {
-            "Value.Type": "ValueType",
-            "Value.Body": "Value",
-            "StatusCode.Symbol": "StatusSymbol",
-            "StatusCode.Code": "StatusCode",
-            "SourceTimestamp": "Timestamp",
-            "HistoryReadResults.NodeId.IdType": "IdType",
-            "HistoryReadResults.NodeId.Id": "Id",
-            "HistoryReadResults.NodeId.Namespace": "Namespace",
-        }
-        return self._process_df(df_result, columns)
-    
-
-    async def get_raw_historical_values_async(
-        self, 
-        start_time: datetime, 
-        end_time: datetime, 
-        variable_list: list, 
-        limit_start_index: Union[int, None] = None, 
-        limit_num_records: Union[int, None] = None,
-        max_data_points: int = 10000, 
-        max_retries: int = 3, 
-        retry_delay: int = 5, 
-        max_concurrent_requests: int = 35
-    ) -> pd.DataFrame:
-        
-        """Request historical aggregated values from the OPC UA server with batching"""
-
+        """Generic method to request historical values from the OPC UA server with batching"""
         total_time_range_ms = (end_time - start_time).total_seconds() * 1000
         estimated_intervals = total_time_range_ms / max_data_points
 
@@ -489,10 +365,9 @@ class OPC_UA:
         max_time_batches = max(1, int(estimated_intervals / max_data_points))
         time_batch_size_ms = total_time_range_ms / max_time_batches
 
-        extended_variables = [{"NodeId": var} for var in variable_list]
+        extended_variables = prepare_variables(variable_list)
         variable_batches = [extended_variables[i:i + max_variables_per_batch] for i in range(0, len(extended_variables), max_variables_per_batch)]
 
-        all_results = []
         semaphore = Semaphore(max_concurrent_requests)
 
         async def process_batch(variables, time_batch):
@@ -504,47 +379,14 @@ class OPC_UA:
 
                 body = {
                     **self.body,
-                    "StartTime": batch_start.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
-                    "EndTime": batch_end.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+                    "StartTime": batch_start.isoformat() + "Z",
+                    "EndTime": batch_end.isoformat() + "Z",
                     "ReadValueIds": variables,
+                    **(additional_params or {})
                 }
-                
-                if limit_start_index is not None and limit_num_records is not None:
-                    body["Limit"] = {"StartIndex": limit_start_index, "NumRecords": limit_num_records}
 
-                for attempt in range(max_retries):
-                    try:
-                        async with ClientSession() as session:
-                            async with session.post(
-                                f"{self.rest_url}values/historical",
-                                json=body,
-                                headers=self.headers
-                            ) as response:
-                                response.raise_for_status()
-                                content = await response.json()
-                                break
-                    except aiohttp.ClientError as e:
-                        if attempt < max_retries - 1:
-                            wait_time = retry_delay * (2 ** attempt)
-                            logger.warning(f"Request failed. Retrying in {wait_time} seconds...")
-                            await asyncio.sleep(wait_time)
-                        else:
-                            logger.error(f"Max retries reached. Error: {e}")
-                            raise RuntimeError(f'Error message {e}')
-
-                self._check_content(content)
-
-                df_list = []
-                for item in content["HistoryReadResults"]:
-                    df = pd.json_normalize(item["DataValues"])
-                    for key, value in item["NodeId"].items():
-                        df[f"HistoryReadResults.NodeId.{key}"] = value
-                    df_list.append(df)
-                
-                if df_list:
-                    df_result = pd.concat(df_list)
-                    df_result.reset_index(inplace=True, drop=True)
-                    return df_result
+                content = await self._make_request(endpoint, body, max_retries, retry_delay)
+                return self._process_content(content)
 
         tasks = [
             process_batch(variables, time_batch)
@@ -553,10 +395,72 @@ class OPC_UA:
         ]
 
         results = await asyncio.gather(*tasks)
-        all_results.extend(results)
+        combined_df = pd.concat(results, ignore_index=True)
+        return combined_df
 
-        logger.info("Combining all batches...")
-        combined_df = pd.concat(all_results, ignore_index=True)
+    async def get_raw_historical_values_asyn(
+        self,
+        start_time: datetime,
+        end_time: datetime,
+        variable_list: List[str],
+        limit_start_index: Union[int, None] = None,
+        limit_num_records: Union[int, None] = None,
+        **kwargs
+    ) -> pd.DataFrame:
+        """Request raw historical values from the OPC UA server"""
+
+        additional_params = {}
+        if limit_start_index is not None and limit_num_records is not None:
+            additional_params["Limit"] = {"StartIndex": limit_start_index, "NumRecords": limit_num_records}
+
+        combined_df = await self.get_historical_values(
+            start_time,
+            end_time,
+            variable_list,
+            "values/historical",
+            lambda vars: [{"NodeId": var} for var in vars],
+            additional_params,
+            **kwargs
+        )
+        columns = {
+            "Value.Type": "ValueType",
+            "Value.Body": "Value",
+            "SourceTimestamp": "Timestamp",
+            "HistoryReadResults.NodeId.IdType": "IdType",
+            "HistoryReadResults.NodeId.Id": "Id",
+            "HistoryReadResults.NodeId.Namespace": "Namespace"
+        }
+        return self._process_df(combined_df, columns)
+    
+    def get_raw_historical_values(self, *args, **kwargs):
+        return self.helper.run_coroutine(self.get_raw_historical_values_asyn(*args, **kwargs))
+            
+
+    async def get_historical_aggregated_values_asyn(
+        self,
+        start_time: datetime,
+        end_time: datetime,
+        pro_interval: int,
+        agg_name: str,
+        variable_list: List[str],
+        **kwargs
+    ) -> pd.DataFrame:
+        """Request historical aggregated values from the OPC UA server"""
+
+        additional_params = {
+            "ProcessingInterval": pro_interval,
+            "AggregateName": agg_name
+        }
+
+        combined_df = await self.get_historical_values(
+            start_time,
+            end_time,
+            variable_list,
+            "values/historicalaggregated",
+            lambda vars: [{"NodeId": var, "AggregateName": agg_name} for var in vars],
+            additional_params,
+            **kwargs
+        )
         columns = {
             "Value.Type": "ValueType",
             "Value.Body": "Value",
@@ -565,114 +469,56 @@ class OPC_UA:
             "SourceTimestamp": "Timestamp",
             "HistoryReadResults.NodeId.IdType": "IdType",
             "HistoryReadResults.NodeId.Id": "Id",
-            "HistoryReadResults.NodeId.Namespace": "Namespace",
+            "HistoryReadResults.NodeId.Namespace": "Namespace"
         }
         return self._process_df(combined_df, columns)
 
-    
-    async def get_historical_aggregated_values_async(
-        self,
-        start_time: datetime,
-        end_time: datetime,
-        pro_interval: int,
-        agg_name: str,
-        variable_list: list,
-        max_data_points: int = 10000,
-        max_retries: int = 3,
-        retry_delay: int = 5,
-        max_concurrent_requests: int = 35
-    ) -> pd.DataFrame:
-        """Request historical aggregated values from the OPC UA server with batching"""
-
-        total_time_range_ms = (end_time - start_time).total_seconds() * 1000
-        estimated_intervals = total_time_range_ms / pro_interval
-        
-        max_variables_per_batch = max(1, int(max_data_points / estimated_intervals))
-        max_time_batches = max(1, int(estimated_intervals / max_data_points))
-        time_batch_size_ms = total_time_range_ms / max_time_batches
-
-        extended_variables = [
-            {"NodeId": var, "AggregateName": agg_name} for var in variable_list
-        ]
-        variable_batches = [
-            extended_variables[i:i + max_variables_per_batch] for i in range(0, len(extended_variables), max_variables_per_batch)
-        ]
-
-        all_results = []
-        semaphore = Semaphore(max_concurrent_requests)
-
-        async def process_batch(variables, time_batch):
-            async with semaphore:
-                batch_start_ms = time_batch * time_batch_size_ms
-                batch_end_ms = min((time_batch + 1) * time_batch_size_ms, total_time_range_ms)
-                batch_start = start_time + timedelta(milliseconds=batch_start_ms)
-                batch_end = start_time + timedelta(milliseconds=batch_end_ms)
-
-                body = {
-                    **self.body,
-                    "StartTime": batch_start.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
-                    "EndTime": batch_end.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
-                    "ProcessingInterval": pro_interval,
-                    "ReadValueIds": variables,
-                    "AggregateName": agg_name
-                }
-                for attempt in range(max_retries):
-                    try:
-                        async with ClientSession() as session:
-                            async with session.post(
-                                f"{self.rest_url}values/historicalaggregated",
-                                json=body,
-                                headers=self.headers
-                            ) as response:
-                                response.raise_for_status()
-                                content = await response.json()
-                                break
-                    except aiohttp.ClientError as e:
-                        if attempt < max_retries - 1:
-                            wait_time = retry_delay * (2 ** attempt)
-                            logger.warning(f"Request failed. Retrying in {wait_time} seconds...")
-                            await asyncio.sleep(wait_time)
-                        else:
-                            logger.error(f"Max retries reached. Error: {e}")
-                            raise RuntimeError(f'Error message {e}')
-
-                self._check_content(content)
-
-                df_list = []
-                for item in content["HistoryReadResults"]:
-                    df = pd.json_normalize(item["DataValues"])
-                    for key, value in item["NodeId"].items():
-                        df[f"HistoryReadResults.NodeId.{key}"] = value
-                    df_list.append(df)
+    async def _make_request(self, endpoint: str, body: dict, max_retries: int, retry_delay: int):
+        for attempt in range(max_retries):
+            try:
+                async with ClientSession() as session:
+                    async with session.post(
+                        f"{self.rest_url}{endpoint}",
+                        json=body,
+                        headers=self.headers
+                    ) as response:
+                        response.raise_for_status()
+                        return await response.json()
+            except aiohttp.ClientError as e:
+                if attempt < max_retries - 1:
+                    wait_time = retry_delay * (2 ** attempt)
+                    logger.warning(f"Request failed. Retrying in {wait_time} seconds...")
+                    await asyncio.sleep(wait_time)
+                else:
+                    logger.error(f"Max retries reached. Error: {e}")
+                    raise RuntimeError(f'Error message {e}')
                 
-                if df_list:
-                    df_result = pd.concat(df_list)
-                    df_result.reset_index(inplace=True, drop=True)
-                    return df_result
+    def get_historical_aggregated_values(self, *args, **kwargs):
+        return self.helper.run_coroutine(self.get_historical_aggregated_values_asyn(*args, **kwargs))
 
-        tasks = [
-            process_batch(variables, time_batch)
-            for variables in variable_batches
-            for time_batch in range(max_time_batches)
-        ]
-
-        results = await asyncio.gather(*tasks)
-        all_results.extend(results)
-
-        logger.info("Combining all batches...")
-        combined_df = pd.concat(results, ignore_index=True)
+    def _process_content(self, content: dict) -> pd.DataFrame:
+        self._check_content(content)
+        df_list = []
+        for item in content["HistoryReadResults"]:
+            df = pd.json_normalize(item["DataValues"])
+            for key, value in item["NodeId"].items():
+                df[f"HistoryReadResults.NodeId.{key}"] = value
+            df_list.append(df)
         
-        columns = {
-        "Value.Type": "ValueType",
-        "Value.Body": "Value",
-        "StatusCode.Symbol": "StatusSymbol",
-        "StatusCode.Code": "StatusCode",
-        "SourceTimestamp": "Timestamp",
-        "HistoryReadResults.NodeId.IdType": "IdType",
-        "HistoryReadResults.NodeId.Id": "Id",
-        "HistoryReadResults.NodeId.Namespace": "Namespace",
-        }
-        return self._process_df(combined_df, columns)
+        if df_list:
+            df_result = pd.concat(df_list)
+            df_result.reset_index(inplace=True, drop=True)
+            return df_result
+        
+    def _run_coroutine(self, coroutine):
+        loop = asyncio.get_event_loop()
+        return loop.run_until_complete(coroutine)
+        
+    def get_raw_historical_values(self, *args, **kwargs):
+        return self._run_coroutine(self.get_raw_historical_values_asyn(*args, **kwargs))
+
+    def get_historical_aggregated_values(self, *args, **kwargs):
+        return self._run_coroutine(self.get_historical_aggregated_values_asyn(*args, **kwargs))
     
     
     def write_values(self, variable_list: List[WriteVariables]) -> List:
