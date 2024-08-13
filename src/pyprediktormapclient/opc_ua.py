@@ -129,7 +129,7 @@ class WriteReturn(BaseModel):
 class AsyncIONotebookHelper:
     @staticmethod
     def run_coroutine(coroutine):
-        return asyncio.run(coroutine)
+        return asyncio.get_event_loop().run_until_complete(coroutine)
 
 class Config:
         arbitrary_types_allowed = True
@@ -344,6 +344,40 @@ class OPC_UA:
 
         return df_result
     
+    async def _make_request(self, endpoint: str, body: dict, max_retries: int, retry_delay: int):
+        for attempt in range(max_retries):
+            try:
+                async with ClientSession() as session:
+                    async with session.post(
+                        f"{self.rest_url}{endpoint}",
+                        json=body,
+                        headers=self.headers
+                    ) as response:
+                        response.raise_for_status()
+                        return await response.json()
+            except aiohttp.ClientError as e:
+                if attempt < max_retries - 1:
+                    wait_time = retry_delay * (2 ** attempt)
+                    logger.warning(f"Request failed. Retrying in {wait_time} seconds...")
+                    await asyncio.sleep(wait_time)
+                else:
+                    logger.error(f"Max retries reached. Error: {e}")
+                    raise RuntimeError(f'Error message {e}')
+                
+    def _process_content(self, content: dict) -> pd.DataFrame:
+        self._check_content(content)
+        df_list = []
+        for item in content["HistoryReadResults"]:
+            df = pd.json_normalize(item["DataValues"])
+            for key, value in item["NodeId"].items():
+                df[f"HistoryReadResults.NodeId.{key}"] = value
+            df_list.append(df)
+        
+        if df_list:
+            df_result = pd.concat(df_list)
+            df_result.reset_index(inplace=True, drop=True)
+            return df_result
+    
     async def get_historical_values(
         self,
         start_time: datetime,
@@ -472,53 +506,9 @@ class OPC_UA:
             "HistoryReadResults.NodeId.Namespace": "Namespace"
         }
         return self._process_df(combined_df, columns)
-
-    async def _make_request(self, endpoint: str, body: dict, max_retries: int, retry_delay: int):
-        for attempt in range(max_retries):
-            try:
-                async with ClientSession() as session:
-                    async with session.post(
-                        f"{self.rest_url}{endpoint}",
-                        json=body,
-                        headers=self.headers
-                    ) as response:
-                        response.raise_for_status()
-                        return await response.json()
-            except aiohttp.ClientError as e:
-                if attempt < max_retries - 1:
-                    wait_time = retry_delay * (2 ** attempt)
-                    logger.warning(f"Request failed. Retrying in {wait_time} seconds...")
-                    await asyncio.sleep(wait_time)
-                else:
-                    logger.error(f"Max retries reached. Error: {e}")
-                    raise RuntimeError(f'Error message {e}')
                 
     def get_historical_aggregated_values(self, *args, **kwargs):
         return self.helper.run_coroutine(self.get_historical_aggregated_values_asyn(*args, **kwargs))
-
-    def _process_content(self, content: dict) -> pd.DataFrame:
-        self._check_content(content)
-        df_list = []
-        for item in content["HistoryReadResults"]:
-            df = pd.json_normalize(item["DataValues"])
-            for key, value in item["NodeId"].items():
-                df[f"HistoryReadResults.NodeId.{key}"] = value
-            df_list.append(df)
-        
-        if df_list:
-            df_result = pd.concat(df_list)
-            df_result.reset_index(inplace=True, drop=True)
-            return df_result
-        
-    def _run_coroutine(self, coroutine):
-        loop = asyncio.get_event_loop()
-        return loop.run_until_complete(coroutine)
-        
-    def get_raw_historical_values(self, *args, **kwargs):
-        return self._run_coroutine(self.get_raw_historical_values_asyn(*args, **kwargs))
-
-    def get_historical_aggregated_values(self, *args, **kwargs):
-        return self._run_coroutine(self.get_historical_aggregated_values_asyn(*args, **kwargs))
     
     
     def write_values(self, variable_list: List[WriteVariables]) -> List:

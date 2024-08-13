@@ -3,5 +3,6 @@ tox
 ipykernel
 tqdm
 tenacity
--e .
+pytest-asyncio
 python-dotenv
+-e .

@@ -1,12 +1,8 @@
 import unittest
 from unittest import mock
-from unittest.mock import patch
 import pytest
-import pydantic
 import datetime
 import aiohttp
-from aiohttp import ClientResponse
-import json
 import pandas.api.types as ptypes
 from pydantic import ValidationError, AnyUrl, BaseModel
 from typing import List
@@ -402,20 +398,6 @@ def successful_mocked_requests(*args, **kwargs):
     response.json_data = json_data
     return response
 
-async def mock_response(url, **kwargs):
-    mock_resp = mock.Mock(spec=ClientResponse)
-    mock_resp.status = 200
-    mock_resp.headers = {"Content-Type": "application/json"}
-    
-    mock_data = {
-        "some": "data",
-        "values": [34.28500000000003, 6.441666666666666, 34.28500000000003, 6.441666666666666]
-    }
-    
-    mock_resp.json = mock.AsyncMock(return_value=mock_data)
-    mock_resp.raise_for_status = mock.AsyncMock()
-    return mock_resp
-
 def empty_values_mocked_requests(*args, **kwargs):
     if args[0] == f"{URL}values/get":
         return MockResponse(empty_live_response, 200)
@@ -564,112 +546,10 @@ def empty_mocked_requests(*args, **kwargs):
 
     return MockResponse(None, 404)
 
-def successful_mocked_historical_requests(*args, **kwargs):
-    if args[0] == f"{URL}values/historicalaggregated":
-        return MockResponse(successful_historical_result, 200)
-
-    return MockResponse(None, 404)
-
-def no_dict_mocked_historical_requests(*args, **kwargs):
-    if args[0] == f"{URL}values/historicalaggregated":
-        return MockResponse([], 200)
-
-    return MockResponse(None, 404)
-
-def unsuccessful_mocked_historical_requests(*args, **kwargs):
-    if args[0] == f"{URL}values/historicalaggregated":
-        unsuc = deepcopy(successful_historical_result)
-        unsuc.pop("HistoryReadResults")
-        return MockResponse([unsuc], 200)
-
-    return MockResponse(None, 404)
-
-def no_historical_result_mocked_historical_requests(*args, **kwargs):
-    if args[0] == f"{URL}values/historicalaggregated":
-        unsuc = deepcopy(successful_historical_result)
-        unsuc["Success"] = False
-        return MockResponse([unsuc], 200)
-
-    return MockResponse(None, 404)
-
-async def no_dict_mock_response(**kwargs):
-    mock_resp = mock.Mock(spec=ClientResponse)
-    mock_resp.status = 200
-    mock_resp.headers = {"Content-Type": "application/json"}
-    mock_resp.json = mock.AsyncMock(return_value="Not a dictionary")
-    mock_resp.raise_for_status = mock.AsyncMock()
-    return mock_resp
-
-async def unsuccessful_mock_response(**kwargs):
-    mock_resp = mock.Mock(spec=ClientResponse)
-    mock_resp.status = 400
-    mock_resp.raise_for_status = mock.AsyncMock(side_effect=aiohttp.ClientResponseError(
-        request_info=mock.Mock(),
-        history=(),
-        status=400,
-        message="Bad Request"
-    ))
-    return mock_resp
-
-async def no_historical_result_mock_response(**kwargs):
-    mock_resp = mock.Mock(spec=ClientResponse)
-    mock_resp.status = 200
-    mock_resp.headers = {"Content-Type": "application/json"}
-    mock_resp.json = mock.AsyncMock(return_value={})  
-    mock_resp.raise_for_status = mock.AsyncMock()
-    return mock_resp
-
-async def make_historical_request():
-    tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
-    return await tsdata.get_historical_aggregated_values_asyn(
-                start_time=(datetime.datetime.now() - datetime.timedelta(30)),
-                end_time=(datetime.datetime.now() - datetime.timedelta(29)),
-                pro_interval=3600000,
-                agg_name="Average",
-                variable_list=list_of_ids,
-            )
-
-def successful_mocked_raw_historical_requests(*args, **kwargs):
-    if args[0] == f"{URL}values/historical":
-        return MockResponse(successful_raw_historical_result, 200)
-    
-    return MockResponse(None, 404)
-
-def no_dict_mocked_raw_historical_requests(*args, **kwargs):
-    if args[0] == f"{URL}values/historical":
-        return MockResponse([], 200)
-    
-    return MockResponse(None, 404)
-
-def unsuccessful_mocked_raw_historical_requests(*args, **kwargs):
-    if args[0] == f"{URL}values/historical":
-        unsuc = deepcopy(successful_raw_historical_result)
-        unsuc.pop("HistoryReadResults")
-        return MockResponse([unsuc], 200)
-    
-    return MockResponse(None, 404)
-
-def no_historical_result_mocked_raw_historical_requests(*args, **kwargs):
-    if args[0] == f"{URL}values/historical":
-        unsuc = deepcopy(successful_raw_historical_result)
-        unsuc["Success"] = False
-        return MockResponse([unsuc], 200)
-    
-    return MockResponse(None, 404)
-
-async def make_raw_historical_request():
-    tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
-    return await tsdata.get_raw_historical_values_asyn(
-        start_time=(datetime.datetime.now() - datetime.timedelta(30)),
-        end_time=(datetime.datetime.now() - datetime.timedelta(29)),
-        variable_list=list_of_ids,
-    )
-
 class AnyUrlModel(BaseModel):
     url: AnyUrl
 
-# Our test case class
-class OPCUATestCase(unittest.TestCase):
+class TestOPCUA(unittest.TestCase):
     def test_malformed_rest_url(self):
         with pytest.raises(ValidationError):
             AnyUrlModel(rest_url="not_an_url", opcua_url=OPC_URL)
@@ -811,57 +691,6 @@ class OPCUATestCase(unittest.TestCase):
         result = tsdata.get_values(list_of_ids)
         assert result[0]["StatusCode"] == None
 
-    @mock.patch("aiohttp.ClientSession.post", side_effect=mock_response)
-    async def test_historical_values_success(mock_post):
-        result = await make_historical_request()
-        cols_to_check = ["Value"]
-        assert all(ptypes.is_numeric_dtype(result[col]) for col in cols_to_check)
-        assert result['Value'].tolist() == [34.28500000000003, 6.441666666666666, 34.28500000000003, 6.441666666666666]
-        assert result['ValueType'].tolist() == ["Double", "Double", "Double", "Double"]
-
-    @pytest.mark.asyncio
-    @mock.patch("aiohttp.ClientSession.post", side_effect=no_dict_mock_response)
-    async def test_historical_values_no_dict(mock_post):
-        with pytest.raises(RuntimeError):
-            await make_historical_request()
-
-    @pytest.mark.asyncio
-    @mock.patch("aiohttp.ClientSession.post", side_effect=unsuccessful_mock_response)
-    async def test_historical_values_unsuccess(mock_post):
-        with pytest.raises(RuntimeError):
-            await make_historical_request()
-
-    @pytest.mark.asyncio
-    @mock.patch("aiohttp.ClientSession.post", side_effect=no_historical_result_mock_response)
-    async def test_historical_values_no_hist(mock_post):
-        with pytest.raises(RuntimeError):
-            await make_historical_request()
-
-    @pytest.mark.asyncio
-    @mock.patch("aiohttp.ClientSession.post", side_effect=successful_mocked_raw_historical_requests)
-    async def test_raw_historical_values_success(mock_post):
-        result = await make_raw_historical_request()
-        cols_to_check = ["Value"]
-        assert all(ptypes.is_numeric_dtype(result[col]) for col in cols_to_check)
-
-    @pytest.mark.asyncio
-    @mock.patch("aiohttp.ClientSession.post", side_effect=no_dict_mocked_raw_historical_requests)
-    async def test_raw_historical_values_no_dict(mock_post):
-        with pytest.raises(RuntimeError):
-            await make_raw_historical_request()
-
-    @pytest.mark.asyncio
-    @mock.patch("aiohttp.ClientSession.post", side_effect=unsuccessful_mocked_raw_historical_requests)
-    async def test_raw_historical_values_unsuccess(mock_post):
-        with pytest.raises(RuntimeError):
-            await make_raw_historical_request()
-
-    @pytest.mark.asyncio
-    @mock.patch("aiohttp.ClientSession.post", side_effect=no_historical_result_mocked_raw_historical_requests)
-    async def test_raw_historical_values_no_hist(mock_post):
-        with pytest.raises(RuntimeError):
-            await make_raw_historical_request()
-
     @mock.patch("requests.post", side_effect=successful_write_mocked_requests)
     def test_write_live_values_successful(self, mock_get):
         tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
@@ -945,6 +774,116 @@ class OPCUATestCase(unittest.TestCase):
         result = tsdata.write_historical_values(converted_data)
         assert result[0]["WriteError"]["Code"] == successfull_write_historical_response_with_errors["HistoryUpdateResults"][0]["StatusCode"]["Code"]
         assert result[0]["WriteError"]["Symbol"] == successfull_write_historical_response_with_errors["HistoryUpdateResults"][0]["StatusCode"]["Symbol"]
+
+class AsyncMockResponse:
+    def __init__(self, json_data, status_code):
+        self.json_data = json_data
+        self.status = status_code
+        self.headers = {'Content-Type': 'application/json'}
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        pass
+
+    async def json(self):
+        return self.json_data
+    
+    async def raise_for_status(self):
+        if self.status >= 400:
+            raise aiohttp.ClientResponseError(
+                request_info=aiohttp.RequestInfo(
+                    url=URL,
+                    method="POST",
+                    headers={},
+                    real_url=OPC_URL
+                ),
+                history=(),
+                status=self.status,
+                message="Mocked error",
+                headers=self.headers
+            )
+
+def unsuccessful_async_mock_response(*args, **kwargs):
+    return AsyncMockResponse(
+        json_data=None,
+        status_code=400
+    )
+
+async def make_historical_request():
+    tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
+    return await tsdata.get_historical_aggregated_values_asyn(
+                start_time=(datetime.datetime.now() - datetime.timedelta(30)),
+                end_time=(datetime.datetime.now() - datetime.timedelta(29)),
+                pro_interval=3600000,
+                agg_name="Average",
+                variable_list=list_of_ids,
+            )
+
+async def make_raw_historical_request():
+    tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
+    return await tsdata.get_raw_historical_values_asyn(
+        start_time=(datetime.datetime.now() - datetime.timedelta(30)),
+        end_time=(datetime.datetime.now() - datetime.timedelta(29)),
+        variable_list=list_of_ids,
+    )
+
+@pytest.mark.asyncio
+class TestAsyncOPCUA:
+
+    @mock.patch("aiohttp.ClientSession.post")
+    async def test_historical_values_success(self, mock_post):
+        mock_post.return_value = AsyncMockResponse(
+            json_data=successful_historical_result,
+            status_code=200
+        )
+        result = await make_historical_request()
+        cols_to_check = ["Value"]
+        assert all(ptypes.is_numeric_dtype(result[col]) for col in cols_to_check)
+        assert result['Value'].tolist() == [34.28500000000003, 6.441666666666666, 34.28500000000003, 6.441666666666666]
+        assert result['ValueType'].tolist() == ["Double", "Double", "Double", "Double"]
+
+    @mock.patch("aiohttp.ClientSession.post")
+    async def test_historical_values_no_dict(self, mock_post):
+        with pytest.raises(RuntimeError):
+            await make_historical_request()
+
+    @mock.patch("aiohttp.ClientSession.post")
+    async def test_historical_values_unsuccess(self, mock_post):
+        mock_post.return_value = unsuccessful_async_mock_response()
+        with pytest.raises(RuntimeError):
+            await make_historical_request()
+
+    @mock.patch("aiohttp.ClientSession.post")
+    async def test_historical_values_no_hist(self, mock_post):
+        with pytest.raises(RuntimeError):
+            await make_historical_request()
+
+    @mock.patch("aiohttp.ClientSession.post")
+    async def test_raw_historical_values_success(self, mock_post):
+        mock_post.return_value = AsyncMockResponse(
+            json_data=successful_raw_historical_result,
+            status_code=200
+        )
+        result = await make_raw_historical_request()
+        cols_to_check = ["Value"]
+        assert all(ptypes.is_numeric_dtype(result[col]) for col in cols_to_check)
+
+    @mock.patch("aiohttp.ClientSession.post")
+    async def test_raw_historical_values_no_dict(self, mock_post):
+        with pytest.raises(RuntimeError):
+            await make_raw_historical_request()
+
+    @mock.patch("aiohttp.ClientSession.post")
+    async def test_raw_historical_values_unsuccess(self, mock_post):
+        with pytest.raises(RuntimeError):
+            await make_raw_historical_request()
+
+    @mock.patch("aiohttp.ClientSession.post")
+    async def test_raw_historical_values_no_hist(self, mock_post):
+        with pytest.raises(RuntimeError):
+            await make_raw_historical_request()
 
 if __name__ == "__main__":
     unittest.main()
