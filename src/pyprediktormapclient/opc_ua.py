@@ -129,7 +129,8 @@ class WriteReturn(BaseModel):
 class AsyncIONotebookHelper:
     @staticmethod
     def run_coroutine(coroutine):
-        return asyncio.get_event_loop().run_until_complete(coroutine)
+        loop = asyncio.get_event_loop()
+        return loop.run_until_complete(coroutine)
 
 class Config:
         arbitrary_types_allowed = True
@@ -347,22 +348,40 @@ class OPC_UA:
     async def _make_request(self, endpoint: str, body: dict, max_retries: int, retry_delay: int):
         for attempt in range(max_retries):
             try:
+                logging.info(f"Attempt {attempt + 1} of {max_retries}")
                 async with ClientSession() as session:
-                    async with session.post(
-                        f"{self.rest_url}{endpoint}",
-                        json=body,
-                        headers=self.headers
-                    ) as response:
-                        response.raise_for_status()
+                    url = f"{self.rest_url}{endpoint}"
+                    logging.info(f"Making POST request to {url}")
+                    logging.debug(f"Request body: {body}")
+                    logging.debug(f"Request headers: {self.headers}")
+                    
+                    async with session.post(url, json=body, headers=self.headers) as response:
+                        logging.info(f"Response received: Status {response.status}")
+                        
+                        if response.status >= 400:
+                            error_text = await response.text()
+                            logging.error(f"HTTP error {response.status}: {error_text}")
+                            response.raise_for_status()  
+                        
                         return await response.json()
+
+            except aiohttp.ClientResponseError as e:
+                if e.status == 500:
+                    logging.error(f"Server Error: {e}")
+                    raise  # For 500 errors, we might want to fail fast
+                logging.error(f"ClientResponseError: {e}")
             except aiohttp.ClientError as e:
-                if attempt < max_retries - 1:
-                    wait_time = retry_delay * (2 ** attempt)
-                    logger.warning(f"Request failed. Retrying in {wait_time} seconds...")
-                    await asyncio.sleep(wait_time)
-                else:
-                    logger.error(f"Max retries reached. Error: {e}")
-                    raise RuntimeError(f'Error message {e}')
+                logging.error(f"ClientError in POST request: {e}")
+            except Exception as e:
+                logging.error(f"Unexpected error in _make_request: {e}")
+
+            if attempt < max_retries - 1:
+                wait_time = retry_delay * (2 ** attempt)
+                logging.warning(f"Request failed. Retrying in {wait_time} seconds...")
+                await asyncio.sleep(wait_time)
+            else:
+                logging.error(f"Max retries reached.")
+                raise RuntimeError('Max retries reached')
                 
     def _process_content(self, content: dict) -> pd.DataFrame:
         self._check_content(content)
@@ -467,8 +486,9 @@ class OPC_UA:
         return self._process_df(combined_df, columns)
     
     def get_raw_historical_values(self, *args, **kwargs):
-        return self.helper.run_coroutine(self.get_raw_historical_values_asyn(*args, **kwargs))
-            
+            result = self.helper.run_coroutine(self.get_raw_historical_values_asyn(*args, **kwargs))
+            return result
+           
 
     async def get_historical_aggregated_values_asyn(
         self,
@@ -508,7 +528,8 @@ class OPC_UA:
         return self._process_df(combined_df, columns)
                 
     def get_historical_aggregated_values(self, *args, **kwargs):
-        return self.helper.run_coroutine(self.get_historical_aggregated_values_asyn(*args, **kwargs))
+        result = self.helper.run_coroutine(self.get_historical_aggregated_values_asyn(*args, **kwargs))
+        return result
     
     
     def write_values(self, variable_list: List[WriteVariables]) -> List:
