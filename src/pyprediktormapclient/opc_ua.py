@@ -345,6 +345,7 @@ class OPC_UA:
 
         return df_result
     
+
     async def _make_request(self, endpoint: str, body: dict, max_retries: int, retry_delay: int):
         for attempt in range(max_retries):
             try:
@@ -450,6 +451,7 @@ class OPC_UA:
         results = await asyncio.gather(*tasks)
         combined_df = pd.concat(results, ignore_index=True)
         return combined_df
+
 
     async def get_raw_historical_values_asyn(
         self,
