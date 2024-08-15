@@ -1,5 +1,9 @@
+nest_asyncio
 sphinx_rtd_theme
 tox
 ipykernel
--e .
+tqdm
+tenacity
+pytest-asyncio
 python-dotenv
+-e .
