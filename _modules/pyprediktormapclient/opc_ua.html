@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pyprediktormapclient.opc_ua &mdash; pyPrediktorMapClient 0.6.8 documentation</title>
+  <title>pyprediktormapclient.opc_ua &mdash; pyPrediktorMapClient 0.6.9 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
 
@@ -14,7 +14,7 @@
   
         <script src="../../_static/jquery.js?v=5d32c60e"></script>
         <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="../../_static/documentation_options.js?v=ac3b80e6"></script>
+        <script src="../../_static/documentation_options.js?v=084304ff"></script>
         <script src="../../_static/doctools.js?v=9a2dae69"></script>
         <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -34,7 +34,7 @@
             pyPrediktorMapClient
           </a>
               <div class="version">
-                0.6.8
+                0.6.9
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -271,6 +271,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            Object: The initialized class object</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">TYPE_DICT</span> <span class="o">=</span> <span class="p">{</span><span class="n">t</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]:</span> <span class="n">t</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">TYPE_LIST</span><span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rest_url</span> <span class="o">=</span> <span class="n">rest_url</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">opcua_url</span> <span class="o">=</span> <span class="n">opcua_url</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">headers</span> <span class="o">=</span> <span class="p">{</span>
@@ -447,15 +448,62 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Process the DataFrame returned from the server.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">df_result</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;Value.Type&quot;</span><span class="p">]):</span>
-                <span class="n">df_result</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="s2">&quot;Value.Type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_value_type</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;Value.Type&quot;</span><span class="p">]))</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;Value.Type&quot;</span> <span class="ow">in</span> <span class="n">df_result</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="n">df_result</span><span class="p">[</span><span class="s2">&quot;Value.Type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_result</span><span class="p">[</span><span class="s2">&quot;Value.Type&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">TYPE_DICT</span><span class="p">)</span>
 
         <span class="n">df_result</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
             <span class="n">columns</span><span class="o">=</span><span class="n">columns</span><span class="p">,</span> 
             <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;raise&quot;</span><span class="p">,</span> 
             <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span>
         <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">df_result</span>
+    
+    <span class="k">def</span> <span class="nf">_prepare_body</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_time</span><span class="p">:</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">end_time</span><span class="p">:</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">variables</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span> <span class="n">additional_params</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Prepare the request body for the API call.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="p">,</span> 
+            <span class="s2">&quot;StartTime&quot;</span><span class="p">:</span> <span class="n">start_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">T%H:%M:%SZ&quot;</span><span class="p">),</span> 
+            <span class="s2">&quot;EndTime&quot;</span><span class="p">:</span> <span class="n">end_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">T%H:%M:%SZ&quot;</span><span class="p">),</span> 
+            <span class="s2">&quot;ReadValueIds&quot;</span><span class="p">:</span> <span class="n">variables</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">additional_params</span><span class="p">:</span>
+            <span class="n">body</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">additional_params</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">body</span>
+    
+    <span class="k">def</span> <span class="nf">_fetch_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">body</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fetch data from the API and return it as a DataFrame.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">content</span> <span class="o">=</span> <span class="n">request_from_api</span><span class="p">(</span>
+                <span class="n">rest_url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rest_url</span><span class="p">,</span> 
+                <span class="n">method</span><span class="o">=</span><span class="s2">&quot;POST&quot;</span><span class="p">,</span> 
+                <span class="n">endpoint</span><span class="o">=</span><span class="n">endpoint</span><span class="p">,</span> 
+                <span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">json_serial</span><span class="p">),</span> 
+                <span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">,</span> 
+                <span class="n">extended_timeout</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_client</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">check_auth_client</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Error message </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_content</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">process_content</span><span class="p">(</span><span class="n">content</span><span class="p">):</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">json_normalize</span><span class="p">(</span><span class="n">content</span><span class="p">[</span><span class="s2">&quot;DataValues&quot;</span><span class="p">])</span>
+
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">content</span><span class="p">[</span><span class="s2">&quot;NodeId&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">df</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;HistoryReadResults.NodeId.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">j</span>
+
+            <span class="k">return</span> <span class="n">df</span>
+
+        <span class="n">df_result</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">((</span><span class="n">process_content</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">content</span><span class="p">[</span><span class="s2">&quot;HistoryReadResults&quot;</span><span class="p">]))</span>
+        <span class="n">df_result</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">df_result</span>
 
@@ -482,39 +530,14 @@
 <span class="sd">            pd.DataFrame: A DataFrame containing the historical raw values.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">vars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_variable_list_as_list</span><span class="p">(</span><span class="n">variable_list</span><span class="p">)</span>
-
         <span class="n">extended_variables</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;NodeId&quot;</span><span class="p">:</span> <span class="n">var</span><span class="p">}</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="nb">vars</span><span class="p">]</span>
-        <span class="n">body</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="p">,</span> 
-            <span class="s2">&quot;StartTime&quot;</span><span class="p">:</span> <span class="n">start_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">T%H:%M:%SZ&quot;</span><span class="p">),</span> 
-            <span class="s2">&quot;EndTime&quot;</span><span class="p">:</span> <span class="n">end_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">T%H:%M:%SZ&quot;</span><span class="p">),</span> 
-            <span class="s2">&quot;ReadValueIds&quot;</span><span class="p">:</span> <span class="n">extended_variables</span><span class="p">}</span>
         
+        <span class="n">additional_params</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="n">limit_start_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">limit_num_records</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">body</span><span class="p">[</span><span class="s2">&quot;Limit&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;StartIndex&quot;</span><span class="p">:</span> <span class="n">limit_start_index</span><span class="p">,</span> <span class="s2">&quot;NumRecords&quot;</span><span class="p">:</span> <span class="n">limit_num_records</span><span class="p">}</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">content</span> <span class="o">=</span> <span class="n">request_from_api</span><span class="p">(</span>
-                <span class="n">rest_url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rest_url</span><span class="p">,</span> 
-                <span class="n">method</span><span class="o">=</span><span class="s2">&quot;POST&quot;</span><span class="p">,</span> 
-                <span class="n">endpoint</span><span class="o">=</span><span class="s2">&quot;values/historical&quot;</span><span class="p">,</span> 
-                <span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">json_serial</span><span class="p">),</span> 
-                <span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">,</span> 
-                <span class="n">extended_timeout</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            
-        <span class="k">except</span> <span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_client</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">check_auth_client</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">))</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Error message </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-            
-        <span class="bp">self</span><span class="o">.</span><span class="n">_check_content</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
-
-        <span class="n">df_result</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">json_normalize</span><span class="p">(</span>
-            <span class="n">content</span><span class="p">,</span> 
-            <span class="n">record_path</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;HistoryReadResults&#39;</span><span class="p">,</span> <span class="s1">&#39;DataValues&#39;</span><span class="p">],</span> 
-            <span class="n">meta</span><span class="o">=</span><span class="p">[[</span><span class="s1">&#39;HistoryReadResults&#39;</span><span class="p">,</span> <span class="s1">&#39;NodeId&#39;</span><span class="p">,</span> <span class="s1">&#39;IdType&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;HistoryReadResults&#39;</span><span class="p">,</span> <span class="s1">&#39;NodeId&#39;</span><span class="p">,</span><span class="s1">&#39;Id&#39;</span><span class="p">],[</span><span class="s1">&#39;HistoryReadResults&#39;</span><span class="p">,</span> <span class="s1">&#39;NodeId&#39;</span><span class="p">,</span><span class="s1">&#39;Namespace&#39;</span><span class="p">]</span>
-            <span class="p">]</span>
-        <span class="p">)</span>
+            <span class="n">additional_params</span><span class="p">[</span><span class="s2">&quot;Limit&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;StartIndex&quot;</span><span class="p">:</span> <span class="n">limit_start_index</span><span class="p">,</span> <span class="s2">&quot;NumRecords&quot;</span><span class="p">:</span> <span class="n">limit_num_records</span><span class="p">}</span>
+        
+        <span class="n">body</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_body</span><span class="p">(</span><span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">extended_variables</span><span class="p">,</span> <span class="n">additional_params</span><span class="p">)</span>
+        <span class="n">df_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_data</span><span class="p">(</span><span class="s2">&quot;values/historical&quot;</span><span class="p">,</span> <span class="n">body</span><span class="p">)</span>
 
         <span class="n">columns</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;Value.Type&quot;</span><span class="p">:</span> <span class="s2">&quot;ValueType&quot;</span><span class="p">,</span>
@@ -553,37 +576,14 @@
         <span class="nb">vars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_variable_list_as_list</span><span class="p">(</span><span class="n">variable_list</span><span class="p">)</span>
         <span class="n">extended_variables</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;NodeId&quot;</span><span class="p">:</span> <span class="n">var</span><span class="p">,</span> <span class="s2">&quot;AggregateName&quot;</span><span class="p">:</span> <span class="n">agg_name</span><span class="p">}</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="nb">vars</span><span class="p">]</span>
 
-        <span class="n">body</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="p">,</span> 
-            <span class="s2">&quot;StartTime&quot;</span><span class="p">:</span> <span class="n">start_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">T%H:%M:%SZ&quot;</span><span class="p">),</span> 
-            <span class="s2">&quot;EndTime&quot;</span><span class="p">:</span> <span class="n">end_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">T%H:%M:%SZ&quot;</span><span class="p">),</span> 
+        <span class="n">additional_params</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;ProcessingInterval&quot;</span><span class="p">:</span> <span class="n">pro_interval</span><span class="p">,</span> 
-            <span class="s2">&quot;ReadValueIds&quot;</span><span class="p">:</span> <span class="n">extended_variables</span><span class="p">,</span> 
             <span class="s2">&quot;AggregateName&quot;</span><span class="p">:</span> <span class="n">agg_name</span>
         <span class="p">}</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">content</span> <span class="o">=</span> <span class="n">request_from_api</span><span class="p">(</span>
-                <span class="n">rest_url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rest_url</span><span class="p">,</span> 
-                <span class="n">method</span><span class="o">=</span><span class="s2">&quot;POST&quot;</span><span class="p">,</span> 
-                <span class="n">endpoint</span><span class="o">=</span><span class="s2">&quot;values/historicalaggregated&quot;</span><span class="p">,</span> 
-                <span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">json_serial</span><span class="p">),</span> 
-                <span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">,</span> 
-                <span class="n">extended_timeout</span><span class="o">=</span><span class="kc">True</span>
-            <span class="p">)</span>
-        <span class="k">except</span> <span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_client</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">check_auth_client</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">))</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Error message </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-            
-        <span class="bp">self</span><span class="o">.</span><span class="n">_check_content</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
-
-        <span class="n">df_result</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">json_normalize</span><span class="p">(</span>
-            <span class="n">content</span><span class="p">,</span> 
-            <span class="n">record_path</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;HistoryReadResults&#39;</span><span class="p">,</span> <span class="s1">&#39;DataValues&#39;</span><span class="p">],</span> 
-            <span class="n">meta</span><span class="o">=</span><span class="p">[[</span><span class="s1">&#39;HistoryReadResults&#39;</span><span class="p">,</span> <span class="s1">&#39;NodeId&#39;</span><span class="p">,</span> <span class="s1">&#39;IdType&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;HistoryReadResults&#39;</span><span class="p">,</span> <span class="s1">&#39;NodeId&#39;</span><span class="p">,</span><span class="s1">&#39;Id&#39;</span><span class="p">],[</span><span class="s1">&#39;HistoryReadResults&#39;</span><span class="p">,</span> <span class="s1">&#39;NodeId&#39;</span><span class="p">,</span><span class="s1">&#39;Namespace&#39;</span><span class="p">]</span>
-            <span class="p">]</span>
-        <span class="p">)</span>
+        
+        <span class="n">body</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_body</span><span class="p">(</span><span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">extended_variables</span><span class="p">,</span> <span class="n">additional_params</span><span class="p">)</span>
+        <span class="n">df_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_data</span><span class="p">(</span><span class="s2">&quot;values/historicalaggregated&quot;</span><span class="p">,</span> <span class="n">body</span><span class="p">)</span>
+        
         <span class="n">columns</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;Value.Type&quot;</span><span class="p">:</span> <span class="s2">&quot;ValueType&quot;</span><span class="p">,</span>
             <span class="s2">&quot;Value.Body&quot;</span><span class="p">:</span> <span class="s2">&quot;Value&quot;</span><span class="p">,</span>
@@ -614,10 +614,7 @@
         <span class="c1"># Configure the logging</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(asctime)s</span><span class="s1"> - </span><span class="si">%(levelname)s</span><span class="s1"> - </span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">)</span>
 
-        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Generating time batches...&quot;</span><span class="p">)</span>
         <span class="n">time_batches</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_time_batches</span><span class="p">(</span><span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">pro_interval</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">)</span>
-
-        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Generating variable batches...&quot;</span><span class="p">)</span>
         <span class="n">variable_batches</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_variable_batches</span><span class="p">(</span><span class="n">variable_list</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">)</span>
 
         <span class="c1"># Creating tasks for each API request and gathering the results</span>
@@ -652,7 +649,6 @@
 
         <span class="c1"># Creating a new variable list to remove pydantic models</span>
         <span class="nb">vars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_variable_list_as_list</span><span class="p">(</span><span class="n">variable_list</span><span class="p">)</span>
-
         <span class="n">extended_variables</span> <span class="o">=</span> <span class="p">[</span>
             <span class="p">{</span>
                     <span class="s2">&quot;NodeId&quot;</span><span class="p">:</span> <span class="n">var</span><span class="p">,</span>
@@ -661,14 +657,16 @@
             <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="nb">vars</span>
 
         <span class="p">]</span>
-
-        <span class="n">body</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
-        <span class="n">body</span><span class="p">[</span><span class="s2">&quot;StartTime&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">start_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">T%H:%M:%SZ&quot;</span><span class="p">)</span>
-        <span class="n">body</span><span class="p">[</span><span class="s2">&quot;EndTime&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">end_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">T%H:%M:%SZ&quot;</span><span class="p">)</span>
-        <span class="n">body</span><span class="p">[</span><span class="s2">&quot;ProcessingInterval&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pro_interval</span>
-        <span class="n">body</span><span class="p">[</span><span class="s2">&quot;ReadValueIds&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">extended_variables</span>
-        <span class="n">body</span><span class="p">[</span><span class="s2">&quot;AggregateName&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">agg_name</span>
-
+        <span class="n">additional_params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;ProcessingInterval&quot;</span><span class="p">:</span> <span class="n">pro_interval</span><span class="p">,</span> 
+            <span class="s2">&quot;AggregateName&quot;</span><span class="p">:</span> <span class="n">agg_name</span>
+        <span class="p">}</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_body</span><span class="p">(</span>
+            <span class="n">start_time</span><span class="p">,</span> 
+            <span class="n">end_time</span><span class="p">,</span> 
+            <span class="n">extended_variables</span><span class="p">,</span> 
+            <span class="n">additional_params</span>
+        <span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="c1"># Make API request using aiohttp session</span>
             <span class="k">async</span> <span class="k">with</span> <span class="n">aiohttp</span><span class="o">.</span><span class="n">ClientSession</span><span class="p">()</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
@@ -686,6 +684,7 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Error message </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_content</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">content</span></div>
 
 
@@ -727,44 +726,36 @@
     
 <div class="viewcode-block" id="OPC_UA.process_api_response">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.process_api_response">[docs]</a>
-    <span class="k">def</span> <span class="nf">process_api_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">process_api_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Process the API response and return the result dataframe&quot;&quot;&quot;</span>
-
-        <span class="c1"># Return if no content from server</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;No content returned from the server&quot;</span><span class="p">)</span>
-
-        <span class="c1"># Return if not successful, but check ory status id ory is enabled</span>
-        <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Success&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ErrorMessage&quot;</span><span class="p">))</span>
-
-        <span class="c1"># Check for HistoryReadResults</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="s2">&quot;HistoryReadResults&quot;</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ErrorMessage&quot;</span><span class="p">))</span>
         
-        <span class="n">df_result</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">json_normalize</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">record_path</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;HistoryReadResults&#39;</span><span class="p">,</span> <span class="s1">&#39;DataValues&#39;</span><span class="p">],</span> 
-                                      <span class="n">meta</span><span class="o">=</span><span class="p">[[</span><span class="s1">&#39;HistoryReadResults&#39;</span><span class="p">,</span> <span class="s1">&#39;NodeId&#39;</span><span class="p">,</span> <span class="s1">&#39;IdType&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;HistoryReadResults&#39;</span><span class="p">,</span> <span class="s1">&#39;NodeId&#39;</span><span class="p">,</span><span class="s1">&#39;Id&#39;</span><span class="p">],</span>
-                                            <span class="p">[</span><span class="s1">&#39;HistoryReadResults&#39;</span><span class="p">,</span> <span class="s1">&#39;NodeId&#39;</span><span class="p">,</span><span class="s1">&#39;Namespace&#39;</span><span class="p">]]</span> <span class="p">)</span>
+        <span class="n">df_result_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">content</span><span class="p">[</span><span class="s2">&quot;HistoryReadResults&quot;</span><span class="p">]:</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">json_normalize</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;DataValues&quot;</span><span class="p">])</span>
 
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">df_result</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;Value.Type&quot;</span><span class="p">]):</span>
-                <span class="n">df_result</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="s2">&quot;Value.Type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_value_type</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;Value.Type&quot;</span><span class="p">]))</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;NodeId&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">df</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;HistoryReadResults.NodeId.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">j</span>
+            
+            <span class="n">df_result_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">df_result_list</span><span class="p">:</span>
+            <span class="n">df_result</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">df_result_list</span><span class="p">)</span>
+            <span class="n">df_result</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-        <span class="n">df_result</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
-            <span class="n">columns</span><span class="o">=</span><span class="p">{</span>
+            <span class="n">columns</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="s2">&quot;Value.Type&quot;</span><span class="p">:</span> <span class="s2">&quot;ValueType&quot;</span><span class="p">,</span>
                 <span class="s2">&quot;Value.Body&quot;</span><span class="p">:</span> <span class="s2">&quot;Value&quot;</span><span class="p">,</span>
                 <span class="s2">&quot;StatusCode.Symbol&quot;</span><span class="p">:</span> <span class="s2">&quot;StatusSymbol&quot;</span><span class="p">,</span>
                 <span class="s2">&quot;StatusCode.Code&quot;</span><span class="p">:</span> <span class="s2">&quot;StatusCode&quot;</span><span class="p">,</span>
                 <span class="s2">&quot;SourceTimestamp&quot;</span><span class="p">:</span> <span class="s2">&quot;Timestamp&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;HistoryReadResults.NodeId.IdType&quot;</span><span class="p">:</span> <span class="s2">&quot;Id&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;HistoryReadResults.NodeId.IdType&quot;</span><span class="p">:</span> <span class="s2">&quot;IdType&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;HistoryReadResults.NodeId.Id&quot;</span><span class="p">:</span> <span class="s2">&quot;Id&quot;</span><span class="p">,</span>
                 <span class="s2">&quot;HistoryReadResults.NodeId.Namespace&quot;</span><span class="p">:</span> <span class="s2">&quot;Namespace&quot;</span><span class="p">,</span>
-            <span class="p">},</span>
-            <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;raise&quot;</span><span class="p">,</span>
-            <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">df_result</span></div>
+            <span class="p">}</span>
+            
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_df</span><span class="p">(</span><span class="n">df_result</span><span class="p">,</span> <span class="n">columns</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span></div>
 
 
 

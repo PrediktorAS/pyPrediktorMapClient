@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pyprediktormapclient package &mdash; pyPrediktorMapClient 0.6.8 documentation</title>
+  <title>pyprediktormapclient package &mdash; pyPrediktorMapClient 0.6.9 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
 
@@ -15,7 +15,7 @@
   
         <script src="../_static/jquery.js?v=5d32c60e"></script>
         <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="../_static/documentation_options.js?v=ac3b80e6"></script>
+        <script src="../_static/documentation_options.js?v=084304ff"></script>
         <script src="../_static/doctools.js?v=9a2dae69"></script>
         <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/js/theme.js"></script>
@@ -37,7 +37,7 @@
             pyPrediktorMapClient
           </a>
               <div class="version">
-                0.6.8
+                0.6.9
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -345,7 +345,7 @@ with this function according to the class docs.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pyprediktormapclient.analytics_helper.AnalyticsHelper.split_id">
-<span class="sig-name descname"><span class="pre">split_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.12/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyprediktormapclient/analytics_helper.html#AnalyticsHelper.split_id"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.analytics_helper.AnalyticsHelper.split_id" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">split_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">id:</span> <span class="pre">~typing.Annotated[str,</span> <span class="pre">~pydantic.types.StringConstraints(strip_whitespace=None,</span> <span class="pre">to_upper=None,</span> <span class="pre">to_lower=None,</span> <span class="pre">strict=None,</span> <span class="pre">min_length=None,</span> <span class="pre">max_length=None,</span> <span class="pre">pattern=^\d+:\d+:\S+$)]</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyprediktormapclient/analytics_helper.html#AnalyticsHelper.split_id"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.analytics_helper.AnalyticsHelper.split_id" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -825,7 +825,7 @@ mapping of field names to [<cite>FieldInfo</cite>][pydantic.fields.FieldInfo].</
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pyprediktormapclient.opc_ua.OPC_UA.process_api_response">
-<span class="sig-name descname"><span class="pre">process_api_response</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">response</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.12/library/stdtypes.html#dict" title="(in Python v3.12)"><span class="pre">dict</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.2)"><span class="pre">DataFrame</span></a></span></span><a class="reference internal" href="../_modules/pyprediktormapclient/opc_ua.html#OPC_UA.process_api_response"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.opc_ua.OPC_UA.process_api_response" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">process_api_response</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">content</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.12/library/stdtypes.html#dict" title="(in Python v3.12)"><span class="pre">dict</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.2)"><span class="pre">DataFrame</span></a></span></span><a class="reference internal" href="../_modules/pyprediktormapclient/opc_ua.html#OPC_UA.process_api_response"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyprediktormapclient.opc_ua.OPC_UA.process_api_response" title="Link to this definition"></a></dt>
 <dd><p>Process the API response and return the result dataframe</p>
 </dd></dl>
 
