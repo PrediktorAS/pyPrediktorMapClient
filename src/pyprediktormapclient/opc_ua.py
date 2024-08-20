@@ -453,7 +453,7 @@ class OPC_UA:
         return combined_df
 
 
-    async def get_raw_historical_values_asyn(
+    async def get_historical_raw_values_asyn(
         self,
         start_time: datetime,
         end_time: datetime,
@@ -487,8 +487,8 @@ class OPC_UA:
         }
         return self._process_df(combined_df, columns)
     
-    def get_raw_historical_values(self, *args, **kwargs):
-            result = self.helper.run_coroutine(self.get_raw_historical_values_asyn(*args, **kwargs))
+    def get_historical_raw_values(self, *args, **kwargs):
+            result = self.helper.run_coroutine(self.get_historical_raw_values_asyn(*args, **kwargs))
             return result
            
 
