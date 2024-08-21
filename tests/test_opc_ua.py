@@ -823,7 +823,7 @@ async def make_historical_request():
 
 async def make_raw_historical_request():
     tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
-    return await tsdata.get_raw_historical_values_asyn(
+    return await tsdata.get_historical_raw_values_asyn(
         start_time=(datetime.datetime.now() - datetime.timedelta(30)),
         end_time=(datetime.datetime.now() - datetime.timedelta(29)),
         variable_list=list_of_ids,
