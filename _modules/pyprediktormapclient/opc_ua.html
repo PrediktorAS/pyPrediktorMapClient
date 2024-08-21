@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pyprediktormapclient.opc_ua &mdash; pyPrediktorMapClient 0.6.9 documentation</title>
+  <title>pyprediktormapclient.opc_ua &mdash; pyPrediktorMapClient 0.7.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
 
@@ -14,7 +14,7 @@
   
         <script src="../../_static/jquery.js?v=5d32c60e"></script>
         <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="../../_static/documentation_options.js?v=084304ff"></script>
+        <script src="../../_static/documentation_options.js?v=5a057da9"></script>
         <script src="../../_static/doctools.js?v=9a2dae69"></script>
         <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -34,7 +34,7 @@
             pyPrediktorMapClient
           </a>
               <div class="version">
-                0.6.9
+                0.7.1
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -586,9 +586,9 @@
 
 
 
-<div class="viewcode-block" id="OPC_UA.get_raw_historical_values_asyn">
-<a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.get_raw_historical_values_asyn">[docs]</a>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">get_raw_historical_values_asyn</span><span class="p">(</span>
+<div class="viewcode-block" id="OPC_UA.get_historical_raw_values_asyn">
+<a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.get_historical_raw_values_asyn">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">get_historical_raw_values_asyn</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">start_time</span><span class="p">:</span> <span class="n">datetime</span><span class="p">,</span>
         <span class="n">end_time</span><span class="p">:</span> <span class="n">datetime</span><span class="p">,</span>
@@ -623,10 +623,10 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_df</span><span class="p">(</span><span class="n">combined_df</span><span class="p">,</span> <span class="n">columns</span><span class="p">)</span></div>
 
     
-<div class="viewcode-block" id="OPC_UA.get_raw_historical_values">
-<a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.get_raw_historical_values">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_raw_historical_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">helper</span><span class="o">.</span><span class="n">run_coroutine</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_raw_historical_values_asyn</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+<div class="viewcode-block" id="OPC_UA.get_historical_raw_values">
+<a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.get_historical_raw_values">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_historical_raw_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">helper</span><span class="o">.</span><span class="n">run_coroutine</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_historical_raw_values_asyn</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
             <span class="k">return</span> <span class="n">result</span></div>
 
            
