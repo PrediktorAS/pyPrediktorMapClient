@@ -13,7 +13,7 @@ class Plant:
     def get_optimal_tracker_angles(self, facility_name: str) -> List:
         query = (
             f"SET NOCOUNT ON; EXEC dwetl.GetOptimalTrackerAngleParameters "
-            + f"@FacilityName = N'{facility_name}'"
+            f"@FacilityName = N'{facility_name}'"
         )
         return self.dwh.fetch(query)
 

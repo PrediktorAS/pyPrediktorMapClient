@@ -80,7 +80,7 @@ def test_upsert_forecast_data(monkeypatch):
             }
         }
     )
-    expected_query = f"EXEC dwetl.UpsertSolcastForecastData ?, ?"
+    expected_query = "EXEC dwetl.UpsertSolcastForecastData ?, ?"
     expected_result = {
         "data": [
             {

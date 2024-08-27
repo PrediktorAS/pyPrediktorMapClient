@@ -109,7 +109,9 @@ class Db:
                     {name: row[index] for index, name in enumerate(columns)}
                 )
 
-            data_sets.append(pd.DataFrame(data_set) if to_dataframe else data_set)
+            data_sets.append(
+                pd.DataFrame(data_set) if to_dataframe else data_set
+            )
 
             if not self.cursor.nextset():
                 break
@@ -146,8 +148,8 @@ class Db:
         result = []
         try:
             result = self.cursor.fetchall()
-        except Exception:
-            pass
+        except Exception as e:
+            logging.error(f"Failed to fetch results: {e}")
 
         self.__commit()
 
@@ -167,17 +169,23 @@ class Db:
                 the driver for you.
         """
         if driver_index < 0:
-            self.driver = self.__get_list_of_available_and_supported_pyodbc_drivers()[0]
+            self.driver = (
+                self.__get_list_of_available_and_supported_pyodbc_drivers()[0]
+            )
             return
 
-        if self.__get_number_of_available_pyodbc_drivers() < (driver_index + 1):
+        if self.__get_number_of_available_pyodbc_drivers() < (
+            driver_index + 1
+        ):
             raise ValueError(
                 f"Driver index {driver_index} is out of range. Please use "
-                + f"the __get_list_of_available_pyodbc_drivers() method "
-                + f"to list all available drivers."
+                f"the __get_list_of_available_pyodbc_drivers() method "
+                f"to list all available drivers."
             )
 
-        self.driver = self.__get_list_of_supported_pyodbc_drivers()[driver_index]
+        self.driver = self.__get_list_of_supported_pyodbc_drivers()[
+            driver_index
+        ]
 
     @validate_call
     def __get_number_of_available_pyodbc_drivers(self) -> int:
@@ -188,7 +196,9 @@ class Db:
         return pyodbc.drivers()
 
     @validate_call
-    def __get_list_of_available_and_supported_pyodbc_drivers(self) -> List[Any]:
+    def __get_list_of_available_and_supported_pyodbc_drivers(
+        self,
+    ) -> List[Any]:
         available_drivers = []
         for driver in self.__get_list_of_supported_pyodbc_drivers():
             try:
@@ -201,7 +211,7 @@ class Db:
                     timeout=3,
                 )
                 available_drivers.append(driver)
-            except pyodbc.Error as e:
+            except pyodbc.Error:
                 pass
 
         return available_drivers
@@ -236,8 +246,8 @@ class Db:
             except pyodbc.ProgrammingError as err:
                 logger.error(f"Programming Error {err.args[0]}: {err.args[1]}")
                 logger.warning(
-                    f"There seems to be a problem with your code. Please "
-                    + f"check your code and try again."
+                    "There seems to be a problem with your code. Please "
+                    "check your code and try again."
                 )
                 raise
             except pyodbc.NotSupportedError as err:
@@ -248,11 +258,11 @@ class Db:
             except pyodbc.OperationalError as err:
                 logger.error(f"Operational Error {err.args[0]}: {err.args[1]}")
                 logger.warning(
-                    f"Pyodbc is having issues with the connection. This "
-                    + f"could be due to the wrong driver being used. Please "
-                    + f"check your driver with "
-                    + f"the __get_list_of_available_and_supported_pyodbc_drivers() method "
-                    + f"and try again."
+                    "Pyodbc is having issues with the connection. This "
+                    "could be due to the wrong driver being used. Please "
+                    "check your driver with "
+                    "the __get_list_of_available_and_supported_pyodbc_drivers() method "
+                    "and try again."
                 )
 
                 attempt += 1
@@ -279,7 +289,7 @@ class Db:
 
         logger.error(
             f"Failed to connect to the DataWarehouse after "
-            + f"{self.connection_attempts} attempts."
+            f"{self.connection_attempts} attempts."
         )
         return True
 

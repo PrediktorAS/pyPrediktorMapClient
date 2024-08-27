@@ -21,9 +21,15 @@ class Enercast:
 
     @validate_call
     def upsert_forecast_data(
-        self, enercast_forecast_data: Dict, forecast_type_key: Union[int, None] = None
+        self,
+        enercast_forecast_data: Dict,
+        forecast_type_key: Union[int, None] = None,
     ) -> List:
-        enercast_forecast_data_json = json.dumps({"results": enercast_forecast_data})
+        enercast_forecast_data_json = json.dumps(
+            {"results": enercast_forecast_data}
+        )
 
         query = "EXEC dwetl.UpsertEnercastForecastData ?, ?"
-        return self.dwh.execute(query, enercast_forecast_data_json, forecast_type_key)
+        return self.dwh.execute(
+            query, enercast_forecast_data_json, forecast_type_key
+        )

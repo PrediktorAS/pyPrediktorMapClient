@@ -1,6 +1,4 @@
 import pytest
-import random
-import string
 import pyodbc
 import logging
 import datetime
@@ -11,26 +9,37 @@ from pyprediktormapclient.dwh.dwh import DWH
 Mock Functions
 """
 
-def mock_pyodbc_connection_throws_error_not_tolerant_to_attempts(connection_string):
+
+def mock_pyodbc_connection_throws_error_not_tolerant_to_attempts(
+    connection_string,
+):
     raise pyodbc.DataError("Error code", "Error message")
 
-def mock_pyodbc_connection_throws_error_tolerant_to_attempts(connection_string):
+
+def mock_pyodbc_connection_throws_error_tolerant_to_attempts(
+    connection_string,
+):
     def attempt_connect():
         if attempt_connect.counter < 3:
             attempt_connect.counter += 1
             raise pyodbc.DatabaseError("Error code", "Temporary error message")
         else:
             raise pyodbc.DatabaseError("Error code", "Permanent error message")
+
     attempt_connect.counter = 0
     return attempt_connect()
+
 
 """
 Helper Function
 """
 
+
 def grs():
-    """Generate a random string suitable for URL, database, username, password."""
+    """Generate a random string suitable for URL, database, username,
+    password."""
     return "test_string"
+
 
 """
 Test Functions
@@ -80,7 +89,9 @@ def test_init_when_instantiate_dwh_but_driver_index_is_not_passed_then_instance_
     mock_cursor = Mock()
     mock_connection = Mock()
     mock_connection.cursor.return_value = mock_cursor
-    monkeypatch.setattr("pyodbc.connect", lambda *args, **kwargs: mock_connection)
+    monkeypatch.setattr(
+        "pyodbc.connect", lambda *args, **kwargs: mock_connection
+    )
     monkeypatch.setattr("pyodbc.drivers", lambda: ["Driver1", "Driver2"])
 
     dwh = DWH(grs(), grs(), grs(), grs())
@@ -93,7 +104,9 @@ version
 """
 
 
-def test_version_when_version_data_is_returned_then_return_version_data(monkeypatch):
+def test_version_when_version_data_is_returned_then_return_version_data(
+    monkeypatch,
+):
     driver_index = 2
     data_returned_by_dwh = [
         (
@@ -132,8 +145,12 @@ def test_version_when_version_data_is_returned_then_return_version_data(monkeypa
     # Mock the connection method to return a mock connection with a mock cursor
     mock_connection = Mock()
     mock_connection.cursor.return_value = mock_cursor
-    monkeypatch.setattr("pyodbc.connect", lambda *args, **kwargs: mock_connection)
-    monkeypatch.setattr("pyodbc.drivers", lambda: ["Driver1", "Driver2", "Driver3"])
+    monkeypatch.setattr(
+        "pyodbc.connect", lambda *args, **kwargs: mock_connection
+    )
+    monkeypatch.setattr(
+        "pyodbc.drivers", lambda: ["Driver1", "Driver2", "Driver3"]
+    )
 
     dwh = DWH(grs(), grs(), grs(), grs(), driver_index)
     version = dwh.version()
@@ -142,7 +159,9 @@ def test_version_when_version_data_is_returned_then_return_version_data(monkeypa
     assert version == expected_result
 
 
-def test_version_when_version_data_is_not_returned_then_return_empty_tuple(monkeypatch):
+def test_version_when_version_data_is_not_returned_then_return_empty_tuple(
+    monkeypatch,
+):
     driver_index = 2
     expected_query = "SET NOCOUNT ON; EXEC [dbo].[GetVersion]"
     expected_result = {}
@@ -163,8 +182,12 @@ def test_version_when_version_data_is_not_returned_then_return_empty_tuple(monke
     # Mock the connection method to return a mock connection with a mock cursor
     mock_connection = Mock()
     mock_connection.cursor.return_value = mock_cursor
-    monkeypatch.setattr("pyodbc.connect", lambda *args, **kwargs: mock_connection)
-    monkeypatch.setattr("pyodbc.drivers", lambda: ["Driver1", "Driver2", "Driver3"])
+    monkeypatch.setattr(
+        "pyodbc.connect", lambda *args, **kwargs: mock_connection
+    )
+    monkeypatch.setattr(
+        "pyodbc.drivers", lambda: ["Driver1", "Driver2", "Driver3"]
+    )
 
     dwh = DWH(grs(), grs(), grs(), grs(), driver_index)
     version = dwh.version()

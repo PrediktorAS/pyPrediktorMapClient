@@ -1,4 +1,3 @@
-import requests
 import pytest
 import unittest
 from unittest import mock
@@ -58,6 +57,7 @@ ancestors = [
     }
 ]
 
+
 # This method will be used by the mock to replace requests.get
 def mocked_requests(*args, **kwargs):
     class MockResponse:
@@ -65,7 +65,7 @@ def mocked_requests(*args, **kwargs):
             self.json_data = json_data
             self.status_code = status_code
             self.raise_for_status = mock.Mock(return_value=False)
-            self.headers = {'Content-Type': 'application/json'}
+            self.headers = {"Content-Type": "application/json"}
 
         def json(self):
             return self.json_data
@@ -86,6 +86,7 @@ def mocked_requests(*args, **kwargs):
 
 class AnyUrlModel(BaseModel):
     url: AnyUrl
+
 
 # Our test case class
 class ModelIndexTestCase(unittest.TestCase):
@@ -117,14 +118,16 @@ class ModelIndexTestCase(unittest.TestCase):
         model = ModelIndex(url=URL)
         with mock.patch("requests.post", side_effect=mocked_requests):
             result = model.get_objects_of_type(type_name="IPVBaseCalculate2")
-            assert result == None
+            assert result is None
 
     @mock.patch("requests.get", side_effect=mocked_requests)
     def test_get_object_descendants(self, mock_get):
         model = ModelIndex(url=URL)
         with mock.patch("requests.post", side_effect=mocked_requests):
             result = model.get_object_descendants(
-                type_name="IPVBaseCalculate", ids=["Anything"], domain="PV_Assets"
+                type_name="IPVBaseCalculate",
+                ids=["Anything"],
+                domain="PV_Assets",
             )
             assert result == descendants
 
@@ -135,7 +138,7 @@ class ModelIndexTestCase(unittest.TestCase):
             result = model.get_object_descendants(
                 type_name=None, ids=["Anything"], domain="PV_Assets"
             )
-            assert result == None
+            assert result is None
 
     @mock.patch("requests.get", side_effect=mocked_requests)
     def test_get_object_descendants_with_no_ids(self, mock_get):
@@ -150,7 +153,9 @@ class ModelIndexTestCase(unittest.TestCase):
         model = ModelIndex(url=URL)
         with mock.patch("requests.post", side_effect=mocked_requests):
             result = model.get_object_ancestors(
-                type_name="IPVBaseCalculate", ids=["Anything"], domain="PV_Assets"
+                type_name="IPVBaseCalculate",
+                ids=["Anything"],
+                domain="PV_Assets",
             )
             assert result == ancestors
 

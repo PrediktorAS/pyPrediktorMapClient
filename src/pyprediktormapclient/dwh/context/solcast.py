@@ -31,4 +31,6 @@ class Solcast:
         )
 
         query = "EXEC dwetl.UpsertSolcastForecastData ?, ?"
-        return self.dwh.execute(query, solcast_forecast_data_json, forecast_type_key)
+        return self.dwh.execute(
+            query, solcast_forecast_data_json, forecast_type_key
+        )

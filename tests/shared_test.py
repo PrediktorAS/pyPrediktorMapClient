@@ -2,7 +2,6 @@ import unittest
 from unittest import mock
 import requests
 import pytest
-from pydantic import ValidationError
 
 from pyprediktormapclient.shared import request_from_api
 
@@ -17,17 +16,18 @@ return_json = [
     }
 ]
 
+
 # This method will be used by the mock to replace requests
 def mocked_requests(*args, **kwargs):
     class MockResponse:
         def __init__(self, json_data, status_code):
             self.json_data = json_data
             self.status_code = status_code
-            self.headers = {'Content-Type': 'application/json'}
+            self.headers = {"Content-Type": "application/json"}
 
         def json(self):
             return self.json_data
-        
+
         def raise_for_status(self):
             return None
 
@@ -36,18 +36,25 @@ def mocked_requests(*args, **kwargs):
 
     return MockResponse(None, 404)
 
+
 class AnalyticsHelperTestCase(unittest.TestCase):
     def test_requests_with_malformed_url(self):
         with pytest.raises(requests.exceptions.MissingSchema):
-            request_from_api(rest_url="No_valid_url", method="GET", endpoint="/")
+            request_from_api(
+                rest_url="No_valid_url", method="GET", endpoint="/"
+            )
 
     def test_requests_with_unsupported_method(self):
         with pytest.raises(TypeError):
-            request_from_api(rest_url=URL, method="NO_SUCH_METHOD", endpoint="/")
+            request_from_api(
+                rest_url=URL, method="NO_SUCH_METHOD", endpoint="/"
+            )
 
     @mock.patch("requests.get", side_effect=mocked_requests)
     def test_request_from_api_method_get(self, mock_get):
-        result = request_from_api(rest_url=URL, method="GET", endpoint="something")
+        result = request_from_api(
+            rest_url=URL, method="GET", endpoint="something"
+        )
         assert result == return_json
 
     @mock.patch("requests.post", side_effect=mocked_requests)

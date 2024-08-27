@@ -1,9 +1,10 @@
-nest_asyncio
-sphinx_rtd_theme
-tox
+-e .
 ipykernel
-tqdm
-tenacity
+nest_asyncio
+pre-commit
 pytest-asyncio
 python-dotenv
--e .
+sphinx_rtd_theme
+tenacity
+tox
+tqdm

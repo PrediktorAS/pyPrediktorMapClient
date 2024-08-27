@@ -1,5 +1,4 @@
 import unittest
-import json
 import pandas as pd
 import pytest
 from pydantic import ValidationError
@@ -70,6 +69,7 @@ namespace_array = [
     {"Idx": 6, "Uri": "http://prediktor.no/PVTypes/"},
 ]
 
+
 # Our test case class
 class AnalyticsHelperTestCase(unittest.TestCase):
     def test_analytics_helper_initialization_success(self):
@@ -84,9 +84,15 @@ class AnalyticsHelperTestCase(unittest.TestCase):
         assert "SomeName" in result.list_of_variable_names()
         assert "SomeName2" in result.list_of_variable_names()
         assert "Property" in result.properties_as_dataframe()
-        assert "Property1" in result.properties_as_dataframe()["Property"].to_list()
+        assert (
+            "Property1"
+            in result.properties_as_dataframe()["Property"].to_list()
+        )
         assert "VariableName" in result.variables_as_dataframe()
-        assert "SomeName" in result.variables_as_dataframe()["VariableName"].to_list()
+        assert (
+            "SomeName"
+            in result.variables_as_dataframe()["VariableName"].to_list()
+        )
 
     def test_split_id_success(self):
         instance = AnalyticsHelper(proper_json)

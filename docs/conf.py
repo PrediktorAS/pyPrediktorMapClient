@@ -10,7 +10,6 @@
 import os
 import sys
 import shutil
-import sphinx_rtd_theme
 
 # -- Path setup --------------------------------------------------------------
 
@@ -44,7 +43,9 @@ except FileNotFoundError:
 try:
     import sphinx
 
-    cmd_line = f"sphinx-apidoc --implicit-namespaces -f -o {output_dir} {module_dir}"
+    cmd_line = (
+        f"sphinx-apidoc --implicit-namespaces -f -o {output_dir} {module_dir}"
+    )
 
     args = cmd_line.split(" ")
     if tuple(sphinx.__version__.split(".")) >= ("1", "7"):
@@ -106,7 +107,9 @@ except ImportError:
     version = ""
 
 if not version or version.lower() == "unknown":
-    version = os.getenv("READTHEDOCS_VERSION", "unknown")  # automatically set by RTD
+    version = os.getenv(
+        "READTHEDOCS_VERSION", "unknown"
+    )  # automatically set by RTD
 
 release = version
 
