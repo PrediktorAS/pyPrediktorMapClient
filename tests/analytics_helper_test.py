@@ -1,7 +1,6 @@
 import unittest
 import pandas as pd
 import pytest
-from pydantic import ValidationError
 
 from pyprediktormapclient.analytics_helper import AnalyticsHelper
 
@@ -103,7 +102,7 @@ class AnalyticsHelperTestCase(unittest.TestCase):
 
     def test_split_id_failure(self):
         result = AnalyticsHelper(proper_json)
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValueError):
             result.split_id("TEXT:TEXT:TEXT")
 
     def test_analytics_helper_descendants_success(self):

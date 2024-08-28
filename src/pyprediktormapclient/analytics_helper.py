@@ -1,7 +1,8 @@
 import pandas as pd
 import logging
+import re
 from typing import List, Any
-from pydantic import validate_call, constr
+from pydantic import validate_call
 
 
 logger = logging.getLogger(__name__)
@@ -123,7 +124,8 @@ class AnalyticsHelper:
     @validate_call
     def split_id(self, id: Any) -> dict:
 
-        if not isinstance(id, constr(pattern=r"^\d+:\d+:\S+$")):
+        pattern = r"^\d+:\d+:\S+$"
+        if not re.match(pattern, id):
             raise ValueError("Invalid id format")
 
         id_split = id.split(":")
