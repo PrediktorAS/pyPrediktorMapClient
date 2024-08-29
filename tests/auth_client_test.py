@@ -4,7 +4,7 @@ from unittest.mock import patch
 import pytest
 from pydantic import ValidationError, BaseModel, AnyUrl
 from copy import deepcopy
-import datetime
+from datetime import datetime, timedelta, timezone
 import requests
 
 from pyprediktormapclient.auth_client import AUTH_CLIENT, Token
@@ -364,7 +364,34 @@ class OPCUATestCase(unittest.TestCase):
         assert auth_client.rest_url == URL
         assert auth_client.username == username
         assert auth_client.password == password
-        assert auth_client.id == None
+        assert auth_client.id is None
+        assert auth_client.token is None
+        assert auth_client.headers == {"Content-Type": "application/json"}
+        assert isinstance(auth_client.session, requests.Session)
+
+    def test_init_with_trailing_slash(self):
+        url_with_trailing_slash = URL.rstrip('/') + '/'
+        auth_client = AUTH_CLIENT(
+            rest_url=url_with_trailing_slash, username=username, password=password
+        )
+        assert auth_client.rest_url == URL
+        assert auth_client.username == username
+        assert auth_client.password == password
+        assert auth_client.id is None
+        assert auth_client.token is None
+        assert auth_client.headers == {"Content-Type": "application/json"}
+        assert isinstance(auth_client.session, requests.Session)
+
+    def test_init_without_trailing_slash(self):
+        url_without_trailing_slash = URL.rstrip('/')
+        auth_client = AUTH_CLIENT(
+            rest_url=url_without_trailing_slash, username=username, password=password
+        )
+        assert auth_client.rest_url == url_without_trailing_slash
+        assert auth_client.username == username
+        assert auth_client.password == password
+        assert auth_client.id is None
+        assert auth_client.token is None
         assert auth_client.headers == {"Content-Type": "application/json"}
         assert isinstance(auth_client.session, requests.Session)
 
@@ -411,6 +438,44 @@ class OPCUATestCase(unittest.TestCase):
         with pytest.raises(RuntimeError):
             auth_client.get_login_id()
 
+    @patch('pyprediktormapclient.auth_client.request_from_api')
+    def test_get_login_id_unsuccessful(self, mock_request):
+        # Mock the request_from_api to return an unsuccessful response
+        mock_request.return_value = {
+            "Success": False,
+            "ErrorMessage": "Custom error message",
+            "id": None  
+        }
+        
+        auth_client = AUTH_CLIENT(rest_url=URL, username=username, password=password)
+        
+        with self.assertRaises(RuntimeError) as context:
+            auth_client.get_login_id()
+        
+        self.assertEqual(str(context.exception), "Custom error message")
+
+    @patch('pyprediktormapclient.auth_client.request_from_api')
+    def test_get_login_id_no_error_message(self, mock_request):
+        # Mock the request_from_api to return an unsuccessful response without an error message
+        mock_request.return_value = {
+            "Success": False,
+            "id": None
+        }
+        
+        auth_client = AUTH_CLIENT(rest_url=URL, username=username, password=password)
+        
+        with self.assertRaises(RuntimeError) as context:
+            auth_client.get_login_id()
+        
+        self.assertEqual(str(context.exception), "Unknown error occurred during login.")
+
+    @patch('pyprediktormapclient.auth_client.request_from_api')
+    def test_get_login_id_error_response(self, mock_request):
+        mock_request.return_value = {"error": "Some error occurred"}
+        auth_client = AUTH_CLIENT(rest_url=URL, username=username, password=password)
+        with self.assertRaises(RuntimeError):
+            auth_client.get_login_id()
+
     @mock.patch(
         "requests.post",
         side_effect=empty_self_service_login_token_mocked_requests,
@@ -422,6 +487,10 @@ class OPCUATestCase(unittest.TestCase):
         auth_client.id = auth_id
         with pytest.raises(RuntimeError):
             auth_client.get_login_token()
+
+    def test_check_if_token_has_expired_no_token(self):
+        auth_client = AUTH_CLIENT(rest_url=URL, username=username, password=password)
+        self.assertTrue(auth_client.check_if_token_has_expired())
 
     @mock.patch(
         "requests.post",
@@ -458,11 +527,47 @@ class OPCUATestCase(unittest.TestCase):
         auth_client.token = Token(
             session_token=auth_session_id, expires_at=auth_expires_at_2hrs_ago
         )
-        auth_client.token.expires_at = datetime.datetime.now(
-            datetime.timezone.utc
-        ) - datetime.timedelta(hours=2)
+        auth_client.token.expires_at = datetime.now(
+            timezone.utc
+        ) - timedelta(hours=2)
         token_expired = auth_client.check_if_token_has_expired()
         assert token_expired
+
+    @patch('pyprediktormapclient.auth_client.request_from_api')
+    def test_get_login_token_success_no_expiry(self, mock_request):
+        mock_response = {
+            "Success": True,
+            "session_token": "some_token",
+            "session": {}
+        }
+        mock_request.return_value = mock_response
+        auth_client = AUTH_CLIENT(rest_url=URL, username=username, password=password)
+        auth_client.id = "some_id"
+        auth_client.get_login_token()
+        self.assertEqual(auth_client.token.session_token, "some_token")
+        self.assertIsNone(auth_client.token.expires_at)
+
+    def test_check_if_token_has_expired_valid(self):
+        auth_client = AUTH_CLIENT(rest_url=URL, username=username, password=password)
+        future_time = datetime.now(timezone.utc) + timedelta(hours=1)
+        auth_client.token = Token(session_token=auth_session_id, expires_at=future_time)
+        self.assertFalse(auth_client.check_if_token_has_expired())
+
+    @patch('pyprediktormapclient.auth_client.request_from_api')
+    def test_get_login_token_invalid_expiry_format(self, mock_request):
+        mock_response = {
+            "Success": True,
+            "session_token": "some_token",
+            "session": {
+                "expires_at": "invalid_date_format"
+            }
+        }
+        mock_request.return_value = mock_response
+        auth_client = AUTH_CLIENT(rest_url=URL, username=username, password=password)
+        auth_client.id = "some_id"
+        auth_client.get_login_token()
+        self.assertEqual(auth_client.token.session_token, "some_token")
+        self.assertIsNone(auth_client.token.expires_at)
 
     def test_get_self_service_token_expired_none(self):
         auth_client = AUTH_CLIENT(
@@ -488,13 +593,15 @@ class OPCUATestCase(unittest.TestCase):
             rest_url=URL, username=username, password=password
         )
 
-        auth_client.token = Token(session_token=auth_session_id, expires_at=auth_expires_at)
-        assert auth_client.token.expires_at == datetime.datetime(2022, 12, 4, 0, 0, 0, 767407252, tzinfo=datetime.timezone.utc)
+        auth_expires_at_datetime = datetime(2022, 12, 4, 7, 31, 28, 767407, tzinfo=timezone.utc)
 
         auth_client.token = Token(session_token=auth_session_id, expires_at=auth_expires_at)
+        assert auth_client.token.expires_at == auth_expires_at_datetime
+
+        auth_client.token = Token(session_token=auth_session_id, expires_at=None)
         assert auth_client.token.expires_at is None
 
-        invalid_datetime = "2024-08-29 00:00:00"
+        invalid_datetime = datetime(2024, 8, 29, 0, 0, tzinfo=timezone.utc)
         auth_client.token = Token(session_token=auth_session_id, expires_at=invalid_datetime)
         assert auth_client.token.expires_at == invalid_datetime
 

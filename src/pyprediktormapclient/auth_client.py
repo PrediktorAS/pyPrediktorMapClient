@@ -1,4 +1,5 @@
-from pydantic import BaseModel, AnyUrl, AwareDatetime, field_validator
+from pydantic import BaseModel, AnyUrl, field_validator, ConfigDict
+from typing import Optional
 from pyprediktormapclient.shared import request_from_api
 import datetime
 import requests
@@ -14,11 +15,15 @@ class Ory_Login_Structure(BaseModel):
 
 class Token(BaseModel):
     session_token: str
-    expires_at: AwareDatetime = None
+    expires_at: Optional[datetime.datetime] = None
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     @field_validator("expires_at", mode="before")
     def remove_nanoseconds(cls, v):
         if v is None:
+            return v
+        if isinstance(v, datetime.datetime):
             return v
         match = re.match(
             r"(\d\d\d\d)-(\d\d)-(\d\d)T(\d\d):(\d\d):(\d\d).\d+(\S+)", v
@@ -108,14 +113,13 @@ class AUTH_CLIENT:
         self.token = Token(session_token=content.get("session_token"))
 
         # Check if token has expiry date, save it if it does
-        if isinstance(content.get("session").get("expires_at"), str):
-            # String returned from ory has to many chars in microsec. Remove them
-            # from_string = content.get("session").get("expires_at")
-            # date_object = datetime.datetime.strptime(f"{from_string[:-11]}.+00:00", "%Y-%m-%dT%H:%M:%S.%z")
+        expires_at_str = content.get("session", {}).get("expires_at")
+        if isinstance(expires_at_str, str):
             try:
+                expires_at = datetime.datetime.fromisoformat(expires_at_str.replace("Z", "+00:00"))
                 self.token = Token(
                     session_token=self.token.session_token,
-                    expires_at=content.get("session").get("expires_at"),
+                    expires_at=expires_at,
                 )
             except Exception:
                 # If string returned from Ory cant be parsed, still should be possible to use Ory,
