@@ -1,9 +1,11 @@
 import unittest
 from unittest import mock
+from unittest.mock import patch
 import pytest
 from pydantic import ValidationError, BaseModel, AnyUrl
 from copy import deepcopy
 import datetime
+import requests
 
 from pyprediktormapclient.auth_client import AUTH_CLIENT, Token
 
@@ -355,6 +357,17 @@ class AnyUrlModel(BaseModel):
 # Our test case class
 class OPCUATestCase(unittest.TestCase):
 
+    def test_init(self):
+        auth_client = AUTH_CLIENT(
+            rest_url=URL, username=username, password=password
+        )
+        assert auth_client.rest_url == URL
+        assert auth_client.username == username
+        assert auth_client.password == password
+        assert auth_client.id == None
+        assert auth_client.headers == {"Content-Type": "application/json"}
+        assert isinstance(auth_client.session, requests.Session)
+
     def test_malformed_rest_url(self):
         with pytest.raises(ValidationError):
             AnyUrlModel(rest_url="invalid-url")
@@ -458,6 +471,32 @@ class OPCUATestCase(unittest.TestCase):
         auth_client.token = Token(session_token=auth_session_id)
         token_expired = auth_client.check_if_token_has_expired()
         assert token_expired
+
+    @patch.object(AUTH_CLIENT, 'get_login_id')
+    @patch.object(AUTH_CLIENT, 'get_login_token')
+    def test_request_new_ory_token(self, mock_get_login_token, mock_get_login_id):
+        auth_client = AUTH_CLIENT(
+            rest_url=URL, username=username, password=password
+        )
+        auth_client.request_new_ory_token()
+        mock_get_login_id.assert_called_once()
+        mock_get_login_token.assert_called_once()
+
+    def test_token_remove_nanoseconds(self):
+
+        auth_client = AUTH_CLIENT(
+            rest_url=URL, username=username, password=password
+        )
+
+        auth_client.token = Token(session_token=auth_session_id, expires_at=auth_expires_at)
+        assert auth_client.token.expires_at == datetime.datetime(2022, 12, 4, 0, 0, 0, 767407252, tzinfo=datetime.timezone.utc)
+
+        auth_client.token = Token(session_token=auth_session_id, expires_at=auth_expires_at)
+        assert auth_client.token.expires_at is None
+
+        invalid_datetime = "2024-08-29 00:00:00"
+        auth_client.token = Token(session_token=auth_session_id, expires_at=invalid_datetime)
+        assert auth_client.token.expires_at == invalid_datetime
 
 
 if __name__ == "__main__":
