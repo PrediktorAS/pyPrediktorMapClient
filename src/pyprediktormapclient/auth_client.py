@@ -116,7 +116,9 @@ class AUTH_CLIENT:
         expires_at_str = content.get("session", {}).get("expires_at")
         if isinstance(expires_at_str, str):
             try:
-                expires_at = datetime.datetime.fromisoformat(expires_at_str.replace("Z", "+00:00"))
+                expires_at = datetime.datetime.fromisoformat(
+                    expires_at_str.replace("Z", "+00:00")
+                )
                 self.token = Token(
                     session_token=self.token.session_token,
                     expires_at=expires_at,
