@@ -464,11 +464,12 @@ class TestCaseAuthClient(unittest.TestCase):
         )
         auth_client.id = auth_id
         auth_client.get_login_token()
-        test_token = Token(
-            session_token=auth_session_id, expires_at=auth_expires_at
-        )
-        assert auth_client.token.session_token == test_token.session_token
-        assert auth_client.token.expires_at == test_token.expires_at
+
+        self.assertIsNotNone(auth_client.token)
+        self.assertEqual(auth_client.token.session_token, auth_session_id)
+
+        expected_expires_at = Token.remove_nanoseconds(auth_expires_at)
+        self.assertEqual(auth_client.token.expires_at, expected_expires_at)
 
     @mock.patch(
         "requests.post",
