@@ -3,7 +3,7 @@ import logging
 from typing import List
 import requests
 from datetime import date, datetime
-from pydantic import AnyUrl, ValidationError
+from pydantic import AnyUrl
 from pydantic_core import Url
 from pyprediktormapclient.shared import request_from_api
 
@@ -82,7 +82,6 @@ class ModelIndex:
             headers=self.headers,
             session=self.session,
         )
-
         return content
 
     def get_object_types(self) -> str:
@@ -93,7 +92,6 @@ class ModelIndex:
             headers=self.headers,
             session=self.session,
         )
-
         return content
 
     def get_object_type_id_from_name(self, type_name: str) -> str:
@@ -113,10 +111,7 @@ class ModelIndex:
             )
         except StopIteration:
             obj_type = {}
-        object_type_id = obj_type.get(
-            "Id"
-        )  # Returns None if the ID is not present
-
+        object_type_id = obj_type.get("Id")
         return object_type_id
 
     def get_objects_of_type(self, type_name: str) -> str:
@@ -141,7 +136,6 @@ class ModelIndex:
             headers=self.headers,
             session=self.session,
         )
-
         return content
 
     def get_object_descendants(
@@ -161,7 +155,7 @@ class ModelIndex:
             A json-formatted string with descendats data of selected object (or None if the type is not found)
         """
         if type_name is None or not ids:
-            raise ValidationError("type_name and ids cannot be None or empty")
+            raise ValueError("type_name and ids cannot be None or empty")
 
         id = self.get_object_type_id_from_name(type_name)
         body = json.dumps(
@@ -179,7 +173,6 @@ class ModelIndex:
             headers=self.headers,
             session=self.session,
         )
-
         return content
 
     def get_object_ancestors(
@@ -199,7 +192,7 @@ class ModelIndex:
             A json-formatted string with ancestors data of selected object (or None if the type is not found)
         """
         if type_name is None or not ids:
-            raise ValidationError("type_name and ids cannot be None or empty")
+            raise ValueError("type_name and ids cannot be None or empty")
 
         id = self.get_object_type_id_from_name(type_name)
         body = json.dumps(
@@ -217,5 +210,4 @@ class ModelIndex:
             headers=self.headers,
             session=self.session,
         )
-
         return content
