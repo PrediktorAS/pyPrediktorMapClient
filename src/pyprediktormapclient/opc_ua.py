@@ -203,6 +203,9 @@ class OPC_UA:
         self.session = session
         self.helper = AsyncIONotebookHelper()
 
+        if not str(self.opcua_url).startswith("opc.tcp://"):
+            raise ValueError("Invalid OPC UA URL")
+        
         if self.auth_client is not None:
             if self.auth_client.token is not None:
                 self.headers["Authorization"] = (
@@ -297,15 +300,6 @@ class OPC_UA:
                 self.check_auth_client(json.loads(e.response.content))
             else:
                 raise RuntimeError(f"Error message {e}")
-        finally:
-            content = request_from_api(
-                rest_url=self.rest_url,
-                method="POST",
-                endpoint="values/get",
-                data=json.dumps([body], default=self.json_serial),
-                headers=self.headers,
-                extended_timeout=True,
-            )
 
         for var in vars:
             # Add default None values
@@ -361,7 +355,7 @@ class OPC_UA:
         if not content.get("Success"):
             raise RuntimeError(content.get("ErrorMessage"))
         if "HistoryReadResults" not in content:
-            raise RuntimeError(content.get("ErrorMessage"))
+            raise RuntimeError("No history read results returned from the server")
 
     def _process_df(
         self, df_result: pd.DataFrame, columns: Dict[str, str]
@@ -501,6 +495,11 @@ class OPC_UA:
         ]
 
         results = await asyncio.gather(*tasks)
+        results = [df for df in results if df is not None]
+
+        if not results:
+            return pd.DataFrame()
+
         combined_df = pd.concat(results, ignore_index=True)
         return combined_df
 
