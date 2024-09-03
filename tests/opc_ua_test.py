@@ -1,7 +1,9 @@
 import unittest
 from unittest import mock
+from unittest.mock import patch
+from requests.exceptions import HTTPError
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import aiohttp
 import pandas.api.types as ptypes
 from pydantic import ValidationError, AnyUrl, BaseModel
@@ -12,13 +14,13 @@ from pydantic_core import Url
 import asyncio
 import requests
 import json
+import logging
 import pandas as pd
 from parameterized import parameterized
-from aioresponses import aioresponses
 from aiohttp.client_exceptions import ClientResponseError, ClientError
 from yarl import URL as YarlURL
 
-from pyprediktormapclient.opc_ua import OPC_UA, Variables, WriteVariables, WriteHistoricalVariables, TYPE_LIST
+from pyprediktormapclient.opc_ua import OPC_UA, Variables, WriteVariables, WriteHistoricalVariables, Value
 from pyprediktormapclient.auth_client import AUTH_CLIENT, Token
 
 URL = "http://someserver.somedomain.com/v1/"
@@ -499,44 +501,73 @@ class TestCaseOPCUA(unittest.TestCase):
             OPC_UA(rest_url=URL, opcua_url="http://invalidurl.com")
 
     def test_json_serial(self):
+        logging.basicConfig(level=logging.DEBUG)
         opc = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
-        
+    
         dt = datetime(2024, 9, 2, 12, 0, 0)
-        self.assertEqual(opc.json_serial(dt), "2024-09-02T12:00:00")
-       
+        assert opc.json_serial(dt) == "2024-09-02T12:00:00"
+        
+        d = date(2024, 9, 2)
+        assert opc.json_serial(d) == "2024-09-02"
+    
         url = Url("http://example.com")
-        self.assertEqual(opc.json_serial(url).rstrip('/'), "http://example.com")
-      
-        with self.assertRaises(TypeError):
+        result = opc.json_serial(url)
+        assert result == "http://example.com/"
+        assert isinstance(result, str)
+    
+        with pytest.raises(TypeError) as excinfo:
             opc.json_serial(set())
+        assert "Type <class 'set'> not serializable" in str(excinfo.value)
 
     def test_check_auth_client(self):
         auth_client_mock = mock.Mock()
+        auth_client_mock.token.session_token = "test_token"
         opc = OPC_UA(rest_url=URL, opcua_url=OPC_URL, auth_client=auth_client_mock)
-       
+    
         content = {"error": {"code": 404}}
         opc.check_auth_client(content)
         auth_client_mock.request_new_ory_token.assert_called_once()
+        assert opc.headers["Authorization"] == "Bearer test_token"
         
+        auth_client_mock.reset_mock()
+
         content = {"error": {"code": 500}, "ErrorMessage": "Server Error"}
-        with self.assertRaises(RuntimeError):
+        with pytest.raises(RuntimeError) as excinfo:
             opc.check_auth_client(content)
+        assert str(excinfo.value) == "Server Error"
+        auth_client_mock.request_new_ory_token.assert_not_called()
 
         content = {"error": {}}
         with pytest.raises(RuntimeError):
             opc.check_auth_client(content)
+        auth_client_mock.request_new_ory_token.assert_not_called()
 
     def test_check_if_ory_session_token_is_valid_refresh(self):
         auth_client_mock = mock.Mock()
-        auth_client_mock.check_if_token_has_expired.return_value = True
         opc = OPC_UA(rest_url=URL, opcua_url=OPC_URL, auth_client=auth_client_mock)
-        
+       
+        auth_client_mock.check_if_token_has_expired.return_value = True
         opc.check_if_ory_session_token_is_valid_refresh()
         auth_client_mock.check_if_token_has_expired.assert_called_once()
         auth_client_mock.refresh_token.assert_called_once()
+      
+        auth_client_mock.reset_mock()
+      
+        auth_client_mock.check_if_token_has_expired.return_value = False
+        opc.check_if_ory_session_token_is_valid_refresh()
+        auth_client_mock.check_if_token_has_expired.assert_called_once()
+        auth_client_mock.refresh_token.assert_not_called()
 
-    @mock.patch("requests.post")
-    @mock.patch("pyprediktormapclient.shared.request_from_api")
+    @mock.patch('pyprediktormapclient.opc_ua.request_from_api')
+    def test_get_values_request_error(self, mock_request):
+        mock_request.side_effect = Exception("Test exception")
+        opc = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
+        with self.assertRaises(RuntimeError) as context:
+            opc.get_values(list_of_ids)
+        self.assertEqual(str(context.exception), "Error in get_values: Test exception")
+
+    @patch('requests.post')
+    @patch('pyprediktormapclient.shared.request_from_api')
     def test_get_values_with_auth_client(self, mock_request_from_api, mock_post):
         auth_client_mock = mock.Mock()
         auth_client_mock.token.session_token = "test_token"
@@ -545,7 +576,7 @@ class TestCaseOPCUA(unittest.TestCase):
         mock_response = mock.Mock()
         mock_response.content = json.dumps({"error": {"code": 404}}).encode()
         mock_request_from_api.side_effect = [
-            HTTPError("404 Client Error", response=mock_response),
+            requests.exceptions.HTTPError("404 Client Error", response=mock_response),
             successful_live_response
         ]
         mock_post.return_value = MockResponse(successful_live_response, 200)
@@ -589,11 +620,6 @@ class TestCaseOPCUA(unittest.TestCase):
         assert "description" in result
         assert result["type"] == "Boolean"
 
-    def test_variable_list_not_list(self):
-        opc = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
-        with pytest.raises(TypeError, match="Unsupported type in variable_list"):
-            opc.get_values("not_a_list")
-
     def test_get_value_type_not_found(self):
         opc = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
         result = opc._get_value_type(100000)
@@ -603,11 +629,26 @@ class TestCaseOPCUA(unittest.TestCase):
 
     def test_get_variable_list_as_list(self):
         opc = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
-        var = Variables(Id="ID", Namespace=1, IdType=2)
-        list = [var]
-        result = opc._get_variable_list_as_list(list)
-        assert "Id" in result[0]
-        assert result[0]["Id"] == "ID"
+
+        pydantic_var = Variables(Id="SOMEID", Namespace=1, IdType=2)
+        result = opc._get_variable_list_as_list([pydantic_var])
+        assert isinstance(result[0], dict)
+        assert result[0] == {"Id": "SOMEID", "Namespace": 1, "IdType": 2}
+
+        dict_var = {"Id": "SOMEID2", "Namespace": 2, "IdType": 1}
+        result = opc._get_variable_list_as_list([dict_var])
+        assert isinstance(result[0], dict)
+        assert result[0] == dict_var
+
+        with pytest.raises(TypeError, match="Unsupported type in variable_list"):
+            opc._get_variable_list_as_list([123])
+
+    def test_get_values_variable_list_not_list(self):
+        opc = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
+        not_a_list = "not_a_list"
+
+        with pytest.raises(TypeError, match="Unsupported type in variable_list"):
+            opc.get_values(not_a_list)
 
     def test_get_variable_list_as_list_invalid_type(self):
         opc = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
@@ -695,6 +736,59 @@ class TestCaseOPCUA(unittest.TestCase):
         tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
         result = tsdata.get_values(list_of_ids)
         assert result[0]["StatusCode"] is None
+
+    @mock.patch('pyprediktormapclient.opc_ua.request_from_api')
+    def test_get_values_error_handling(self, mock_request):
+        mock_request.side_effect = Exception("Test exception")
+        opc = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
+        with self.assertRaises(RuntimeError) as context:
+            opc.get_values(list_of_ids)
+        self.assertEqual(str(context.exception), "Error in get_values: Test exception")
+
+    @mock.patch('pyprediktormapclient.opc_ua.request_from_api')
+    def test_write_values_error_handling(self, mock_request):
+        mock_request.side_effect = Exception("Test exception")
+        opc = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
+        with self.assertRaises(RuntimeError) as context:
+            opc.write_values(list_of_write_values)
+        self.assertEqual(str(context.exception), "Error in write_values: Test exception")
+
+    @mock.patch('pyprediktormapclient.opc_ua.request_from_api')
+    def test_write_values_http_error_handling(self, mock_request):
+        auth_client_mock = mock.Mock()
+        opc = OPC_UA(rest_url=URL, opcua_url=OPC_URL, auth_client=auth_client_mock)
+        
+        mock_response = mock.Mock()
+        mock_response.content = json.dumps({"error": {"code": 404}}).encode()
+        http_error = requests.exceptions.HTTPError("404 Client Error", response=mock_response)
+        mock_request.side_effect = [http_error, {"Success": True, "StatusCodes": [{"Code": 0}]}]
+        
+        opc.check_auth_client = mock.Mock()
+        
+        result = opc.write_values(list_of_write_values)
+        
+        opc.check_auth_client.assert_called_once_with({"error": {"code": 404}})
+        self.assertIsNotNone(result)
+        self.assertEqual(len(result), len(list_of_write_values))
+
+    @mock.patch('pyprediktormapclient.opc_ua.request_from_api')
+    def test_write_historical_values_http_error_handling(self, mock_request):
+        auth_client_mock = mock.Mock()
+        opc = OPC_UA(rest_url=URL, opcua_url=OPC_URL, auth_client=auth_client_mock)
+        
+        mock_response = mock.Mock()
+        mock_response.content = json.dumps({"error": {"code": 404}}).encode()
+        http_error = requests.exceptions.HTTPError("404 Client Error", response=mock_response)
+        mock_request.side_effect = [http_error, {"Success": True, "HistoryUpdateResults": [{}]}]
+        
+        opc.check_auth_client = mock.Mock()
+        
+        converted_data = [WriteHistoricalVariables(**item) for item in list_of_write_historical_values]
+        result = opc.write_historical_values(converted_data)
+        
+        opc.check_auth_client.assert_called_once_with({"error": {"code": 404}})
+        self.assertIsNotNone(result)
+        self.assertEqual(len(result), len(converted_data))
 
     @mock.patch("requests.post", side_effect=successful_write_mocked_requests)
     def test_write_live_values_successful(self, mock_get):
@@ -1041,6 +1135,15 @@ class TestCaseAsyncOPCUA():
             await opc._make_request("test_endpoint", {}, 3, 0)
         assert mock_post.call_count == 3
 
+    @mock.patch('aiohttp.ClientSession.post')
+    async def test_make_request_client_error(self, mock_post):
+        opc = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
+        
+        mock_post.side_effect = aiohttp.ClientError("Test client error")
+        
+        with pytest.raises(RuntimeError):
+            await opc._make_request("test_endpoint", {}, 1, 0)
+
     @mock.patch("aiohttp.ClientSession.post")
     async def test_make_request_500_error(self, mock_post):
         opc = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
@@ -1066,7 +1169,7 @@ class TestCaseAsyncOPCUA():
             await error_response.raise_for_status()  
             await opc._make_request("test_endpoint", {}, 1, 0)
 
-    @mock.patch("aiohttp.ClientSession.post")
+    @mock.patch('aiohttp.ClientSession.post')
     async def test_make_request_max_retries_reached(self, mock_post):
         opc = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
         

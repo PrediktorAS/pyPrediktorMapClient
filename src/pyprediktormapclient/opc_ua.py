@@ -294,12 +294,8 @@ class OPC_UA:
                 headers=self.headers,
                 extended_timeout=True,
             )
-        except HTTPError as e:
-            # print(.get('error').get('code'))
-            if self.auth_client is not None:
-                self.check_auth_client(json.loads(e.response.content))
-            else:
-                raise RuntimeError(f"Error message {e}")
+        except Exception as e:
+            raise RuntimeError(f"Error in get_values: {str(e)}") from e
 
         for var in vars:
             # Add default None values
@@ -615,17 +611,19 @@ class OPC_UA:
         except HTTPError as e:
             if self.auth_client is not None:
                 self.check_auth_client(json.loads(e.response.content))
+                content = request_from_api(
+                    rest_url=self.rest_url,
+                    method="POST",
+                    endpoint="values/set",
+                    data=json.dumps([body], default=self.json_serial),
+                    headers=self.headers,
+                    extended_timeout=True,
+                )
             else:
-                raise RuntimeError(f"Error message {e}")
-        finally:
-            content = request_from_api(
-                rest_url=self.rest_url,
-                method="POST",
-                endpoint="values/set",
-                data=json.dumps([body], default=self.json_serial),
-                headers=self.headers,
-                extended_timeout=True,
-            )
+                raise RuntimeError(f"Error in write_values: {str(e)}")
+        except Exception as e:
+            raise RuntimeError(f"Error in write_values: {str(e)}")
+        
         # Return if no content from server
         if not isinstance(content, dict):
             return None
