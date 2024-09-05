@@ -294,6 +294,19 @@ class OPC_UA:
                 headers=self.headers,
                 extended_timeout=True,
             )
+        except HTTPError as e:
+            if self.auth_client is not None:
+                self.check_auth_client(json.loads(e.response.content))
+                content = request_from_api(
+                    rest_url=self.rest_url,
+                    method="POST",
+                    endpoint="values/get",
+                    data=json.dumps([body], default=self.json_serial),
+                    headers=self.headers,
+                    extended_timeout=True,
+                )
+            else:
+                raise RuntimeError(f"Error in get_values: {str(e)}") from e
         except Exception as e:
             raise RuntimeError(f"Error in get_values: {str(e)}") from e
 
