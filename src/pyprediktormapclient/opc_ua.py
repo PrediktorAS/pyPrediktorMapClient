@@ -403,14 +403,14 @@ class OPC_UA:
                             logging.error(
                                 f"HTTP error {response.status}: {error_text}"
                             )
-                            response.raise_for_status()
+                            await response.raise_for_status()
 
                         return await response.json()
 
             except aiohttp.ClientResponseError as e:
-                if e.status == 500:
+                if e.status == 500 or attempt == max_retries - 1:
                     logging.error(f"Server Error: {e}")
-                    raise  # For 500 errors, we might want to fail fast
+                    raise  # Raise for 500 errors or on last attempt
                 logging.error(f"ClientResponseError: {e}")
             except aiohttp.ClientError as e:
                 logging.error(f"ClientError in POST request: {e}")
