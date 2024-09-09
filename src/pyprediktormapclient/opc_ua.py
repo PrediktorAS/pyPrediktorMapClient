@@ -408,10 +408,9 @@ class OPC_UA:
                         return await response.json()
 
             except aiohttp.ClientResponseError as e:
-                if e.status == 500 or attempt == max_retries - 1:
-                    logging.error(f"Server Error: {e}")
-                    raise  # Raise for 500 errors or on last attempt
                 logging.error(f"ClientResponseError: {e}")
+                if attempt == max_retries - 1:
+                    raise RuntimeError("Max retries reached") from e
             except aiohttp.ClientError as e:
                 logging.error(f"ClientError in POST request: {e}")
             except Exception as e:
@@ -423,9 +422,9 @@ class OPC_UA:
                     f"Request failed. Retrying in {wait_time} seconds..."
                 )
                 await asyncio.sleep(wait_time)
-            else:
-                logging.error("Max retries reached.")
-                raise RuntimeError("Max retries reached")
+
+        logging.error("Max retries reached.")
+        raise RuntimeError("Max retries reached")
 
     def _process_content(self, content: dict) -> pd.DataFrame:
         self._check_content(content)
@@ -667,13 +666,13 @@ class OPC_UA:
         """
         # Check if data is in correct order, if wrong fail.
         for variable in variable_list:
-            if len(variable.UpdateValues) > 1:
-                for num_variable in range(len(variable.UpdateValues) - 1):
+            if len(variable.get('UpdateValues', [])) > 1:
+                for num_variable in range(len(variable['UpdateValues']) - 1):
                     if not (
-                        (variable.UpdateValues[num_variable].SourceTimestamp)
-                        < variable.UpdateValues[
+                        (variable['UpdateValues'][num_variable]['SourceTimestamp'])
+                        < variable['UpdateValues'][
                             num_variable + 1
-                        ].SourceTimestamp
+                        ]['SourceTimestamp']
                     ):
                         raise ValueError(
                             "Time for variables not in correct order."
@@ -694,17 +693,19 @@ class OPC_UA:
         except HTTPError as e:
             if self.auth_client is not None:
                 self.check_auth_client(json.loads(e.response.content))
+                # Retry the request after checking auth
+                content = request_from_api(
+                    rest_url=self.rest_url,
+                    method="POST",
+                    endpoint="values/historicalwrite",
+                    data=json.dumps(body, default=self.json_serial),
+                    headers=self.headers,
+                    extended_timeout=True,
+                )
             else:
-                raise RuntimeError(f"Error message {e}")
-        finally:
-            content = request_from_api(
-                rest_url=self.rest_url,
-                method="POST",
-                endpoint="values/historicalwrite",
-                data=json.dumps(body, default=self.json_serial),
-                headers=self.headers,
-                extended_timeout=True,
-            )
+                raise RuntimeError(f"Error in write_historical_values: {str(e)}")
+        except Exception as e:
+            raise RuntimeError(f"Error in write_historical_values: {str(e)}")
         # Return if no content from server
         if not isinstance(content, dict):
             return None

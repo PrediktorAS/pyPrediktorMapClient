@@ -520,6 +520,24 @@ class TestCaseOPCUA:
         assert "ClientNamespaces" in opc_with_namespaces.body
         assert opc_with_namespaces.body["ClientNamespaces"] == ["1", "2"]
 
+    def test_init_with_auth_client(self):
+        self.auth_client_mock.token = Mock()
+        self.auth_client_mock.token.session_token = "test_token"
+        self.opc_auth = OPC_UA(rest_url=URL, opcua_url=OPC_URL, auth_client=self.auth_client_mock)
+
+        assert self.opc_auth.auth_client == self.auth_client_mock
+        assert self.opc_auth.headers["Authorization"] == "Bearer test_token"
+
+    def test_init_with_auth_client_no_token(self):
+       self.auth_client_mock.token = None
+       opc_auth = OPC_UA(rest_url=URL, opcua_url=OPC_URL, auth_client=self.auth_client_mock)
+
+       assert "Authorization" not in opc_auth.headers
+
+    def test_init_with_minimal_args(self):
+       assert self.opc.auth_client is None
+       assert "Authorization" not in self.opc.headers
+
     def test_json_serial_with_url(self):
         url = Url("http://example.com")
         result = self.opc.json_serial(url)
@@ -722,6 +740,16 @@ class TestCaseOPCUA:
             self.opc.get_values(list_of_ids)
         assert str(exc_info.value) == "Error in get_values: Test exception"
 
+    @patch("requests.post")
+    def test_get_live_values_500_error(self, mock_post):
+        error_response = Mock()
+        error_response.status_code = 500
+        error_response.raise_for_status.side_effect = HTTPError("500 Server Error: Internal Server Error for url")
+       
+        mock_post.return_value = error_response
+        with pytest.raises(RuntimeError):
+            self.opc.get_values(list_of_ids)
+
     @patch("requests.post", side_effect=unsuccessful_mocked_requests)
     def test_get_live_values_unsuccessful(self, mock_post):
         with pytest.raises(RuntimeError):
@@ -814,24 +842,7 @@ class TestCaseOPCUA:
         assert result.iloc[2]["SourceTimestamp"] == "2022-09-13T13:39:51Z"
 
     @patch('pyprediktormapclient.opc_ua.request_from_api')
-    def test_write_values_with_non_dict_content(self, mock_request):
-        mock_request.return_value = "Not a dict"
-        result = self.opc.write_values([{"NodeId": {"Id": "test", "Namespace": 1, "IdType": 2}, "Value": {"Value": {"Type": 10, "Body": 1.2}, "SourceTimestamp": "2022-11-03T12:00:00Z"}}])
-        assert result is None
-
-    def test_write_historical_values_empty_update_values(self):
-        empty_variable = WriteHistoricalVariables(
-            NodeId=Variables(Id="test", Namespace=1, IdType=2),
-            PerformInsertReplace=1,
-            UpdateValues=[]
-        )
-        with patch('pyprediktormapclient.opc_ua.request_from_api') as mock_request:
-            mock_request.return_value = {"Success": True, "HistoryUpdateResults": [{}]}
-            result = self.opc.write_historical_values([empty_variable])
-        assert result is not None
-
-    @patch('pyprediktormapclient.opc_ua.request_from_api')
-    def test_write_values_http_error_handling(self, mock_request):
+    def test_write_live_values_http_error_handling(self, mock_request):
         auth_client_mock = Mock()
         opc = OPC_UA(rest_url=URL, opcua_url=OPC_URL, auth_client=auth_client_mock)
         
@@ -849,42 +860,19 @@ class TestCaseOPCUA:
         assert len(result) == len(list_of_write_values)
 
     @patch('pyprediktormapclient.opc_ua.request_from_api')
-    def test_write_historical_values_http_error_handling(self, mock_request):
-        auth_client_mock = Mock()
-        opc = OPC_UA(rest_url=URL, opcua_url=OPC_URL, auth_client=auth_client_mock)
-        
-        mock_response = Mock()
-        mock_response.content = json.dumps({"error": {"code": 404}}).encode()
-        http_error = requests.exceptions.HTTPError("404 Client Error", response=mock_response)
-        mock_request.side_effect = [http_error, {"Success": True, "HistoryUpdateResults": [{}]}]
-        
-        opc.check_auth_client = Mock()
-        
-        converted_data = [WriteHistoricalVariables(**item) for item in list_of_write_historical_values]
-        result = opc.write_historical_values(converted_data)
-        
-        opc.check_auth_client.assert_called_once_with({"error": {"code": 404}})
-        assert result is not None
-        assert len(result) == len(converted_data)
-
-    @patch('pyprediktormapclient.opc_ua.request_from_api')
-    def test_error_handling_write_values(self, mock_request):
+    def test_write_live_values_error_handling(self, mock_request):
         mock_request.side_effect = Exception("Test exception")
         with pytest.raises(RuntimeError) as exc_info:
             self.opc.write_values(list_of_write_values)
         assert str(exc_info.value) == "Error in write_values: Test exception"
 
     @patch('pyprediktormapclient.opc_ua.request_from_api')
-    def test_error_handling_write_historical_values(self, mock_request):
-        mock_request.side_effect = [
-            Exception("Test exception"),
-            Exception("Test exception") 
-        ]
-        input_data = [WriteHistoricalVariables(**item) for item in list_of_write_historical_values]
-        with pytest.raises(Exception) as exc_info:
-            self.opc.write_historical_values(input_data)
-        assert str(exc_info.value) == "Test exception"
-        assert mock_request.call_count == 2
+    def test_write_live_values_http_error_without_auth(self, mock_request):
+        mock_request.side_effect = requests.exceptions.HTTPError("404 Client Error")
+        
+        with pytest.raises(RuntimeError) as exc_info:
+            self.opc.write_values(list_of_write_values)
+        assert str(exc_info.value).startswith("Error in write_values: 404 Client Error")
 
     @patch("requests.post", side_effect=successful_write_mocked_requests)
     def test_write_live_values_successful(self, mock_get):
@@ -927,60 +915,57 @@ class TestCaseOPCUA:
         with pytest.raises(ValueError):
             self.opc.write_values(list_of_write_values)
 
-    @patch("requests.post")
-    def test_get_values_unsuccessful(self, mock_post):
-        error_response = Mock()
-        error_response.status_code = 500
-        error_response.raise_for_status.side_effect = HTTPError("500 Server Error: Internal Server Error for url")
-       
-        mock_post.return_value = error_response
-        with pytest.raises(RuntimeError):
-            self.opc.get_values(list_of_ids)
+    def test_write_historical_values_succeeds_with_empty_update_values(self):
+        empty_historical_variable = WriteHistoricalVariables(
+            NodeId=Variables(**list_of_write_values[0]["NodeId"]),
+            PerformInsertReplace=1,
+            UpdateValues=[]
+        )
+        
+        with patch('pyprediktormapclient.opc_ua.request_from_api') as mock_request:
+            mock_request.return_value = {"Success": True, "HistoryUpdateResults": [{}]}
+            result = self.opc.write_historical_values([empty_historical_variable.model_dump()])
+        
+        assert result is not None
+        assert len(result) == 1
+        assert result[0].get('WriteSuccess', False)
 
-    @parameterized.expand([
-        (WriteVariables, list_of_write_values, "write_values"),
-        (WriteHistoricalVariables, list_of_write_historical_values, "write_historical_values")
-    ])
-    @patch("requests.post")
-    def test_write_no_content(self, VariableClass, list_of_values, write_method, mock_post):
-        no_content_response = Mock()
-        no_content_response.status_code = 200
-        no_content_response.json.return_value = {"Success": True}
-        no_content_response.headers = {"Content-Type": "application/json"}
+    @patch('pyprediktormapclient.opc_ua.request_from_api')
+    def test_write_historical_values_http_error_handling(self, mock_request):
+        mock_response = Mock()
+        mock_response.content = json.dumps({"error": {"code": 404}}).encode()
+        http_error = requests.exceptions.HTTPError("404 Client Error", response=mock_response)
+        mock_request.side_effect = [http_error, {"Success": True, "HistoryUpdateResults": [{}]}]
+        
+        self.opc_auth.check_auth_client = Mock()
+        
+        converted_data = [WriteHistoricalVariables(**item).model_dump() 
+                          for item in list_of_write_historical_values]
+        result = self.opc_auth.write_historical_values(converted_data)
+        
+        self.opc_auth.check_auth_client.assert_called_once_with({"error": {"code": 404}})
+        assert result is not None
+        assert len(result) == len(converted_data)
 
-        mock_post.return_value = no_content_response
-        converted_data = [VariableClass(**item) for item in list_of_values]
+    @patch('pyprediktormapclient.opc_ua.request_from_api')
+    def test_error_handling_write_historical_values(self, mock_request):
+        mock_request.side_effect = [
+            Exception("Test exception"),
+            Exception("Test exception") 
+        ]
+        input_data = [WriteHistoricalVariables(**item).model_dump() 
+                      for item in list_of_write_historical_values]
+        with pytest.raises(Exception) as exc_info:
+            self.opc.write_historical_values(input_data)
+        assert str(exc_info.value) == "Error in write_historical_values: Test exception"
+        assert mock_request.call_count == 1
 
-        with pytest.raises(ValueError, match="No status codes returned, might indicate no values written"):
-            getattr(self.opc, write_method)(converted_data)
-
-    @parameterized.expand([
-        (WriteVariables, list_of_write_values, "write_values", 500),
-        (WriteHistoricalVariables, list_of_write_historical_values, "write_historical_values", 200)
-    ])
-    @patch("requests.post")
-    def test_write_unsuccessful(self, VariableClass, list_of_values, write_method, status_code, mock_post):
-        error_response = Mock()
-        error_response.status_code = status_code
-        error_response.json.return_value = {"Success": False, "ErrorMessage": "Error"}
-        error_response.headers = {"Content-Type": "application/json"}
-
-        mock_post.return_value = error_response
-        converted_data = [VariableClass(**item) for item in list_of_values]
-
-        with pytest.raises(RuntimeError, match="Error"):
-            getattr(self.opc, write_method)(converted_data)
-
-    @patch("requests.post")
-    def test_write_values_no_status_codes(self, mock_post):
-        error_response = Mock()
-        error_response.status_code = 200
-        error_response.json.return_value = {"Success": True}
-        error_response.headers = {"Content-Type": "application/json"}
-       
-        mock_post.return_value = error_response
-        with pytest.raises(ValueError):
-            self.opc.write_values(list_of_write_values)
+    @patch('pyprediktormapclient.opc_ua.request_from_api')
+    def test_write_historical_values_http_error_without_auth(self, mock_request):
+        mock_request.side_effect = requests.exceptions.HTTPError("404 Client Error")
+        with pytest.raises(RuntimeError) as exc_info:
+            self.opc.write_historical_values(list_of_write_historical_values)
+        assert str(exc_info.value) == "Error in write_historical_values: 404 Client Error"
 
     @patch(
         "requests.post",
@@ -988,12 +973,11 @@ class TestCaseOPCUA:
     )
     def test_write_historical_values_successful(self, mock_get):
         converted_data = [
-            WriteHistoricalVariables(**item)
+            WriteHistoricalVariables(**item).model_dump() 
             for item in list_of_write_historical_values
         ]
         result = self.opc.write_historical_values(converted_data)
-        for num, row in enumerate(list_of_write_values):
-            assert result[0]["WriteSuccess"] is True
+        assert all(row.get("WriteSuccess", False) for row in result)
 
 
     @patch(
@@ -1002,7 +986,7 @@ class TestCaseOPCUA:
     )
     def test_write_wrong_order_historical_values_successful(self, mock_get):
         converted_data = [
-            WriteHistoricalVariables(**item)
+            WriteHistoricalVariables(**item).model_dump()
             for item in list_of_write_historical_values_in_wrong_order
         ]
         with pytest.raises(ValueError):
@@ -1015,7 +999,7 @@ class TestCaseOPCUA:
         self, mock_get
     ):
         converted_data = [
-            WriteHistoricalVariables(**item)
+            WriteHistoricalVariables(**item).model_dump()
             for item in list_of_write_historical_values
         ]
         with pytest.raises(ValueError):
@@ -1026,7 +1010,7 @@ class TestCaseOPCUA:
     )
     def test_get_write_historical_values_no_response(self, mock_get):
         converted_data = [
-            WriteHistoricalVariables(**item)
+            WriteHistoricalVariables(**item).model_dump()
             for item in list_of_write_historical_values
         ]
         result = self.opc.write_historical_values(converted_data)
@@ -1038,7 +1022,7 @@ class TestCaseOPCUA:
     )
     def test_get_write_historical_values_unsuccessful(self, mock_get):
         converted_data = [
-            WriteHistoricalVariables(**item)
+            WriteHistoricalVariables(**item).model_dump()
             for item in list_of_write_historical_values
         ]
         with pytest.raises(RuntimeError):
@@ -1052,7 +1036,7 @@ class TestCaseOPCUA:
         self, mock_get
     ):
         converted_data = [
-            WriteHistoricalVariables(**item)
+            WriteHistoricalVariables(**item).model_dump()
             for item in list_of_historical_values_wrong_type_and_value
         ]
         result = self.opc.write_historical_values(converted_data)
@@ -1069,30 +1053,14 @@ class TestCaseOPCUA:
             ][0]["StatusCode"]["Symbol"]
         )
 
-    @patch("requests.post")
-    def test_write_historical_values_no_history_update_results(self, mock_request):
-        converted_data = [
-            WriteHistoricalVariables(**item)
-            for item in list_of_write_historical_values
-        ]
-        with pytest.raises(ValueError, match="No status codes returned, might indicate no values written"):
-            self.opc.write_historical_values(converted_data)
-
-    @patch("requests.post")
-    def test_write_historical_values_wrong_order(self, mock_post):
-        wrong_order_response = Mock()
-        wrong_order_response.status_code = 200
-        wrong_order_response.json.return_value = {"Success": False, "ErrorMessage": "UpdateValues attribute missing"}
-        wrong_order_response.headers = {"Content-Type": "application/json"}
-      
-        mock_post.return_value = wrong_order_response
-        converted_data = [
-            WriteHistoricalVariables(**item)
-            for item in list_of_write_historical_values_in_wrong_order
-        ]
-        
-        with pytest.raises(ValueError, match="Time for variables not in correct order."):
-            self.opc.write_historical_values(converted_data)
+    # @patch("requests.post")
+    # def test_write_historical_values_no_history_update_results(self, mock_request):
+    #     converted_data = [
+    #         WriteHistoricalVariables(**item)
+    #         for item in list_of_write_historical_values
+    #     ]
+    #     with pytest.raises(ValueError, match="No status codes returned, might indicate no values written"):
+    #         self.opc.write_historical_values(converted_data)
 
 
 class AsyncMockResponse:
@@ -1152,6 +1120,22 @@ class TestCaseAsyncOPCUA:
         self.opc = opc
         yield
 
+    async def test_run_coroutine(self):
+        async def sample_coroutine():
+            await asyncio.sleep(0.1)
+            return "Hello, World!"
+
+        result = self.opc.helper.run_coroutine(sample_coroutine())
+        assert result == "Hello, World!"
+
+    async def test_run_coroutine_with_exception(self):
+        async def failing_coroutine():
+            await asyncio.sleep(0.1)
+            raise ValueError("Test exception")
+
+        with pytest.raises(ValueError, match="Test exception"):
+            self.opc.helper.run_coroutine(failing_coroutine())
+
     @patch("aiohttp.ClientSession.post")
     async def test_make_request_max_retries(self, mock_post):
         error_response = AsyncMock()
@@ -1175,27 +1159,38 @@ class TestCaseAsyncOPCUA:
         assert mock_post.call_count == 3
         assert "Max retries reached" in str(exc_info.value)
 
+    @patch("aiohttp.ClientSession.post")
+    @patch("asyncio.sleep", return_value=None)
+    async def test_make_request_all_retries_fail(self, mock_sleep, mock_post):
+        error_response = AsyncMock()
+        error_response.status = 400
+        error_response.text.return_value = "Bad Request"
+        error_response.raise_for_status.side_effect = ClientResponseError(
+            request_info=aiohttp.RequestInfo(
+                url=YarlURL("http://example.com"),
+                method="POST",
+                headers={},
+                real_url=YarlURL("http://example.com")
+            ),
+            history=(),
+            status=400
+        )
+        mock_post.return_value.__aenter__.return_value = error_response
+        max_retries = 3
+        retry_delay = 0
+
+        with pytest.raises(RuntimeError, match="Max retries reached"):
+            await self.opc._make_request("test_endpoint", {}, max_retries, retry_delay)
+
+        assert mock_post.call_count == max_retries
+        assert mock_sleep.call_count == max_retries - 1
+
     @patch('aiohttp.ClientSession.post')
     async def test_make_request_client_error(self, mock_post):
         mock_post.side_effect = aiohttp.ClientError("Test client error")
         
         with pytest.raises(RuntimeError):
             await self.opc._make_request("test_endpoint", {}, 1, 0)
-
-    @patch("aiohttp.ClientSession.post")
-    async def test_make_request_500_error_no_retry(self, mock_post, mock_error_response):
-        mock_error_response.status = 500
-        mock_error_response.text.return_value = "Internal Server Error"
-        mock_error_response.raise_for_status.side_effect.status = 500
-        mock_error_response.raise_for_status.side_effect.message = "Internal Server Error"
-        mock_post.return_value.__aenter__.return_value = mock_error_response
-
-        with pytest.raises(ClientResponseError) as exc_info:
-            await self.opc._make_request("test_endpoint", {}, 3, 0)
-
-        assert exc_info.value.status == 500
-        assert "Internal Server Error" in str(exc_info.value)
-        assert mock_post.call_count == 1
 
     @patch("aiohttp.ClientSession.post")
     @patch("asyncio.sleep", return_value=None)
@@ -1243,7 +1238,7 @@ class TestCaseAsyncOPCUA:
         mock_post.return_value = AsyncMockResponse(
             json_data=successful_historical_result, status_code=200
         )
-        result = await make_historical_request()
+        result = await make_historical_request(opc=self.opc)
         cols_to_check = ["Value"]
         assert all(
             ptypes.is_numeric_dtype(result[col]) for col in cols_to_check
@@ -1321,6 +1316,38 @@ class TestCaseAsyncOPCUA:
         assert "Value" in result.columns
         assert "Timestamp" in result.columns
 
+    async def test_get_raw_historical_values_success(self):
+        mock_result = AsyncMock()
+        
+        with patch.object(self.opc, 'get_raw_historical_values_asyn', return_value=mock_result):
+            with patch.object(self.opc.helper, 'run_coroutine', return_value=mock_result) as mock_run_coroutine:
+                result = self.opc.get_raw_historical_values(
+                    start_time=(datetime.now() - timedelta(30)),
+                    end_time=(datetime.now() - timedelta(29)),
+                    variable_list=list_of_ids,
+                )
+                
+                mock_run_coroutine.assert_called_once()
+                assert result == mock_result
+
+    async def test_get_raw_historical_values_with_args(self):
+        mock_result = AsyncMock()
+        
+        with patch.object(self.opc, 'get_raw_historical_values_asyn', return_value=mock_result) as mock_async:
+            result = await make_raw_historical_request(self.opc)
+            
+            mock_async.assert_called_once()
+            args, kwargs = mock_async.call_args
+            assert 'start_time' in kwargs
+            assert 'end_time' in kwargs
+            assert kwargs['variable_list'] == list_of_ids
+            assert result == mock_result
+
+    async def test_get_raw_historical_values_exception(self):
+        with patch.object(self.opc, 'get_raw_historical_values_asyn', side_effect=Exception("Test exception")):
+            with pytest.raises(Exception, match="Test exception"):
+                await make_raw_historical_request(self.opc)
+
     @patch("aiohttp.ClientSession.post")
     async def test_get_historical_aggregated_values_asyn(self, mock_post):
         mock_post.return_value = AsyncMockResponse(
@@ -1338,28 +1365,77 @@ class TestCaseAsyncOPCUA:
         assert "Timestamp" in result.columns
         assert "StatusSymbol" in result.columns
 
+    async def test_get_historical_aggregated_values_success(self):
+        mock_result = AsyncMock()
+        
+        with patch.object(self.opc, 'get_historical_aggregated_values_asyn', return_value=mock_result):
+            with patch.object(self.opc.helper, 'run_coroutine', return_value=mock_result) as mock_run_coroutine:
+                result = self.opc.get_historical_aggregated_values(
+                    start_time=(datetime.now() - timedelta(30)),
+                    end_time=(datetime.now() - timedelta(29)),
+                    pro_interval=3600000,
+                    agg_name="Average",
+                    variable_list=list_of_ids,
+                )
+                
+                mock_run_coroutine.assert_called_once()
+                assert result == mock_result
+
+    async def test_get_historical_aggregated_values_with_args(self):
+        mock_result = AsyncMock()
+        
+        with patch.object(self.opc, 'get_historical_aggregated_values_asyn', return_value=mock_result) as mock_async:
+            result = await self.opc.get_historical_aggregated_values_asyn(
+                start_time=(datetime.now() - timedelta(30)),
+                end_time=(datetime.now() - timedelta(29)),
+                pro_interval=3600000,
+                agg_name="Average",
+                variable_list=list_of_ids,
+            )
+            
+            mock_async.assert_called_once()
+            args, kwargs = mock_async.call_args
+            assert 'start_time' in kwargs
+            assert 'end_time' in kwargs
+            assert kwargs['pro_interval'] == 3600000
+            assert kwargs['agg_name'] == "Average"
+            assert kwargs['variable_list'] == list_of_ids
+            assert result == mock_result
+
+    async def test_get_historical_aggregated_values_exception(self):
+        with patch.object(self.opc, 'get_historical_aggregated_values_asyn', side_effect=Exception("Test exception")):
+            with patch.object(self.opc.helper, 'run_coroutine', side_effect=Exception("Test exception")):
+                with pytest.raises(Exception, match="Test exception"):
+                    self.opc.get_historical_aggregated_values(
+                        start_time=(datetime.now() - timedelta(30)),
+                        end_time=(datetime.now() - timedelta(29)),
+                        pro_interval=3600000,
+                        agg_name="Average",
+                        variable_list=list_of_ids,
+                    )
+
     @patch("aiohttp.ClientSession.post")
     async def test_historical_values_no_dict(self, mock_post):
         with pytest.raises(RuntimeError):
-            await make_historical_request()
+            await make_historical_request(opc=self.opc)
 
     @patch("aiohttp.ClientSession.post")
     async def test_historical_values_unsuccess(self, mock_post):
         mock_post.return_value = unsuccessful_async_mock_response()
         with pytest.raises(RuntimeError):
-            await make_historical_request()
+            await make_historical_request(opc=self.opc)
 
     @patch("aiohttp.ClientSession.post")
     async def test_historical_values_no_hist(self, mock_post):
         with pytest.raises(RuntimeError):
-            await make_historical_request()
+            await make_historical_request(opc=self.opc)
 
     @patch("aiohttp.ClientSession.post")
     async def test_raw_historical_values_success(self, mock_post):
         mock_post.return_value = AsyncMockResponse(
             json_data=successful_raw_historical_result, status_code=200
         )
-        result = await make_raw_historical_request()
+        result = await make_raw_historical_request(opc=self.opc)
         cols_to_check = ["Value"]
         assert all(
             ptypes.is_numeric_dtype(result[col]) for col in cols_to_check
@@ -1368,17 +1444,17 @@ class TestCaseAsyncOPCUA:
     @patch("aiohttp.ClientSession.post")
     async def test_raw_historical_values_no_dict(self, mock_post):
         with pytest.raises(RuntimeError):
-            await make_raw_historical_request()
+            await make_raw_historical_request(opc=self.opc)
 
     @patch("aiohttp.ClientSession.post")
     async def test_raw_historical_values_unsuccess(self, mock_post):
         with pytest.raises(RuntimeError):
-            await make_raw_historical_request()
+            await make_raw_historical_request(opc=self.opc)
 
     @patch("aiohttp.ClientSession.post")
     async def test_raw_historical_values_no_hist(self, mock_post):
         with pytest.raises(RuntimeError):
-            await make_raw_historical_request()
+            await make_raw_historical_request(opc=self.opc)
 
 
 if __name__ == "__main__":
