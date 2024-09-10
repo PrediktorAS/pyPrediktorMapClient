@@ -161,31 +161,31 @@ class Db:
 
     @validate_call
     def __set_driver(self, driver_index: int) -> None:
-        """Sets the driver to use for the connection to the database.
+        """Sets the driver for the database connection.
 
         Args:
-            driver (int): The index of the driver to use. If the index is -1 or
+            driver (int): Index of the driver in the list of available drivers. If the index is -1 or
                 in general below 0, pyPrediktorMapClient is going to choose
                 the driver for you.
+        
+        Raises:
+            ValueError: If no valid driver is found.
         """
+        available_drivers = self.__get_list_of_available_and_supported_pyodbc_drivers()
+    
+        if not available_drivers:
+            raise ValueError("No supported ODBC drivers found.")
+        
         if driver_index < 0:
-            self.driver = (
-                self.__get_list_of_available_and_supported_pyodbc_drivers()[0]
-            )
-            return
-
-        if self.__get_number_of_available_pyodbc_drivers() < (
-            driver_index + 1
-        ):
+            self.driver = available_drivers[0]
+        elif driver_index >= len(available_drivers):
             raise ValueError(
                 f"Driver index {driver_index} is out of range. Please use "
                 f"the __get_list_of_available_pyodbc_drivers() method "
                 f"to list all available drivers."
             )
-
-        self.driver = self.__get_list_of_supported_pyodbc_drivers()[
-            driver_index
-        ]
+        else:
+            self.driver = available_drivers[driver_index]
 
     @validate_call
     def __get_number_of_available_pyodbc_drivers(self) -> int:
