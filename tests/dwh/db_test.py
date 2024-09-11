@@ -4,7 +4,7 @@ import string
 import pyodbc
 import logging
 import pandas as pd
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, MagicMock
 from pyprediktormapclient.dwh.db import Db
 from pandas.testing import assert_frame_equal
 
@@ -45,16 +45,24 @@ class TestCaseDB:
         with pytest.raises(ValueError, match="No supported ODBC drivers found."):
             Db(self.grs(), self.grs(), self.grs(), self.grs())
 
-    @pytest.mark.parametrize('error, expected_error, expected_message', [
-        (pyodbc.DataError('Error code', 'Error message'), pyodbc.DataError, 'Data Error Error code: Error message'),
-        (pyodbc.DatabaseError('Error code', 'Error message'), pyodbc.DatabaseError, 'Failed to connect to the DataWarehouse after 3 attempts.'),
+    @pytest.mark.parametrize('error, expected_error, expected_log_message', [
+        (pyodbc.DataError('Error code', 'Error message'), pyodbc.DataError, 'DataError Error code: Error message'),
+        (pyodbc.DatabaseError('Error code', 'Error message'), pyodbc.Error, 'DatabaseError Error code: Error message'),
     ])
-    def test_init_connection_error(self, monkeypatch, error, expected_error, expected_message, caplog, mock_get_drivers):
+    def test_init_connection_error(self, monkeypatch, error, expected_error, expected_log_message, caplog, mock_get_drivers):
         monkeypatch.setattr('pyodbc.connect', Mock(side_effect=error))
-        with pytest.raises(expected_error):
+        with pytest.raises(expected_error) as exc_info:
             with caplog.at_level(logging.ERROR):
                 Db(self.grs(), self.grs(), self.grs(), self.grs())
-        assert expected_message in caplog.text
+
+        if expected_error == pyodbc.Error:
+            assert str(exc_info.value) == "Failed to connect to the database"
+        else:
+            assert str(exc_info.value) == str(error)
+
+        assert expected_log_message in caplog.text
+        if expected_error == pyodbc.Error:
+            assert "Failed to connect to the DataWarehouse after 3 attempts" in caplog.text
 
     def test_init_when_instantiate_db_but_no_pyodbc_drivers_available_then_throw_exception(
         self, monkeypatch
@@ -73,6 +81,17 @@ class TestCaseDB:
 
         with pytest.raises(ValueError, match="Driver index 1 is out of range."):
             Db(self.grs(), self.grs(), self.grs(), self.grs(), driver_index)
+
+    def test_exit_with_connection(self, db_instance):
+        mock_connection = Mock()
+        db_instance.connection = mock_connection
+        db_instance.__exit__(None, None, None)
+        mock_connection.close.assert_called_once()
+        assert db_instance.connection is None
+
+    def test_exit_without_connection(self, db_instance):
+        db_instance.connection = None
+        db_instance.__exit__(None, None, None)
 
     def test_fetch_connection_error(self, db_instance, monkeypatch):
         monkeypatch.setattr(db_instance, '_Db__connect', Mock(side_effect=pyodbc.DataError('Error', 'Connection Error')))
@@ -188,67 +207,184 @@ class TestCaseDB:
         monkeypatch.setattr(db_instance, '_Db__get_list_of_supported_pyodbc_drivers', lambda: ['DRIVER1', 'DRIVER2'])
         assert db_instance._Db__get_number_of_available_pyodbc_drivers() == 2
 
+    @patch('pyodbc.connect')
+    def test_get_available_and_supported_drivers(self, mock_connect, db_instance):
+        db_instance.__get_list_of_supported_pyodbc_drivers = Mock(return_value=['Driver1', 'Driver2', 'Driver3'])
+        mock_connect.side_effect = [None, pyodbc.Error, None]
+        
+        result = db_instance._Db__get_list_of_available_and_supported_pyodbc_drivers()
+        
+        assert result == ['Driver1', 'Driver3']
+        assert mock_connect.call_count == 3
+
+    def test_get_list_of_available_and_supported_pyodbc_drivers_silently_passes_on_error(self, db_instance, monkeypatch):
+        mock_error = pyodbc.Error("Mock Error")
+        monkeypatch.setattr(pyodbc, 'drivers', Mock(side_effect=mock_error))
+
+        result = db_instance._Db__get_list_of_available_and_supported_pyodbc_drivers()
+        assert result == [], "Should return an empty list when pyodbc.Error occurs"
+
     def test_connect_success(self, db_instance, monkeypatch):
         connect_called = False
+
         def mock_connect(*args, **kwargs):
             nonlocal connect_called
             connect_called = True
             return Mock(cursor=Mock())
 
-        with patch('pyprediktormapclient.dwh.db.pyodbc.connect', side_effect=mock_connect) as mock:
+        db_instance.connection = None
+        with patch('pyodbc.connect', side_effect=mock_connect) as mock:
             db_instance._Db__connect()
             assert mock.called
             assert connect_called
 
-    def test_connect_retry_on_operational_error(self, db_instance, monkeypatch):
-        attempt_count = 0
-        def mock_connect(*args, **kwargs):
-            nonlocal attempt_count
-            attempt_count += 1
-            if attempt_count < 3:
-                raise pyodbc.OperationalError('Test error')
-            return Mock(cursor=Mock())
+    def test_exit_disconnects_when_connection_exists(self, db_instance, monkeypatch):
+        disconnect_called = False
 
-        with patch('pyprediktormapclient.dwh.db.pyodbc.connect', side_effect=mock_connect) as mock:
-            db_instance._Db__connect()
-            assert mock.call_count == 3
+        def mock_disconnect():
+            nonlocal disconnect_called
+            disconnect_called = True
+
+        monkeypatch.setattr(db_instance, '_Db__disconnect', mock_disconnect)
+        db_instance.connection = True
+
+        db_instance.__exit__(None, None, None)
+        assert disconnect_called, "__disconnect should be called when __exit__ is invoked with an active connection"
+
+    def test_connect_raises_programming_error_with_logging(self, db_instance, monkeypatch, caplog):
+        def mock_connect(*args, **kwargs):
+            raise pyodbc.ProgrammingError("some_code", "some_message")
+
+        monkeypatch.setattr(pyodbc, 'connect', mock_connect)
+
+        db_instance.connection = None
+        with pytest.raises(pyodbc.ProgrammingError):
+                db_instance._Db__connect()
+
+        assert "Programming Error some_code: some_message" in caplog.text, "Programming error should be logged"
+        assert "There seems to be a problem with your code" in caplog.text, "Warning for ProgrammingError should be logged"
+
+    def test_connect_raise_on_data_error(self, db_instance, monkeypatch):
+        def mock_connect(*args, **kwargs):
+            raise pyodbc.DataError(("DataError code", "Test data error"))
+
+        db_instance.connection = None
+        with patch('pyodbc.connect', side_effect=mock_connect):
+            with pytest.raises(pyodbc.DataError):
+                db_instance._Db__connect()
 
     def test_connect_raise_on_integrity_error(self, db_instance, monkeypatch):
         def mock_connect(*args, **kwargs):
-            raise pyodbc.IntegrityError('Test integrity error')
+            raise pyodbc.IntegrityError(("IntegrityError code", "Test integrity error"))
 
-        with patch('pyprediktormapclient.dwh.db.pyodbc.connect', side_effect=mock_connect):
-            with pytest.raises(pyodbc.IntegrityError):
-                db_instance._Db__connect()
-
-    def test_connect_raise_on_programming_error(self, db_instance, monkeypatch):
-        def mock_connect(*args, **kwargs):
-            raise pyodbc.ProgrammingError('Test programming error')
-
+        db_instance.connection = None
         with patch('pyodbc.connect', side_effect=mock_connect):
-            with pytest.raises(pyodbc.ProgrammingError):
+            with pytest.raises(pyodbc.IntegrityError):
                 db_instance._Db__connect()
 
     def test_connect_raise_on_not_supported_error(self, db_instance, monkeypatch):
         def mock_connect(*args, **kwargs):
-            raise pyodbc.NotSupportedError('Test not supported error')
+            raise pyodbc.NotSupportedError(("NotSupportedError code", "Test not supported error"))
 
+        db_instance.connection = None
         with patch('pyodbc.connect', side_effect=mock_connect):
             with pytest.raises(pyodbc.NotSupportedError):
                 db_instance._Db__connect()
 
-    def test_connect_retry_on_generic_error(self, db_instance, monkeypatch):
+    def test_connect_attempts_three_times_on_operational_error(self, db_instance, monkeypatch, caplog):
         attempt_count = 0
+
         def mock_connect(*args, **kwargs):
             nonlocal attempt_count
             attempt_count += 1
             if attempt_count < 3:
-                raise pyodbc.Error('Test generic error')
+                exc = pyodbc.OperationalError()
+                exc.args = ("OperationalError code", "Mock Operational Error")
+                raise exc
+            else:
+                return Mock()
+
+        db_instance.connection = None
+        with patch('pyodbc.connect', side_effect=mock_connect) as mock:
+            db_instance._Db__connect()
+            assert "Operational Error: OperationalError code: Mock Operational Error" in caplog.text
+            assert "Pyodbc is having issues with the connection" in caplog.text
+            assert mock.call_count == 3
+
+    def test_connect_raises_after_max_attempts_on_operational_error(self, db_instance, monkeypatch):
+        def mock_connect(*args, **kwargs):
+            raise pyodbc.OperationalError(("OperationalError code", "Test operational error"))
+
+        db_instance.connection = None
+        db_instance.connection_attempts = 3
+        with patch('pyodbc.connect', side_effect=mock_connect):
+            with pytest.raises(pyodbc.OperationalError):
+                db_instance._Db__connect()
+
+    def test_connect_logs_database_error_and_retries(self, db_instance, monkeypatch, caplog):
+        attempt_count = 0
+
+        def mock_connect(*args, **kwargs):
+            nonlocal attempt_count
+            attempt_count += 1
+            if attempt_count < 3:
+                raise pyodbc.DatabaseError(("DatabaseError code", "Test database error"))
             return Mock(cursor=Mock())
 
-        with patch('pyprediktormapclient.dwh.db.pyodbc.connect', side_effect=mock_connect) as mock:
+        db_instance.connection = None
+        with patch('pyodbc.connect', side_effect=mock_connect):
+            db_instance._Db__connect()
+
+        assert "DatabaseError ('DatabaseError code', 'Test database error'): No message" in caplog.text
+        assert attempt_count == 3
+
+    def test_connect_breaks_after_max_attempts_on_database_error(self, db_instance, monkeypatch):
+        def mock_connect(*args, **kwargs):
+            raise pyodbc.DatabaseError(("DatabaseError code", "Test database error"))
+
+        db_instance.connection = None
+        db_instance.connection_attempts = 3
+        with patch('pyodbc.connect', side_effect=mock_connect):
+            with pytest.raises(pyodbc.Error, match="Failed to connect to the database"):
+                db_instance._Db__connect()
+
+    def test_connect_retry_on_generic_error(self, db_instance, monkeypatch):
+        attempt_count = 0
+
+        def mock_connect(*args, **kwargs):
+            nonlocal attempt_count
+            attempt_count += 1
+            if attempt_count < 3:
+                raise pyodbc.Error(("Error code", "Test generic error"))
+            return Mock(cursor=Mock())
+
+        db_instance.connection = None
+        with patch('pyodbc.connect', side_effect=mock_connect) as mock:
             db_instance._Db__connect()
             assert mock.call_count == 3
+    def test_connect_raises_error_after_max_attempts(self, db_instance, monkeypatch):
+        def mock_connect(*args, **kwargs):
+            raise pyodbc.Error(("Error code", "Test error"))
+
+        db_instance.connection = None
+        db_instance.connection_attempts = 3
+        with patch('pyodbc.connect', side_effect=mock_connect):
+            with pytest.raises(pyodbc.Error, match="Failed to connect to the database"):
+                db_instance._Db__connect()
+
+    def test_connect_exits_early_if_connection_exists(self, db_instance, monkeypatch):
+        connect_called = False
+
+        def mock_connect(*args, **kwargs):
+            nonlocal connect_called
+            connect_called = True
+            return Mock()
+
+        db_instance.connection = Mock()
+        with patch('pyodbc.connect', side_effect=mock_connect):
+            db_instance._Db__connect()
+
+        assert not connect_called, "pyodbc.connect should not be called if connection already exists"
 
     def test_disconnect(self, db_instance):
         mock_connection = Mock()
@@ -260,3 +396,9 @@ class TestCaseDB:
         assert mock_connection.close.called
         assert db_instance.connection is None
         assert db_instance.cursor is None
+
+    def test_disconnect_without_connection(self, db_instance):
+        db_instance.connection = None
+        db_instance.cursor = None
+
+        db_instance._Db__disconnect()

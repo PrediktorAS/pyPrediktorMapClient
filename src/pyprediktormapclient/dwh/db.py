@@ -193,25 +193,32 @@ class Db:
 
     @validate_call
     def __get_list_of_supported_pyodbc_drivers(self) -> List[Any]:
-        return pyodbc.drivers()
+        try:
+            return pyodbc.drivers()
+        except pyodbc.Error as err:
+            logger.error(f"Error retrieving drivers: {err}")
+            return []
 
     @validate_call
     def __get_list_of_available_and_supported_pyodbc_drivers(
-        self,
+        self
     ) -> List[Any]:
         available_drivers = []
-        for driver in self.__get_list_of_supported_pyodbc_drivers():
+        supported_drivers = self.__get_list_of_supported_pyodbc_drivers()
+
+        for driver in supported_drivers:
             try:
-                pyodbc.connect(
+                connection_string = (
                     f"UID={self.username};"
                     + f"PWD={self.password};"
                     + f"DRIVER={driver};"
                     + f"SERVER={self.url};"
-                    + f"DATABASE={self.database};",
-                    timeout=3,
+                    + f"DATABASE={self.database};"
                 )
+                pyodbc.connect(connection_string, timeout=3)
                 available_drivers.append(driver)
-            except pyodbc.Error:
+            except pyodbc.Error as err:
+                logger.info(f"Driver {driver} could not connect: {err}")
                 pass
 
         return available_drivers
@@ -234,29 +241,24 @@ class Db:
                 self.connection = pyodbc.connect(self.connection_string)
                 self.cursor = self.connection.cursor()
                 logging.info("Connection successfull!")
-                break
+                return
 
             # Exceptions once thrown there is no point attempting
-            except pyodbc.DataError as err:
-                logger.error(f"Data Error {err.args[0]}: {err.args[1]}")
-                raise
-            except pyodbc.IntegrityError as err:
-                logger.error(f"Integrity Error {err.args[0]}: {err.args[1]}")
-                raise
             except pyodbc.ProgrammingError as err:
-                logger.error(f"Programming Error {err.args[0]}: {err.args[1]}")
+                logger.error(f"Programming Error {err.args[0] if err.args else 'No code'}: {err.args[1] if len(err.args) > 1 else 'No message'}")
                 logger.warning(
                     "There seems to be a problem with your code. Please "
                     "check your code and try again."
                 )
                 raise
-            except pyodbc.NotSupportedError as err:
-                logger.error(f"Not supported {err.args[0]}: {err.args[1]}")
+
+            except (pyodbc.DataError, pyodbc.IntegrityError, pyodbc.NotSupportedError) as err:
+                logger.error(f"{type(err).__name__} {err.args[0] if err.args else 'No code'}: {err.args[1] if len(err.args) > 1 else 'No message'}")
                 raise
 
             # Exceptions when thrown we can continue attempting
             except pyodbc.OperationalError as err:
-                logger.error(f"Operational Error {err.args[0]}: {err.args[1]}")
+                logger.error(f"Operational Error: {err.args[0] if err.args else 'No code'}: {err.args[1] if len(err.args) > 1 else 'No message'}")
                 logger.warning(
                     "Pyodbc is having issues with the connection. This "
                     "could be due to the wrong driver being used. Please "
@@ -264,22 +266,18 @@ class Db:
                     "the __get_list_of_available_and_supported_pyodbc_drivers() method "
                     "and try again."
                 )
-
                 attempt += 1
                 if self.__are_connection_attempts_reached(attempt):
                     raise
-            except pyodbc.DatabaseError as err:
-                logger.error(f"Database Error {err.args[0]}: {err.args[1]}")
 
+            except (pyodbc.DatabaseError, pyodbc.Error) as err:
+                logger.error(f"{type(err).__name__} {err.args[0] if err.args else 'No code'}: {err.args[1] if len(err.args) > 1 else 'No message'}")
                 attempt += 1
                 if self.__are_connection_attempts_reached(attempt):
-                    raise
-            except pyodbc.Error as err:
-                logger.error(f"Generic Error {err.args[0]}: {err.args[1]}")
+                    break
 
-                attempt += 1
-                if self.__are_connection_attempts_reached(attempt):
-                    raise
+        if not self.connection:
+            raise pyodbc.Error("Failed to connect to the database")
 
     @validate_call
     def __are_connection_attempts_reached(self, attempt) -> bool:
