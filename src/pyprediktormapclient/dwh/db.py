@@ -101,17 +101,13 @@ class Db:
 
         data_sets = []
         while True:
-            data_set = []
-
             columns = [col[0] for col in self.cursor.description]
-            for row in self.cursor.fetchall():
-                data_set.append(
-                    {name: row[index] for index, name in enumerate(columns)}
-                )
+            data_set = [dict(zip(columns, row)) for row in self.cursor.fetchall()]
 
-            data_sets.append(
-                pd.DataFrame(data_set) if to_dataframe else data_set
-            )
+            if to_dataframe:
+                data_sets.append(pd.DataFrame(data_set, columns=columns))
+            else:
+                data_sets.append(data_set)
 
             if not self.cursor.nextset():
                 break
@@ -143,16 +139,14 @@ class Db:
             List[Any]: The results of the query.
         """
         self.__connect()
-        self.cursor.execute(query, *args, **kwargs)
-
-        result = []
         try:
+            self.cursor.execute(query, *args, **kwargs)
             result = self.cursor.fetchall()
         except Exception as e:
-            logging.error(f"Failed to fetch results: {e}")
+            logging.error(f"Failed to execute query: {e}")
+            return []
 
         self.__commit()
-
         return result
 
     """

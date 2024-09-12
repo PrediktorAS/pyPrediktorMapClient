@@ -1,13 +1,22 @@
 import pytest
 import unittest
+import random
+import inspect
+import string
 import pyodbc
 import logging
 import datetime
+from typing import Dict, List
 from unittest.mock import Mock, patch, MagicMock, call
 from pyprediktormapclient.dwh.dwh import DWH
+from pyprediktormapclient.dwh.idwh import IDWH
 
 
 class TestCaseDWH:
+    @staticmethod
+    def grs():
+        """Generate a random string."""
+        return ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
 
     @pytest.fixture
     def mock_pyodbc_connect(self):
@@ -19,9 +28,18 @@ class TestCaseDWH:
             yield mock_connect
 
     @pytest.fixture
-    def dwh_instance(self, mock_pyodbc_connect):
+    def mock_pyodbc_drivers(self, monkeypatch):
+        monkeypatch.setattr('pyodbc.drivers', lambda: ['Driver1', 'Driver2', 'Driver3'])
+
+    @pytest.fixture
+    def mock_get_drivers(self, monkeypatch):
+        monkeypatch.setattr('pyprediktorutilities.dwh.dwh.Db._Db__get_list_of_available_and_supported_pyodbc_drivers', 
+                            lambda self: ['Driver1'])
+
+    @pytest.fixture
+    def dwh_instance(self, mock_pyodbc_connect, mock_pyodbc_drivers):
         with patch.object(DWH, '_DWH__initialize_context_services'):
-            return DWH("test_url", "test_db", "test_user", "test_pass", -1)
+            return DWH(self.grs(), self.grs(), self.grs(), self.grs())
         
     @pytest.fixture
     def mock_iter_modules(self):
@@ -60,6 +78,23 @@ class TestCaseDWH:
         mock_connect.return_value = Mock()
         dwh = DWH("test_url", "test_db", "test_user", "test_pass")
         assert dwh.driver == "Driver1"
+
+    def test_dwh_implements_idwh(self, dwh_instance):
+        def compare_signatures(impl_method, abstract_method):
+            impl_sig = inspect.signature(impl_method)
+            abstract_sig = inspect.signature(abstract_method)
+
+            assert impl_sig.return_annotation == abstract_sig.return_annotation
+
+            impl_params = list(impl_sig.parameters.values())[1:]
+            abstract_params = list(abstract_sig.parameters.values())[1:]
+            assert impl_params == abstract_params
+
+        assert hasattr(dwh_instance, 'version')
+        assert callable(dwh_instance.version)
+        compare_signatures(dwh_instance.version, IDWH.version)
+
+        assert dwh_instance.version.__annotations__['return'] == Dict
 
     @patch.object(DWH, 'fetch')
     def test_version_with_results(self, mock_fetch, dwh_instance):
