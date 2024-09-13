@@ -175,15 +175,11 @@ class Db:
         elif driver_index >= len(available_drivers):
             raise ValueError(
                 f"Driver index {driver_index} is out of range. Please use "
-                f"the __get_list_of_available_pyodbc_drivers() method "
+                f"the __get_list_of_available_and_supported_pyodbc_drivers() method "
                 f"to list all available drivers."
             )
         else:
             self.driver = available_drivers[driver_index]
-
-    @validate_call
-    def __get_number_of_available_pyodbc_drivers(self) -> int:
-        return len(self.__get_list_of_supported_pyodbc_drivers())
 
     @validate_call
     def __get_list_of_supported_pyodbc_drivers(self) -> List[Any]:
@@ -233,9 +229,13 @@ class Db:
         while attempt < self.connection_attempts:
             try:
                 self.connection = pyodbc.connect(self.connection_string)
-                self.cursor = self.connection.cursor()
-                logging.info("Connection successfull!")
-                return
+                if self.connection:  # Ensure connection is valid before accessing cursor
+                    self.cursor = self.connection.cursor()
+                    logging.info(f"Connected to the database on attempt {attempt + 1}")
+                    return
+                else:
+                    logging.info(f"Connection is None on attempt {attempt + 1}")
+                    raise pyodbc.Error("Failed to connect to the database")
 
             # Exceptions once thrown there is no point attempting
             except pyodbc.ProgrammingError as err:
@@ -262,7 +262,7 @@ class Db:
                 )
                 attempt += 1
                 if self.__are_connection_attempts_reached(attempt):
-                    raise
+                    break
 
             except (pyodbc.DatabaseError, pyodbc.Error) as err:
                 logger.error(f"{type(err).__name__} {err.args[0] if err.args else 'No code'}: {err.args[1] if len(err.args) > 1 else 'No message'}")

@@ -79,7 +79,11 @@ class TestCaseDWH:
         dwh = DWH("test_url", "test_db", "test_user", "test_pass")
         assert dwh.driver == "Driver1"
 
-    def test_dwh_implements_idwh(self, dwh_instance):
+    def test_idwh_abstract_methods(self):
+        assert inspect.isabstract(IDWH)
+        assert set(IDWH.__abstractmethods__) == {'version', 'fetch', 'execute'}
+
+    def test_dwh_implements_abstract_idwh(self, dwh_instance):
         def compare_signatures(impl_method, abstract_method):
             impl_sig = inspect.signature(impl_method)
             abstract_sig = inspect.signature(abstract_method)
@@ -95,6 +99,10 @@ class TestCaseDWH:
         compare_signatures(dwh_instance.version, IDWH.version)
 
         assert dwh_instance.version.__annotations__['return'] == Dict
+
+    def test_idwh_instantiation_raises_error(self):
+        with pytest.raises(TypeError, match="Can't instantiate abstract class IDWH without an implementation for abstract methods 'execute', 'fetch', 'version'"):
+            IDWH()
 
     @patch.object(DWH, 'fetch')
     def test_version_with_results(self, mock_fetch, dwh_instance):

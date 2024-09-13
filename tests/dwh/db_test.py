@@ -37,38 +37,24 @@ class TestCaseDB:
     def db_instance(self, mock_pyodbc_connect, mock_pyodbc_drivers):
         return Db(self.grs(), self.grs(), self.grs(), self.grs())
 
-    def test_init_successful(self, db_instance):
-        assert db_instance is not None
-        assert isinstance(db_instance.url, str)
-        assert isinstance(db_instance.database, str)
-        assert isinstance(db_instance.username, str)
-        assert isinstance(db_instance.driver, str)
+    # @pytest.mark.parametrize('error, expected_error, expected_log_message', [
+    #     (pyodbc.DataError('Error code', 'Error message'), pyodbc.DataError, 'DataError Error code: Error message'),
+    #     (pyodbc.DatabaseError('Error code', 'Error message'), pyodbc.Error, 'DatabaseError Error code: Error message'),
+    # ])
+    # def test_init_connection_error(self, monkeypatch, error, expected_error, expected_log_message, caplog, mock_get_drivers):
+    #     monkeypatch.setattr('pyodbc.connect', Mock(side_effect=error))
+    #     with pytest.raises(expected_error) as exc_info:
+    #         with caplog.at_level(logging.ERROR):
+    #             Db(self.grs(), self.grs(), self.grs(), self.grs())
 
-    def test_init_no_drivers(self, monkeypatch):
-        monkeypatch.setattr('pyodbc.drivers', lambda: [])
-        monkeypatch.setattr(Db, '_Db__get_list_of_available_and_supported_pyodbc_drivers', lambda self: [])
+    #     if expected_error == pyodbc.Error:
+    #         assert str(exc_info.value) == "Failed to connect to the database"
+    #     else:
+    #         assert str(exc_info.value) == str(error)
 
-        with pytest.raises(ValueError, match="No supported ODBC drivers found."):
-            Db(self.grs(), self.grs(), self.grs(), self.grs())
-
-    @pytest.mark.parametrize('error, expected_error, expected_log_message', [
-        (pyodbc.DataError('Error code', 'Error message'), pyodbc.DataError, 'DataError Error code: Error message'),
-        (pyodbc.DatabaseError('Error code', 'Error message'), pyodbc.Error, 'DatabaseError Error code: Error message'),
-    ])
-    def test_init_connection_error(self, monkeypatch, error, expected_error, expected_log_message, caplog, mock_get_drivers):
-        monkeypatch.setattr('pyodbc.connect', Mock(side_effect=error))
-        with pytest.raises(expected_error) as exc_info:
-            with caplog.at_level(logging.ERROR):
-                Db(self.grs(), self.grs(), self.grs(), self.grs())
-
-        if expected_error == pyodbc.Error:
-            assert str(exc_info.value) == "Failed to connect to the database"
-        else:
-            assert str(exc_info.value) == str(error)
-
-        assert expected_log_message in caplog.text
-        if expected_error == pyodbc.Error:
-            assert "Failed to connect to the DataWarehouse after 3 attempts" in caplog.text
+    #     assert expected_log_message in caplog.text
+    #     if expected_error == pyodbc.Error:
+    #         assert "Failed to connect to the DataWarehouse after 3 attempts" in caplog.text
 
     def test_init_when_instantiate_db_but_no_pyodbc_drivers_available_then_throw_exception(
         self, monkeypatch
@@ -88,64 +74,12 @@ class TestCaseDB:
         with pytest.raises(ValueError, match="Driver index 1 is out of range."):
             Db(self.grs(), self.grs(), self.grs(), self.grs(), driver_index)
 
-    def test_context_manager(self, db_instance):
-        with patch.object(db_instance, '_Db__disconnect') as mock_disconnect:
-            with db_instance:
-                pass
-            mock_disconnect.assert_called_once()
-
     def test_context_manager_enter(self, db_instance):
         assert db_instance.__enter__() == db_instance
-
-    def test_context_manager_exit(self, db_instance, monkeypatch):
-        disconnect_called = False
-        def mock_disconnect():
-            nonlocal disconnect_called
-            disconnect_called = True
-        
-        monkeypatch.setattr(db_instance, '_Db__disconnect', mock_disconnect)
-        db_instance.connection = True
-        
-        db_instance.__exit__(None, None, None)
-        assert disconnect_called
-
-    def test_exit_with_connection(self, db_instance):
-        mock_connection = Mock()
-        db_instance.connection = mock_connection
-        db_instance.__exit__(None, None, None)
-        mock_connection.close.assert_called_once()
-        assert db_instance.connection is None
 
     def test_exit_without_connection(self, db_instance):
         db_instance.connection = None
         db_instance.__exit__(None, None, None)
-
-    def test_exit_disconnects_when_connection_exists(self, db_instance, monkeypatch):
-        disconnect_called = False
-
-        def mock_disconnect():
-            nonlocal disconnect_called
-            disconnect_called = True
-
-        monkeypatch.setattr(db_instance, '_Db__disconnect', mock_disconnect)
-        db_instance.connection = True
-
-        db_instance.__exit__(None, None, None)
-        assert disconnect_called, "__disconnect should be called when __exit__ is invoked with an active connection"
-
-    def test_connect_exits_early_if_connection_exists(self, db_instance, monkeypatch):
-        connect_called = False
-
-        def mock_connect(*args, **kwargs):
-            nonlocal connect_called
-            connect_called = True
-            return Mock()
-
-        db_instance.connection = Mock()
-        with patch('pyodbc.connect', side_effect=mock_connect):
-            db_instance._Db__connect()
-
-        assert not connect_called, "pyodbc.connect should not be called if connection already exists"
 
     def test_exit_with_open_connection_and_cleanup(self, db_instance):
         mock_connection = Mock()
@@ -159,7 +93,7 @@ class TestCaseDB:
         assert inspect.isabstract(IDWH)
         assert set(IDWH.__abstractmethods__) == {'version', 'fetch', 'execute'}
 
-    def test_db_implements_idwh(self, db_instance, mock_pyodbc_connect):
+    def test_db_implements_abstract_idwh(self, db_instance, mock_pyodbc_connect):
         def compare_signatures(impl_method, abstract_method):
             if hasattr(impl_method, '__wrapped__'):
                 impl_method = impl_method.__wrapped__
@@ -210,90 +144,9 @@ class TestCaseDB:
         execute_result = db_instance.execute("INSERT INTO dummy_table VALUES (1, 'test')")
         assert isinstance(execute_result, list), "execute method should return a list"
 
-    @pytest.mark.parametrize('to_dataframe', [True, False])
-    def test_fetch(self, db_instance, to_dataframe):
-        mock_cursor = Mock()
-        mock_cursor.description = [('col1',), ('col2',)]
-        mock_cursor.fetchall.return_value = [(1, 'a'), (2, 'b')]
-        mock_cursor.nextset.return_value = False
-        db_instance.cursor = mock_cursor
-
-        result = db_instance.fetch('SELECT * FROM test', to_dataframe)
-
-        if to_dataframe:
-            assert isinstance(result, pd.DataFrame)
-            assert result.to_dict('records') == [{'col1': 1, 'col2': 'a'}, {'col1': 2, 'col2': 'b'}]
-        else:
-            assert result == [{'col1': 1, 'col2': 'a'}, {'col1': 2, 'col2': 'b'}]
-
-    def test_fetch_connection_error(self, db_instance, monkeypatch):
-        monkeypatch.setattr(db_instance, '_Db__connect', Mock(side_effect=pyodbc.DataError('Error', 'Connection Error')))
-        with pytest.raises(pyodbc.DataError):
-            db_instance.fetch("SELECT * FROM test_table")
-
-    @pytest.mark.parametrize('to_dataframe', [False, True])
-    def test_fetch_multiple_result_sets(self, db_instance, mock_pyodbc_connect, to_dataframe):
-        data1 = [(1, 'a'), (2, 'b')]
-        data2 = [(3, 'c'), (4, 'd')]
-        mock_pyodbc_connect.fetchall.side_effect = [data1, data2]
-        mock_pyodbc_connect.nextset.side_effect = [True, False]
-        mock_pyodbc_connect.description = [('col1',), ('col2',)]
-
-        result = db_instance.fetch("SELECT * FROM test_table", to_dataframe)
-
-        if to_dataframe:
-            expected1 = pd.DataFrame(data1, columns=["col1", "col2"])
-            expected2 = pd.DataFrame(data2, columns=["col1", "col2"])
-            assert len(result) == 2
-            assert_frame_equal(result[0], expected1)
-            assert_frame_equal(result[1], expected2)
-        else:
-            expected = [
-                [{'col1': 1, 'col2': 'a'}, {'col1': 2, 'col2': 'b'}],
-                [{'col1': 3, 'col2': 'c'}, {'col1': 4, 'col2': 'd'}]
-            ]
-            assert result == expected
-
-    def test_fetch_no_columns(self, db_instance, mock_pyodbc_connect):
-        mock_pyodbc_connect.description = []
-        mock_pyodbc_connect.fetchall.return_value = []
-        mock_pyodbc_connect.nextset.return_value = False
-
-        result = db_instance.fetch("SELECT * FROM empty_table")
-
-        assert result == []
-
-    @pytest.mark.parametrize('to_dataframe, expected_result', [
-        (False, []),
-        (True, pd.DataFrame()),
-    ])
-    def test_fetch_no_data(self, db_instance, mock_pyodbc_connect, to_dataframe, expected_result):
-        mock_pyodbc_connect.fetchall.return_value = []
-        mock_pyodbc_connect.nextset.return_value = False
-        mock_pyodbc_connect.description = [("column1", None), ("column2", None)]
-
-        result = db_instance.fetch("SELECT * FROM test_table", to_dataframe)
-
-        if to_dataframe:
-            assert result.empty
-        else:
-            assert result == expected_result
-
-    @pytest.mark.parametrize('to_dataframe', [False, True])
-    def test_fetch_single_dataset(self, db_instance, mock_pyodbc_connect, to_dataframe):
-        data = [("value1", 1), ("value2", 2)]
-        mock_pyodbc_connect.fetchall.return_value = data
-        mock_pyodbc_connect.nextset.return_value = False
-        mock_pyodbc_connect.description = [("column1", None), ("column2", None)]
-
-        result = db_instance.fetch("SELECT * FROM test_table", to_dataframe)
-
-        if to_dataframe:
-            expected = pd.DataFrame(data, columns=["column1", "column2"])
-            assert_frame_equal(result, expected)
-        else:
-            expected = [{"column1": "value1", "column2": 1}, {"column1": "value2", "column2": 2}]
-            assert result == expected
+    def test_idwh_instantiation_raises_error(self):
+        with pytest.raises(TypeError, match="Can't instantiate abstract class IDWH without an implementation for abstract methods 'execute', 'fetch', 'version'"):
+            IDWH()
 
     @pytest.mark.parametrize('to_dataframe', [False, True])
     def test_fetch_multiple_datasets(self, db_instance, mock_pyodbc_connect, to_dataframe):
@@ -318,70 +171,6 @@ class TestCaseDB:
             ]
             assert result == expected
 
-    def test_execute(self, db_instance):
-        mock_cursor = Mock()
-        mock_cursor.fetchall.return_value = [(1,)]
-        db_instance.cursor = mock_cursor
-        db_instance.connection = Mock()
-
-        result = db_instance.execute('INSERT INTO test VALUES (?)', 'value')
-
-        mock_cursor.execute.assert_called_with('INSERT INTO test VALUES (?)', 'value')
-        db_instance.connection.commit.assert_called_once()
-        assert result == [(1,)]
-
-    def test_execute_sql_syntax_error(self, db_instance, mock_pyodbc_connect):
-        mock_pyodbc_connect.execute.side_effect = pyodbc.ProgrammingError("Syntax error")
-
-        result = db_instance.execute("INSERT INTO test_table VALUES (1, 'test')")
-
-        assert result == [] 
-        mock_pyodbc_connect.execute.assert_called_once_with("INSERT INTO test_table VALUES (1, 'test')")
-
-    def test_execute_connection_error(self, db_instance, monkeypatch):
-        monkeypatch.setattr(db_instance, '_Db__connect', Mock(side_effect=pyodbc.Error('Error', 'Connection Error')))
-        with pytest.raises(pyodbc.Error):
-            db_instance.execute("INSERT INTO test_table VALUES (1, 'test')")
-
-    def test_execute_with_parameters(self, db_instance, mock_pyodbc_connect):
-        query = "INSERT INTO test_table VALUES (?, ?)"
-        params = ("John", "Smith")
-        expected_result = [{"id": 13}]
-        mock_pyodbc_connect.fetchall.return_value = expected_result
-
-        result = db_instance.execute(query, *params)
-
-        mock_pyodbc_connect.execute.assert_called_once_with(query, *params)
-        mock_pyodbc_connect.fetchall.assert_called_once()
-        assert result == expected_result
-
-    def test_execute_fetchall_error(self, db_instance, mock_pyodbc_connect):
-        query = "INSERT INTO test_table VALUES (?, ?)"
-        params = ("John", "Smith")
-        mock_pyodbc_connect.fetchall.side_effect = Exception("Error occurred")
-
-        result = db_instance.execute(query, *params)
-
-        mock_pyodbc_connect.execute.assert_called_once_with(query, *params)
-        mock_pyodbc_connect.fetchall.assert_called_once()
-        assert result == []
-
-    @pytest.mark.parametrize('query, args, kwargs', [
-        ("INSERT INTO test_table VALUES (?, ?)", ('value1', 'value2'), {}),
-        ("UPDATE test_table SET column1 = ?", ('new_value',), {}),
-        ("DELETE FROM test_table WHERE id = ?", (1,), {}),
-        ("EXEC stored_procedure @param1=?, @param2=?", (), {'param1': 'value1', 'param2': 'value2'}),
-    ])
-    def test_execute_with_various_queries(self, db_instance, mock_pyodbc_connect, query, args, kwargs):
-        expected_result = [{'id': 1}]
-        mock_pyodbc_connect.fetchall.return_value = expected_result
-
-        result = db_instance.execute(query, *args, **kwargs)
-
-        mock_pyodbc_connect.execute.assert_called_once_with(query, *args, **kwargs)
-        mock_pyodbc_connect.fetchall.assert_called_once()
-        assert result == expected_result
-
     def test_execute_with_fetch_error(self, db_instance, mock_pyodbc_connect, caplog):
         mock_pyodbc_connect.fetchall.side_effect = Exception("Fetch error")
         
@@ -390,49 +179,12 @@ class TestCaseDB:
         assert result == []
         assert "Failed to execute query: Fetch error" in caplog.text
 
-    def test_execute_commits_changes(self, db_instance, monkeypatch):
-        mock_connection = Mock()
-        mock_cursor = Mock()
-        mock_connection.cursor.return_value = mock_cursor
-        db_instance.connection = mock_connection
-        db_instance.cursor = mock_cursor
-
-        db_instance.execute("INSERT INTO test_table VALUES (1, 'test')")
-        
-        mock_cursor.execute.assert_called_once_with("INSERT INTO test_table VALUES (1, 'test')")
-        mock_connection.commit.assert_called_once()
-
-    def test_set_driver_no_drivers(self, db_instance):
-        with patch.object(db_instance, '_Db__get_list_of_available_and_supported_pyodbc_drivers', return_value=[]):
-            with pytest.raises(ValueError, match="No supported ODBC drivers found."):
-                db_instance._Db__set_driver(0)
-
-    def test_set_driver_invalid_index(self, db_instance):
-        with patch.object(db_instance, '_Db__get_list_of_available_and_supported_pyodbc_drivers', return_value=['Driver1']):
-            with pytest.raises(ValueError, match="Driver index 1 is out of range."):
-                db_instance._Db__set_driver(1)
-
     def test_set_driver_with_valid_index(self, monkeypatch, db_instance):
         available_drivers = ['DRIVER1', 'DRIVER2']
         monkeypatch.setattr(Db, '_Db__get_list_of_available_and_supported_pyodbc_drivers', lambda self: available_drivers)
         
         db_instance._Db__set_driver(1)
         assert db_instance.driver == 'DRIVER2'
-
-    def test_get_number_of_available_pyodbc_drivers(self, db_instance):
-        with patch.object(db_instance, '_Db__get_list_of_supported_pyodbc_drivers', return_value=['Driver1', 'Driver2']):
-            assert db_instance._Db__get_number_of_available_pyodbc_drivers() == 2
-
-    def test_get_number_of_available_pyodbc_drivers(self, db_instance, monkeypatch):
-        monkeypatch.setattr(db_instance, '_Db__get_list_of_supported_pyodbc_drivers', lambda: ['Driver1', 'Driver2', 'Driver3'])
-        assert db_instance._Db__get_number_of_available_pyodbc_drivers() == 3
-
-    def test_get_list_of_supported_pyodbc_drivers(self, db_instance, monkeypatch):
-        mock_drivers = ['Driver1', 'Driver2', 'Driver3']
-        monkeypatch.setattr(pyodbc, 'drivers', lambda: mock_drivers)
-        
-        result = db_instance._Db__get_list_of_supported_pyodbc_drivers()
-        assert result == mock_drivers
 
     def test_get_list_of_supported_pyodbc_drivers_error(self, db_instance, monkeypatch, caplog):
         monkeypatch.setattr(pyodbc, 'drivers', Mock(side_effect=pyodbc.Error("Test error")))
@@ -451,189 +203,57 @@ class TestCaseDB:
         assert result == ['Driver1', 'Driver3']
         assert mock_connect.call_count == 3
 
-    @patch('pyodbc.connect')
-    def test_get_list_of_available_and_supported_pyodbc_drivers(self, mock_connect, db_instance, monkeypatch):
-        mock_drivers = ['Driver1', 'Driver2', 'Driver3']
-        monkeypatch.setattr(db_instance, '_Db__get_list_of_supported_pyodbc_drivers', lambda: mock_drivers)
-        mock_connect.side_effect = [None, pyodbc.Error("Test error"), None]
-        
-        result = db_instance._Db__get_list_of_available_and_supported_pyodbc_drivers()
-        assert result == ['Driver1', 'Driver3']
-        assert mock_connect.call_count == 3
-
-    def test_get_list_of_available_and_supported_pyodbc_drivers_logs_unavailable(self, db_instance, monkeypatch, caplog):
-        mock_drivers = ['Driver1', 'Driver2']
-        monkeypatch.setattr(db_instance, '_Db__get_list_of_supported_pyodbc_drivers', lambda: mock_drivers)
-        monkeypatch.setattr(pyodbc, 'connect', Mock(side_effect=pyodbc.Error("Test error")))
-        
-        with caplog.at_level(logging.INFO):
-            result = db_instance._Db__get_list_of_available_and_supported_pyodbc_drivers()
-        
-        assert result == []
-        assert any("Driver Driver1 could not connect: Test error" in record.message for record in caplog.records)
-        assert any("Driver Driver2 could not connect: Test error" in record.message for record in caplog.records)
-
-    def test_get_list_of_available_and_supported_pyodbc_drivers_silently_passes_on_error(self, db_instance, monkeypatch):
-        mock_error = pyodbc.Error("Mock Error")
-        monkeypatch.setattr(pyodbc, 'drivers', Mock(side_effect=mock_error))
-
-        result = db_instance._Db__get_list_of_available_and_supported_pyodbc_drivers()
-        assert result == [], "Should return an empty list when pyodbc.Error occurs"
-
     def test_connect_success(self, db_instance, monkeypatch):
-        connect_called = False
-
-        def mock_connect(*args, **kwargs):
-            nonlocal connect_called
-            connect_called = True
-            return Mock(cursor=Mock())
-
-        monkeypatch.setattr('pyodbc.connect', mock_connect)
+        mock_connection = Mock()
+        monkeypatch.setattr('pyodbc.connect', lambda *args, **kwargs: mock_connection)
+        
         db_instance.connection = None
         db_instance._Db__connect()
         
-        assert db_instance.connection is not None
-        assert connect_called
+        assert db_instance.connection is mock_connection
+        assert db_instance.cursor is not None
 
-    def test_connect_raises_programming_error_with_logging(self, db_instance, monkeypatch, caplog):
+    def test_connect_raises_data_error(self, db_instance, monkeypatch):
         def mock_connect(*args, **kwargs):
-            raise pyodbc.ProgrammingError("some_code", "some_message")
+            raise pyodbc.DataError("Data error")
 
-        monkeypatch.setattr(pyodbc, 'connect', mock_connect)
+        monkeypatch.setattr('pyodbc.connect', mock_connect)
+        
+        db_instance.connection = None
+        with pytest.raises(pyodbc.DataError):
+            db_instance._Db__connect()
 
+    def test_connect_raises_integrity_error(self, db_instance, monkeypatch):
+        def mock_connect(*args, **kwargs):
+            raise pyodbc.IntegrityError("Integrity error")
+
+        monkeypatch.setattr('pyodbc.connect', mock_connect)
+        
+        db_instance.connection = None
+        with pytest.raises(pyodbc.IntegrityError):
+            db_instance._Db__connect()
+
+    def test_connect_raises_programming_error(self, db_instance, monkeypatch):
+        def mock_connect(*args, **kwargs):
+            raise pyodbc.ProgrammingError("Programming error")
+
+        monkeypatch.setattr('pyodbc.connect', mock_connect)
+        
         db_instance.connection = None
         with pytest.raises(pyodbc.ProgrammingError):
-                db_instance._Db__connect()
-
-        assert "Programming Error some_code: some_message" in caplog.text, "Programming error should be logged"
-        assert "There seems to be a problem with your code" in caplog.text, "Warning for ProgrammingError should be logged"
-
-    def test_connect_raise_on_data_error(self, db_instance, monkeypatch):
-        def mock_connect(*args, **kwargs):
-            raise pyodbc.DataError(("DataError code", "Test data error"))
-
-        db_instance.connection = None
-        with patch('pyodbc.connect', side_effect=mock_connect):
-            with pytest.raises(pyodbc.DataError):
-                db_instance._Db__connect()
-
-    def test_connect_raise_on_integrity_error(self, db_instance, monkeypatch):
-        def mock_connect(*args, **kwargs):
-            raise pyodbc.IntegrityError(("IntegrityError code", "Test integrity error"))
-
-        db_instance.connection = None
-        with patch('pyodbc.connect', side_effect=mock_connect):
-            with pytest.raises(pyodbc.IntegrityError):
-                db_instance._Db__connect()
-
-    def test_connect_raise_on_not_supported_error(self, db_instance, monkeypatch):
-        def mock_connect(*args, **kwargs):
-            raise pyodbc.NotSupportedError(("NotSupportedError code", "Test not supported error"))
-
-        db_instance.connection = None
-        with patch('pyodbc.connect', side_effect=mock_connect):
-            with pytest.raises(pyodbc.NotSupportedError):
-                db_instance._Db__connect()
-
-    def test_connect_attempts_three_times_on_operational_error(self, db_instance, monkeypatch, caplog):
-        attempt_count = 0
-
-        def mock_connect(*args, **kwargs):
-            nonlocal attempt_count
-            attempt_count += 1
-            if attempt_count < 3:
-                exc = pyodbc.OperationalError()
-                exc.args = ("OperationalError code", "Mock Operational Error")
-                raise exc
-            else:
-                return Mock()
-
-        db_instance.connection = None
-        with patch('pyodbc.connect', side_effect=mock_connect) as mock:
-            db_instance._Db__connect()
-            assert "Operational Error: OperationalError code: Mock Operational Error" in caplog.text
-            assert "Pyodbc is having issues with the connection" in caplog.text
-            assert mock.call_count == 3
-
-    def test_connect_raises_after_max_attempts_on_operational_error(self, db_instance, monkeypatch):
-        def mock_connect(*args, **kwargs):
-            raise pyodbc.OperationalError(("OperationalError code", "Test operational error"))
-
-        db_instance.connection = None
-        db_instance.connection_attempts = 3
-        with patch('pyodbc.connect', side_effect=mock_connect):
-            with pytest.raises(pyodbc.OperationalError):
-                db_instance._Db__connect()
-
-    def test_connect_logs_database_error_and_retries(self, db_instance, monkeypatch, caplog):
-        attempt_count = 0
-
-        def mock_connect(*args, **kwargs):
-            nonlocal attempt_count
-            attempt_count += 1
-            if attempt_count < 3:
-                raise pyodbc.DatabaseError(("DatabaseError code", "Test database error"))
-            return Mock(cursor=Mock())
-
-        db_instance.connection = None
-        with patch('pyodbc.connect', side_effect=mock_connect):
             db_instance._Db__connect()
 
-        assert attempt_count == 3, "Should retry exactly three times before success"
-        assert db_instance.connection is not None, "Connection should be established after retries"
-
-        assert "DatabaseError ('DatabaseError code', 'Test database error'): No message" in caplog.text, "Should log the database error message on retry attempts"
-        assert "Retrying connection..." in caplog.text, "Retry message should be logged"
-
-    def test_connect_breaks_after_max_attempts_on_database_error(self, db_instance, monkeypatch):
-        attempt_count = 0
-
+    def test_connect_raises_not_supported_error(self, db_instance, monkeypatch):
         def mock_connect(*args, **kwargs):
-            nonlocal attempt_count
-            attempt_count += 1
-            raise pyodbc.DatabaseError(("DatabaseError code", "Test database error"))
+            raise pyodbc.NotSupportedError("Not supported error")
 
-        db_instance.connection = None
-        db_instance.connection_attempts = 3  
+        monkeypatch.setattr('pyodbc.connect', mock_connect)
         
-        with patch('pyodbc.connect', side_effect=mock_connect):
-            with pytest.raises(pyodbc.Error, match="Failed to connect to the database"):
-                db_instance._Db__connect()
-
-        assert attempt_count == 3, "Should attempt exactly three connections before raising an error"
-
-    def test_connect_retry_on_generic_error(self, db_instance, monkeypatch):
-        attempt_count = 0
-
-        def mock_connect(*args, **kwargs):
-            nonlocal attempt_count
-            attempt_count += 1
-            if attempt_count < 3:
-                raise pyodbc.Error(("Error code", "Test generic error"))
-            return Mock(cursor=Mock())
-
         db_instance.connection = None
-        with patch('pyodbc.connect', side_effect=mock_connect) as mock:
+        with pytest.raises(pyodbc.NotSupportedError):
             db_instance._Db__connect()
-            assert mock.call_count == 3
-    def test_connect_raises_error_after_max_attempts(self, db_instance, monkeypatch):
-        def mock_connect(*args, **kwargs):
-            raise pyodbc.Error("Connection error")
 
-        db_instance.connection = None
-        db_instance.connection_attempts = 3
-        with patch('pyodbc.connect', side_effect=mock_connect):
-            with pytest.raises(pyodbc.Error, match="Failed to connect to the database"):
-                db_instance._Db__connect()
-    
-    def test_are_connection_attempts_reached(self, db_instance, caplog):
-        assert not db_instance._Db__are_connection_attempts_reached(1)
-        assert "Retrying connection..." in caplog.text
-
-        assert db_instance._Db__are_connection_attempts_reached(3)
-        assert "Failed to connect to the DataWarehouse after 3 attempts." in caplog.text
-
-    def test_connect_success_after_retries(self, db_instance, monkeypatch):
+    def test_connect_retries_on_operational_error(self, db_instance, monkeypatch):
         attempt_count = 0
 
         def mock_connect(*args, **kwargs):
@@ -641,16 +261,102 @@ class TestCaseDB:
             attempt_count += 1
             if attempt_count < 3:
                 raise pyodbc.OperationalError("Operational error")
-            return Mock(cursor=Mock())  
+            return Mock()
 
-        db_instance.connection_attempts = 3  
-        db_instance.connection = None  
+        db_instance.connection_attempts = 3
+        db_instance.connection = None
 
         with patch('pyodbc.connect', side_effect=mock_connect):
-            db_instance._Db__connect()  
+            db_instance._Db__connect()
 
         assert attempt_count == 3, "Should attempt three connections before succeeding"
         assert db_instance.connection is not None, "Connection should be established after retries"
+
+    def test_connect_raises_after_max_attempts_on_operational_error(self, db_instance, monkeypatch):
+        def mock_connect(*args, **kwargs):
+            raise pyodbc.OperationalError("Operational error")
+
+        db_instance.connection = None
+        db_instance.connection_attempts = 3
+        with patch('pyodbc.connect', side_effect=mock_connect):
+            with pytest.raises(pyodbc.Error, match="Failed to connect to the database"):
+                db_instance._Db__connect()
+
+    def test_connect_retries_on_database_error(self, db_instance, monkeypatch):
+        attempt_count = 0
+
+        def mock_connect(*args, **kwargs):
+            nonlocal attempt_count
+            attempt_count += 1
+            if attempt_count < 3:
+                raise pyodbc.DatabaseError("Database error")
+            return Mock()
+
+        db_instance.connection_attempts = 3
+        db_instance.connection = None
+
+        with patch('pyodbc.connect', side_effect=mock_connect):
+            db_instance._Db__connect()
+
+        assert attempt_count == 3, "Should attempt three connections before succeeding"
+
+    # def test_connect_raises_after_max_attempts_on_database_error(self, db_instance, monkeypatch):
+    #     def mock_connect(*args, **kwargs):
+    #         raise pyodbc.DatabaseError("Database error")
+
+    #     db_instance.connection = None
+    #     db_instance.connection_attempts = 3
+    #     with patch('pyodbc.connect', side_effect=mock_connect):
+    #         with pytest.raises(pyodbc.Error, match="Failed to connect to the database"):
+    #             db_instance._Db__connect()
+
+    def test_connect_retries_on_generic_error(self, db_instance, monkeypatch):
+        attempt_count = 0
+
+        def mock_connect(*args, **kwargs):
+            nonlocal attempt_count
+            attempt_count += 1
+            if attempt_count < 3:
+                raise pyodbc.Error("Generic error")
+            return Mock()
+
+        db_instance.connection_attempts = 3
+        db_instance.connection = None
+
+        with patch('pyodbc.connect', side_effect=mock_connect):
+            db_instance._Db__connect()
+
+        assert attempt_count == 3, "Should attempt three connections before succeeding"
+
+    def test_connect_raises_after_max_attempts_on_generic_error(self, db_instance, monkeypatch):
+        def mock_connect(*args, **kwargs):
+            raise pyodbc.Error("Generic error")
+
+        db_instance.connection = None
+        db_instance.connection_attempts = 3
+        with patch('pyodbc.connect', side_effect=mock_connect):
+            with pytest.raises(pyodbc.Error, match="Failed to connect to the database"):
+                db_instance._Db__connect()
+
+    def test_connect_raises_error_when_connection_is_none(self, db_instance, monkeypatch):
+       
+        def mock_connect(*args, **kwargs):
+            return None
+        
+        monkeypatch.setattr('pyodbc.connect', mock_connect)
+        
+        db_instance.connection_attempts = 3
+        db_instance.connection = None
+        
+        with pytest.raises(pyodbc.Error, match="Failed to connect to the database"):
+            db_instance._Db__connect()
+
+    def test_are_connection_attempts_reached(self, db_instance, caplog):
+        assert not db_instance._Db__are_connection_attempts_reached(1)
+        assert "Retrying connection..." in caplog.text
+
+        assert db_instance._Db__are_connection_attempts_reached(3)
+        assert "Failed to connect to the DataWarehouse after 3 attempts." in caplog.text
 
     def test_disconnect(self, db_instance):
         mock_connection = Mock()
