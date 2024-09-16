@@ -205,7 +205,7 @@ class OPC_UA:
 
         if not str(self.opcua_url).startswith("opc.tcp://"):
             raise ValueError("Invalid OPC UA URL")
-        
+
         if self.auth_client is not None:
             if self.auth_client.token is not None:
                 self.headers["Authorization"] = (
@@ -364,7 +364,9 @@ class OPC_UA:
         if not content.get("Success"):
             raise RuntimeError(content.get("ErrorMessage"))
         if "HistoryReadResults" not in content:
-            raise RuntimeError("No history read results returned from the server")
+            raise RuntimeError(
+                "No history read results returned from the server"
+            )
 
     def _process_df(
         self, df_result: pd.DataFrame, columns: Dict[str, str]
@@ -635,7 +637,7 @@ class OPC_UA:
                 raise RuntimeError(f"Error in write_values: {str(e)}")
         except Exception as e:
             raise RuntimeError(f"Error in write_values: {str(e)}")
-        
+
         # Return if no content from server
         if not isinstance(content, dict):
             return None
@@ -666,13 +668,17 @@ class OPC_UA:
         """
         # Check if data is in correct order, if wrong fail.
         for variable in variable_list:
-            if len(variable.get('UpdateValues', [])) > 1:
-                for num_variable in range(len(variable['UpdateValues']) - 1):
+            if len(variable.get("UpdateValues", [])) > 1:
+                for num_variable in range(len(variable["UpdateValues"]) - 1):
                     if not (
-                        (variable['UpdateValues'][num_variable]['SourceTimestamp'])
-                        < variable['UpdateValues'][
-                            num_variable + 1
-                        ]['SourceTimestamp']
+                        (
+                            variable["UpdateValues"][num_variable][
+                                "SourceTimestamp"
+                            ]
+                        )
+                        < variable["UpdateValues"][num_variable + 1][
+                            "SourceTimestamp"
+                        ]
                     ):
                         raise ValueError(
                             "Time for variables not in correct order."
@@ -703,7 +709,9 @@ class OPC_UA:
                     extended_timeout=True,
                 )
             else:
-                raise RuntimeError(f"Error in write_historical_values: {str(e)}")
+                raise RuntimeError(
+                    f"Error in write_historical_values: {str(e)}"
+                )
         except Exception as e:
             raise RuntimeError(f"Error in write_historical_values: {str(e)}")
         # Return if no content from server

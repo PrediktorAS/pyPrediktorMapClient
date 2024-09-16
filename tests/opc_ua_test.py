@@ -13,13 +13,11 @@ from pydantic_core import Url
 import asyncio
 import requests
 import json
-import logging
 import pandas as pd
-from parameterized import parameterized
-from aiohttp.client_exceptions import ClientResponseError, ClientError
+from aiohttp.client_exceptions import ClientResponseError
 from yarl import URL as YarlURL
 
-from pyprediktormapclient.opc_ua import OPC_UA, WriteVariables, TYPE_LIST
+from pyprediktormapclient.opc_ua import OPC_UA, TYPE_LIST
 from pyprediktormapclient.auth_client import AUTH_CLIENT, Token
 
 URL = "http://someserver.somedomain.com/v1/"
@@ -493,7 +491,9 @@ class TestCaseOPCUA:
     def setup(self, opc):
         self.opc = opc
         self.auth_client_mock = Mock()
-        self.opc_auth = OPC_UA(rest_url=URL, opcua_url=OPC_URL, auth_client=self.auth_client_mock)
+        self.opc_auth = OPC_UA(
+            rest_url=URL, opcua_url=OPC_URL, auth_client=self.auth_client_mock
+        )
         opc.TYPE_DICT = {t["id"]: t["type"] for t in TYPE_LIST}
 
     def test_malformed_rest_url(self):
@@ -516,27 +516,33 @@ class TestCaseOPCUA:
     def test_namespaces(self, opc):
         assert "ClientNamespaces" not in opc.body
 
-        opc_with_namespaces = OPC_UA(rest_url=URL, opcua_url=OPC_URL, namespaces=["1", "2"])
+        opc_with_namespaces = OPC_UA(
+            rest_url=URL, opcua_url=OPC_URL, namespaces=["1", "2"]
+        )
         assert "ClientNamespaces" in opc_with_namespaces.body
         assert opc_with_namespaces.body["ClientNamespaces"] == ["1", "2"]
 
     def test_init_with_auth_client(self):
         self.auth_client_mock.token = Mock()
         self.auth_client_mock.token.session_token = "test_token"
-        self.opc_auth = OPC_UA(rest_url=URL, opcua_url=OPC_URL, auth_client=self.auth_client_mock)
+        self.opc_auth = OPC_UA(
+            rest_url=URL, opcua_url=OPC_URL, auth_client=self.auth_client_mock
+        )
 
         assert self.opc_auth.auth_client == self.auth_client_mock
         assert self.opc_auth.headers["Authorization"] == "Bearer test_token"
 
     def test_init_with_auth_client_no_token(self):
-       self.auth_client_mock.token = None
-       opc_auth = OPC_UA(rest_url=URL, opcua_url=OPC_URL, auth_client=self.auth_client_mock)
+        self.auth_client_mock.token = None
+        opc_auth = OPC_UA(
+            rest_url=URL, opcua_url=OPC_URL, auth_client=self.auth_client_mock
+        )
 
-       assert "Authorization" not in opc_auth.headers
+        assert "Authorization" not in opc_auth.headers
 
     def test_init_with_minimal_args(self):
-       assert self.opc.auth_client is None
-       assert "Authorization" not in self.opc.headers
+        assert self.opc.auth_client is None
+        assert "Authorization" not in self.opc.headers
 
     def test_json_serial_with_url(self):
         url = Url("http://example.com")
@@ -558,8 +564,10 @@ class TestCaseOPCUA:
         unsupported_type = set()
         with pytest.raises(TypeError) as exc_info:
             self.opc.json_serial(unsupported_type)
-        
-        expected_error_message = f"Type {type(unsupported_type)} not serializable"
+
+        expected_error_message = (
+            f"Type {type(unsupported_type)} not serializable"
+        )
         assert str(exc_info.value) == expected_error_message
 
     def test_check_auth_client_404_error(self):
@@ -596,7 +604,9 @@ class TestCaseOPCUA:
         self.auth_client_mock.check_if_token_has_expired.assert_called_once()
         self.auth_client_mock.refresh_token.assert_called_once()
 
-    def test_check_if_ory_session_token_is_valid_refresh_when_not_expired(self):
+    def test_check_if_ory_session_token_is_valid_refresh_when_not_expired(
+        self,
+    ):
         self.auth_client_mock.check_if_token_has_expired.return_value = False
         self.opc_auth.check_if_ory_session_token_is_valid_refresh()
         self.auth_client_mock.check_if_token_has_expired.assert_called_once()
@@ -634,13 +644,17 @@ class TestCaseOPCUA:
         assert isinstance(result[0], dict)
         assert result[0] == dict_var
 
-        with pytest.raises(TypeError, match="Unsupported type in variable_list"):
+        with pytest.raises(
+            TypeError, match="Unsupported type in variable_list"
+        ):
             self.opc._get_variable_list_as_list([123])
 
     def test_get_values_variable_list_not_list(self):
         not_a_list = "not_a_list"
 
-        with pytest.raises(TypeError, match="Unsupported type in variable_list"):
+        with pytest.raises(
+            TypeError, match="Unsupported type in variable_list"
+        ):
             self.opc.get_values(not_a_list)
 
     def test_get_variable_list_as_list_invalid_type(self):
@@ -649,13 +663,16 @@ class TestCaseOPCUA:
 
     @pytest.mark.parametrize("auth_client_class", [None, AUTH_CLIENT])
     @patch("requests.post", side_effect=successful_mocked_requests)
-    def test_get_live_values_successful_response_processing(self, mock_get, auth_client_class):
+    def test_get_live_values_successful_response_processing(
+        self, mock_get, auth_client_class
+    ):
         if auth_client_class:
             auth_client = auth_client_class(
                 rest_url=URL, username="test_user", password="test_pass"
             )
             auth_client.token = Token(
-                session_token="test_session_id", expires_at="2099-01-01T00:00:00Z"
+                session_token="test_session_id",
+                expires_at="2099-01-01T00:00:00Z",
             )
             tsdata = OPC_UA(
                 rest_url=URL, opcua_url=OPC_URL, auth_client=auth_client
@@ -664,38 +681,54 @@ class TestCaseOPCUA:
             tsdata = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
 
         result = tsdata.get_values(list_of_ids)
-        
-        assert len(result) == len(list_of_ids), "Result length should match input length"
-    
+
+        assert len(result) == len(
+            list_of_ids
+        ), "Result length should match input length"
+
         for num, row in enumerate(list_of_ids):
-            assert result[num]["Id"] == list_of_ids[num]["Id"], "IDs should match"
             assert (
-                result[num]["Timestamp"] ==
-                successful_live_response[0]["Values"][num]["ServerTimestamp"]
+                result[num]["Id"] == list_of_ids[num]["Id"]
+            ), "IDs should match"
+            assert (
+                result[num]["Timestamp"]
+                == successful_live_response[0]["Values"][num][
+                    "ServerTimestamp"
+                ]
             ), "Timestamps should match"
             assert (
-                result[num]["Value"] ==
-                successful_live_response[0]["Values"][num]["Value"]["Body"]
+                result[num]["Value"]
+                == successful_live_response[0]["Values"][num]["Value"]["Body"]
             ), "Values should match"
 
-    @patch('pyprediktormapclient.opc_ua.request_from_api')
-    def test_get_live_values_with_auth_client_error_handling(self, mock_request_from_api):
+    @patch("pyprediktormapclient.opc_ua.request_from_api")
+    def test_get_live_values_with_auth_client_error_handling(
+        self, mock_request_from_api
+    ):
         self.auth_client_mock.token.session_token = "test_token"
-        
+
         mock_response = Mock()
         mock_response.content = json.dumps({"error": {"code": 404}}).encode()
         mock_request_from_api.side_effect = [
-            requests.exceptions.HTTPError("404 Client Error", response=mock_response),
-            successful_live_response
+            requests.exceptions.HTTPError(
+                "404 Client Error", response=mock_response
+            ),
+            successful_live_response,
         ]
 
         result = self.opc_auth.get_values(list_of_ids)
-        
-        assert result is not None
-        assert mock_request_from_api.call_count == 2, "request_from_api should be called twice due to retry"
 
-        assert "Authorization" in self.opc_auth.headers, "Authorization header is missing"
-        assert "test_token" in self.opc_auth.headers.get("Authorization", ""), "Session token not found in Authorization header"
+        assert result is not None
+        assert (
+            mock_request_from_api.call_count == 2
+        ), "request_from_api should be called twice due to retry"
+
+        assert (
+            "Authorization" in self.opc_auth.headers
+        ), "Authorization header is missing"
+        assert "test_token" in self.opc_auth.headers.get(
+            "Authorization", ""
+        ), "Session token not found in Authorization header"
 
     @patch("requests.post", side_effect=empty_values_mocked_requests)
     def test_get_live_values_with_missing_values(self, mock_get):
@@ -707,33 +740,60 @@ class TestCaseOPCUA:
                     result[num]["Timestamp"]
                     == empty_live_response[0]["Values"][num]["ServerTimestamp"]
                 )
-                assert all(result[num][key] is None for key in ["Value", "ValueType"])
+                assert all(
+                    result[num][key] is None for key in ["Value", "ValueType"]
+                )
 
     @patch("requests.post", side_effect=no_status_code_mocked_requests)
     def test_get_live_values_no_status_code(self, mock_get):
         result = self.opc.get_values(list_of_ids)
         assert result[0]["StatusCode"] is None
         assert result[0]["StatusSymbol"] is None
-        assert all(result[0][key] is not None for key in ["Id", "Timestamp", "Value", "ValueType"])
+        assert all(
+            result[0][key] is not None
+            for key in ["Id", "Timestamp", "Value", "ValueType"]
+        )
 
     @patch("requests.post", side_effect=no_mocked_requests)
     def test_get_live_values_no_response(self, mock_get):
         result = self.opc.get_values(list_of_ids)
         for item in result:
-            assert all(item[key] is None for key in ["Timestamp", "Value", "ValueType", "StatusCode", "StatusSymbol"])
+            assert all(
+                item[key] is None
+                for key in [
+                    "Timestamp",
+                    "Value",
+                    "ValueType",
+                    "StatusCode",
+                    "StatusSymbol",
+                ]
+            )
         assert "Success" not in result[0]
 
     @patch("requests.post", side_effect=empty_mocked_requests)
     def test_get_live_values_empty_response(self, mock_get):
         result = self.opc.get_values(list_of_ids)
-        
-        assert len(result) == len(list_of_ids), "Result should have same length as input"
-        
-        for item in result:
-            assert all(item[key] is None for key in ["Timestamp", "Value", "ValueType", "StatusCode", "StatusSymbol"])
-            assert all(item[key] is not None for key in ["Id", "Namespace", "IdType"])
 
-    @patch('pyprediktormapclient.opc_ua.request_from_api')
+        assert len(result) == len(
+            list_of_ids
+        ), "Result should have same length as input"
+
+        for item in result:
+            assert all(
+                item[key] is None
+                for key in [
+                    "Timestamp",
+                    "Value",
+                    "ValueType",
+                    "StatusCode",
+                    "StatusSymbol",
+                ]
+            )
+            assert all(
+                item[key] is not None for key in ["Id", "Namespace", "IdType"]
+            )
+
+    @patch("pyprediktormapclient.opc_ua.request_from_api")
     def test_get_live_values_error_handling(self, mock_request):
         mock_request.side_effect = Exception("Test exception")
         with pytest.raises(RuntimeError) as exc_info:
@@ -744,8 +804,10 @@ class TestCaseOPCUA:
     def test_get_live_values_500_error(self, mock_post):
         error_response = Mock()
         error_response.status_code = 500
-        error_response.raise_for_status.side_effect = HTTPError("500 Server Error: Internal Server Error for url")
-       
+        error_response.raise_for_status.side_effect = HTTPError(
+            "500 Server Error: Internal Server Error for url"
+        )
+
         mock_post.return_value = error_response
         with pytest.raises(RuntimeError):
             self.opc.get_values(list_of_ids)
@@ -760,119 +822,150 @@ class TestCaseOPCUA:
         self.opc._check_content(valid_content)
 
     def test_check_content_not_dict(self):
-        with pytest.raises(RuntimeError, match="No content returned from the server"):
+        with pytest.raises(
+            RuntimeError, match="No content returned from the server"
+        ):
             self.opc._check_content("Not a dictionary")
 
     def test_check_content_not_successful(self):
         unsuccessful_content = successful_historical_result.copy()
         unsuccessful_content["Success"] = False
         unsuccessful_content["ErrorMessage"] = "Some error occurred"
-        
+
         with pytest.raises(RuntimeError, match="Some error occurred"):
             self.opc._check_content(unsuccessful_content)
 
     def test_check_content_no_history_results(self):
         content_without_history = successful_historical_result.copy()
         del content_without_history["HistoryReadResults"]
-        
-        with pytest.raises(RuntimeError, match="No history read results returned from the server"):
+
+        with pytest.raises(
+            RuntimeError,
+            match="No history read results returned from the server",
+        ):
             self.opc._check_content(content_without_history)
 
     def test_process_df_with_value_type(self):
-        df_input = pd.DataFrame({
-            "Value.Type": [11, 12, 11],
-            "Value.Body": [1.23, "test", 4.56],
-            "OldColumn1": ["A", "B", "C"],
-            "OldColumn2": [1, 2, 3]
-        })
+        df_input = pd.DataFrame(
+            {
+                "Value.Type": [11, 12, 11],
+                "Value.Body": [1.23, "test", 4.56],
+                "OldColumn1": ["A", "B", "C"],
+                "OldColumn2": [1, 2, 3],
+            }
+        )
         columns = {"OldColumn1": "NewColumn1", "OldColumn2": "NewColumn2"}
-        
+
         result = self.opc._process_df(df_input, columns)
-        
+
         assert list(result["Value.Type"]) == ["Double", "String", "Double"]
-        assert set(result.columns) == {"Value.Type", "Value.Body", "NewColumn1", "NewColumn2"}
+        assert set(result.columns) == {
+            "Value.Type",
+            "Value.Body",
+            "NewColumn1",
+            "NewColumn2",
+        }
 
     def test_process_df_without_value_type(self):
-        df_input = pd.DataFrame({
-            "Value.Body": [1.23, "test", 4.56],
-            "OldColumn1": ["A", "B", "C"],
-            "OldColumn2": [1, 2, 3]
-        })
+        df_input = pd.DataFrame(
+            {
+                "Value.Body": [1.23, "test", 4.56],
+                "OldColumn1": ["A", "B", "C"],
+                "OldColumn2": [1, 2, 3],
+            }
+        )
         columns = {"OldColumn1": "NewColumn1", "OldColumn2": "NewColumn2"}
-        
+
         result = self.opc._process_df(df_input, columns)
-        
-        assert set(result.columns) == {"Value.Body", "NewColumn1", "NewColumn2"}
+
+        assert set(result.columns) == {
+            "Value.Body",
+            "NewColumn1",
+            "NewColumn2",
+        }
 
     def test_process_df_rename_error(self):
-        df_input = pd.DataFrame({
-            "Value.Body": [1.23, "test", 4.56],
-            "OldColumn1": ["A", "B", "C"],
-        })
+        df_input = pd.DataFrame(
+            {
+                "Value.Body": [1.23, "test", 4.56],
+                "OldColumn1": ["A", "B", "C"],
+            }
+        )
         columns = {"NonExistentColumn": "NewColumn"}
-        
+
         with pytest.raises(KeyError):
             self.opc._process_df(df_input, columns)
 
     def test_process_df_empty_dataframe(self):
         df_input = pd.DataFrame()
         columns = {}
-        
+
         result = self.opc._process_df(df_input, columns)
-        
+
         assert result.empty
         assert isinstance(result, pd.DataFrame)
 
     def test_process_content(self):
         result = self.opc._process_content(successful_historical_result)
-        
+
         assert isinstance(result, pd.DataFrame)
         assert len(result) == 4
-       
+
         assert "HistoryReadResults.NodeId.Id" in result.columns
         assert "HistoryReadResults.NodeId.Namespace" in result.columns
         assert "HistoryReadResults.NodeId.IdType" in result.columns
-       
+
         assert result.iloc[0]["HistoryReadResults.NodeId.Id"] == "SOMEID"
         assert result.iloc[0]["Value.Body"] == 34.28500000000003
         assert result.iloc[0]["SourceTimestamp"] == "2022-09-13T13:39:51Z"
-      
+
         assert result.iloc[2]["HistoryReadResults.NodeId.Id"] == "SOMEID2"
         assert result.iloc[2]["Value.Body"] == 34.28500000000003
         assert result.iloc[2]["SourceTimestamp"] == "2022-09-13T13:39:51Z"
 
-    @patch('pyprediktormapclient.opc_ua.request_from_api')
+    @patch("pyprediktormapclient.opc_ua.request_from_api")
     def test_write_live_values_http_error_handling(self, mock_request):
         auth_client_mock = Mock()
-        opc = OPC_UA(rest_url=URL, opcua_url=OPC_URL, auth_client=auth_client_mock)
-        
+        opc = OPC_UA(
+            rest_url=URL, opcua_url=OPC_URL, auth_client=auth_client_mock
+        )
+
         mock_response = Mock()
         mock_response.content = json.dumps({"error": {"code": 404}}).encode()
-        http_error = requests.exceptions.HTTPError("404 Client Error", response=mock_response)
-        mock_request.side_effect = [http_error, {"Success": True, "StatusCodes": [{"Code": 0}]}]
-        
+        http_error = requests.exceptions.HTTPError(
+            "404 Client Error", response=mock_response
+        )
+        mock_request.side_effect = [
+            http_error,
+            {"Success": True, "StatusCodes": [{"Code": 0}]},
+        ]
+
         opc.check_auth_client = Mock()
-        
+
         result = opc.write_values(list_of_write_values)
-        
+
         opc.check_auth_client.assert_called_once_with({"error": {"code": 404}})
         assert result is not None
         assert len(result) == len(list_of_write_values)
 
-    @patch('pyprediktormapclient.opc_ua.request_from_api')
+    @patch("pyprediktormapclient.opc_ua.request_from_api")
     def test_write_live_values_error_handling(self, mock_request):
         mock_request.side_effect = Exception("Test exception")
         with pytest.raises(RuntimeError) as exc_info:
             self.opc.write_values(list_of_write_values)
         assert str(exc_info.value) == "Error in write_values: Test exception"
 
-    @patch('pyprediktormapclient.opc_ua.request_from_api')
+    @patch("pyprediktormapclient.opc_ua.request_from_api")
     def test_write_live_values_http_error_without_auth(self, mock_request):
-        mock_request.side_effect = requests.exceptions.HTTPError("404 Client Error")
-        
+        mock_request.side_effect = requests.exceptions.HTTPError(
+            "404 Client Error"
+        )
+
         with pytest.raises(RuntimeError) as exc_info:
             self.opc.write_values(list_of_write_values)
-        assert str(exc_info.value).startswith("Error in write_values: 404 Client Error")
+        assert str(exc_info.value).startswith(
+            "Error in write_values: 404 Client Error"
+        )
 
     @patch("requests.post", side_effect=successful_write_mocked_requests)
     def test_write_live_values_successful(self, mock_get):
@@ -888,9 +981,7 @@ class TestCaseOPCUA:
             )
             assert result[num]["WriteSuccess"] is True
 
-    @patch(
-        "requests.post", side_effect=empty_write_values_mocked_requests
-    )
+    @patch("requests.post", side_effect=empty_write_values_mocked_requests)
     def test_write_live_values_with_missing_value_and_statuscode(
         self, mock_get
     ):
@@ -903,9 +994,7 @@ class TestCaseOPCUA:
         result = self.opc.write_values(list_of_write_values)
         assert result is None
 
-    @patch(
-        "requests.post", side_effect=unsuccessful_write_mocked_requests
-    )
+    @patch("requests.post", side_effect=unsuccessful_write_mocked_requests)
     def test_get_write_live_values_unsuccessful(self, mock_get):
         with pytest.raises(RuntimeError):
             self.opc.write_values(list_of_write_values)
@@ -919,53 +1008,81 @@ class TestCaseOPCUA:
         empty_historical_variable = WriteHistoricalVariables(
             NodeId=Variables(**list_of_write_values[0]["NodeId"]),
             PerformInsertReplace=1,
-            UpdateValues=[]
+            UpdateValues=[],
         )
-        
-        with patch('pyprediktormapclient.opc_ua.request_from_api') as mock_request:
-            mock_request.return_value = {"Success": True, "HistoryUpdateResults": [{}]}
-            result = self.opc.write_historical_values([empty_historical_variable.model_dump()])
-        
+
+        with patch(
+            "pyprediktormapclient.opc_ua.request_from_api"
+        ) as mock_request:
+            mock_request.return_value = {
+                "Success": True,
+                "HistoryUpdateResults": [{}],
+            }
+            result = self.opc.write_historical_values(
+                [empty_historical_variable.model_dump()]
+            )
+
         assert result is not None
         assert len(result) == 1
-        assert result[0].get('WriteSuccess', False)
+        assert result[0].get("WriteSuccess", False)
 
-    @patch('pyprediktormapclient.opc_ua.request_from_api')
+    @patch("pyprediktormapclient.opc_ua.request_from_api")
     def test_write_historical_values_http_error_handling(self, mock_request):
         mock_response = Mock()
         mock_response.content = json.dumps({"error": {"code": 404}}).encode()
-        http_error = requests.exceptions.HTTPError("404 Client Error", response=mock_response)
-        mock_request.side_effect = [http_error, {"Success": True, "HistoryUpdateResults": [{}]}]
-        
+        http_error = requests.exceptions.HTTPError(
+            "404 Client Error", response=mock_response
+        )
+        mock_request.side_effect = [
+            http_error,
+            {"Success": True, "HistoryUpdateResults": [{}]},
+        ]
+
         self.opc_auth.check_auth_client = Mock()
-        
-        converted_data = [WriteHistoricalVariables(**item).model_dump() 
-                          for item in list_of_write_historical_values]
+
+        converted_data = [
+            WriteHistoricalVariables(**item).model_dump()
+            for item in list_of_write_historical_values
+        ]
         result = self.opc_auth.write_historical_values(converted_data)
-        
-        self.opc_auth.check_auth_client.assert_called_once_with({"error": {"code": 404}})
+
+        self.opc_auth.check_auth_client.assert_called_once_with(
+            {"error": {"code": 404}}
+        )
         assert result is not None
         assert len(result) == len(converted_data)
 
-    @patch('pyprediktormapclient.opc_ua.request_from_api')
+    @patch("pyprediktormapclient.opc_ua.request_from_api")
     def test_error_handling_write_historical_values(self, mock_request):
         mock_request.side_effect = [
             Exception("Test exception"),
-            Exception("Test exception") 
+            Exception("Test exception"),
         ]
-        input_data = [WriteHistoricalVariables(**item).model_dump() 
-                      for item in list_of_write_historical_values]
+        input_data = [
+            WriteHistoricalVariables(**item).model_dump()
+            for item in list_of_write_historical_values
+        ]
         with pytest.raises(Exception) as exc_info:
             self.opc.write_historical_values(input_data)
-        assert str(exc_info.value) == "Error in write_historical_values: Test exception"
+        assert (
+            str(exc_info.value)
+            == "Error in write_historical_values: Test exception"
+        )
         assert mock_request.call_count == 1
 
-    @patch('pyprediktormapclient.opc_ua.request_from_api')
-    def test_write_historical_values_http_error_without_auth(self, mock_request):
-        mock_request.side_effect = requests.exceptions.HTTPError("404 Client Error")
+    @patch("pyprediktormapclient.opc_ua.request_from_api")
+    def test_write_historical_values_http_error_without_auth(
+        self, mock_request
+    ):
+        mock_request.side_effect = requests.exceptions.HTTPError(
+            "404 Client Error"
+        )
         with pytest.raises(RuntimeError) as exc_info:
             self.opc.write_historical_values(list_of_write_historical_values)
-        assert str(exc_info.value) == "Error in write_historical_values: 404 Client Error"
+        assert (
+            str(exc_info.value)
+            == "Error in write_historical_values: 404 Client Error"
+        )
 
     @patch(
         "requests.post",
@@ -973,12 +1090,11 @@ class TestCaseOPCUA:
     )
     def test_write_historical_values_successful(self, mock_get):
         converted_data = [
-            WriteHistoricalVariables(**item).model_dump() 
+            WriteHistoricalVariables(**item).model_dump()
             for item in list_of_write_historical_values
         ]
         result = self.opc.write_historical_values(converted_data)
         assert all(row.get("WriteSuccess", False) for row in result)
-
 
     @patch(
         "requests.post",
@@ -992,9 +1108,7 @@ class TestCaseOPCUA:
         with pytest.raises(ValueError):
             self.opc.write_historical_values(converted_data)
 
-    @patch(
-        "requests.post", side_effect=empty_write_historical_mocked_requests
-    )
+    @patch("requests.post", side_effect=empty_write_historical_mocked_requests)
     def test_write_historical_values_with_missing_value_and_statuscode(
         self, mock_get
     ):
@@ -1005,9 +1119,7 @@ class TestCaseOPCUA:
         with pytest.raises(ValueError):
             self.opc.write_historical_values(converted_data)
 
-    @patch(
-        "requests.post", side_effect=no_write_mocked_historical_requests
-    )
+    @patch("requests.post", side_effect=no_write_mocked_historical_requests)
     def test_get_write_historical_values_no_response(self, mock_get):
         converted_data = [
             WriteHistoricalVariables(**item).model_dump()
@@ -1145,17 +1257,17 @@ class TestCaseAsyncOPCUA:
                 url=YarlURL("http://example.com"),
                 method="POST",
                 headers={},
-                real_url=YarlURL("http://example.com")
+                real_url=YarlURL("http://example.com"),
             ),
             history=(),
-            status=500
+            status=500,
         )
-        
+
         mock_post.side_effect = [error_response] * 3
-        
+
         with pytest.raises(RuntimeError) as exc_info:
             await self.opc._make_request("test_endpoint", {}, 3, 0)
-        
+
         assert mock_post.call_count == 3
         assert "Max retries reached" in str(exc_info.value)
 
@@ -1170,36 +1282,41 @@ class TestCaseAsyncOPCUA:
                 url=YarlURL("http://example.com"),
                 method="POST",
                 headers={},
-                real_url=YarlURL("http://example.com")
+                real_url=YarlURL("http://example.com"),
             ),
             history=(),
-            status=400
+            status=400,
         )
         mock_post.return_value.__aenter__.return_value = error_response
         max_retries = 3
         retry_delay = 0
 
         with pytest.raises(RuntimeError, match="Max retries reached"):
-            await self.opc._make_request("test_endpoint", {}, max_retries, retry_delay)
+            await self.opc._make_request(
+                "test_endpoint", {}, max_retries, retry_delay
+            )
 
         assert mock_post.call_count == max_retries
         assert mock_sleep.call_count == max_retries - 1
 
-    @patch('aiohttp.ClientSession.post')
+    @patch("aiohttp.ClientSession.post")
     async def test_make_request_client_error(self, mock_post):
         mock_post.side_effect = aiohttp.ClientError("Test client error")
-        
+
         with pytest.raises(RuntimeError):
             await self.opc._make_request("test_endpoint", {}, 1, 0)
 
     @patch("aiohttp.ClientSession.post")
     @patch("asyncio.sleep", return_value=None)
-    async def test_make_request_non_500_error_with_retry(self, mock_sleep, mock_post, mock_error_response):
+    async def test_make_request_non_500_error_with_retry(
+        self, mock_sleep, mock_post, mock_error_response
+    ):
         mock_error_response.status = 400
         mock_error_response.text.return_value = "Bad Request"
         mock_error_response.raise_for_status.side_effect.status = 400
-        mock_error_response.raise_for_status.side_effect.message = "Bad Request"
-
+        mock_error_response.raise_for_status.side_effect.message = (
+            "Bad Request"
+        )
 
         success_response = AsyncMock()
         success_response.status = 200
@@ -1208,14 +1325,14 @@ class TestCaseAsyncOPCUA:
         mock_post.side_effect = [
             AsyncMock(__aenter__=AsyncMock(return_value=mock_error_response)),
             AsyncMock(__aenter__=AsyncMock(return_value=mock_error_response)),
-            AsyncMock(__aenter__=AsyncMock(return_value=success_response))
+            AsyncMock(__aenter__=AsyncMock(return_value=success_response)),
         ]
 
         result = await self.opc._make_request("test_endpoint", {}, 3, 0)
 
         assert result == {"success": True}
         assert mock_post.call_count == 3
-        assert mock_sleep.call_count == 2 
+        assert mock_sleep.call_count == 2
 
         mock_error_response.text.assert_awaited()
         mock_error_response.raise_for_status.assert_called()
@@ -1264,21 +1381,27 @@ class TestCaseAsyncOPCUA:
                 {
                     "NodeId": {"Id": "SOMEID", "Namespace": 1, "IdType": 2},
                     "DataValues": [
-                        {"Value": {"Type": 11, "Body": 1.23}, "SourceTimestamp": "2023-01-01T00:00:00Z"}
-                    ]
+                        {
+                            "Value": {"Type": 11, "Body": 1.23},
+                            "SourceTimestamp": "2023-01-01T00:00:00Z",
+                        }
+                    ],
                 }
-            ]
+            ],
         }
-        
+
         start_time = datetime(2023, 1, 1)
         end_time = datetime(2023, 1, 2)
         variable_list = ["SOMEID"]
-        
+
         result = await self.opc.get_historical_values(
-            start_time, end_time, variable_list, "test_endpoint",
-            lambda vars: [{"NodeId": var} for var in vars]
+            start_time,
+            end_time,
+            variable_list,
+            "test_endpoint",
+            lambda vars: [{"NodeId": var} for var in vars],
         )
-        
+
         assert isinstance(result, pd.DataFrame)
         assert len(result) == 1
         assert result.iloc[0]["Value.Body"] == 1.23
@@ -1286,7 +1409,8 @@ class TestCaseAsyncOPCUA:
     @patch("aiohttp.ClientSession.post")
     async def test_get_historical_values_no_results(self, mock_post):
         mock_post.return_value = AsyncMockResponse(
-            json_data={"Success": True, "HistoryReadResults": []}, status_code=200
+            json_data={"Success": True, "HistoryReadResults": []},
+            status_code=200,
         )
 
         result = await self.opc.get_historical_values(
@@ -1294,7 +1418,7 @@ class TestCaseAsyncOPCUA:
             end_time=datetime(2023, 1, 2),
             variable_list=["SOMEID"],
             endpoint="values/historical",
-            prepare_variables=lambda vars: [{"NodeId": var} for var in vars]
+            prepare_variables=lambda vars: [{"NodeId": var} for var in vars],
         )
 
         assert result.empty
@@ -1310,7 +1434,7 @@ class TestCaseAsyncOPCUA:
             end_time=datetime(2023, 1, 2),
             variable_list=["SOMEID"],
             limit_start_index=0,
-            limit_num_records=100
+            limit_num_records=100,
         )
         assert isinstance(result, pd.DataFrame)
         assert "Value" in result.columns
@@ -1318,33 +1442,47 @@ class TestCaseAsyncOPCUA:
 
     async def test_get_raw_historical_values_success(self):
         mock_result = AsyncMock()
-        
-        with patch.object(self.opc, 'get_raw_historical_values_asyn', return_value=mock_result):
-            with patch.object(self.opc.helper, 'run_coroutine', return_value=mock_result) as mock_run_coroutine:
+
+        with patch.object(
+            self.opc,
+            "get_raw_historical_values_asyn",
+            return_value=mock_result,
+        ):
+            with patch.object(
+                self.opc.helper, "run_coroutine", return_value=mock_result
+            ) as mock_run_coroutine:
                 result = self.opc.get_raw_historical_values(
                     start_time=(datetime.now() - timedelta(30)),
                     end_time=(datetime.now() - timedelta(29)),
                     variable_list=list_of_ids,
                 )
-                
+
                 mock_run_coroutine.assert_called_once()
                 assert result == mock_result
 
     async def test_get_raw_historical_values_with_args(self):
         mock_result = AsyncMock()
-        
-        with patch.object(self.opc, 'get_raw_historical_values_asyn', return_value=mock_result) as mock_async:
+
+        with patch.object(
+            self.opc,
+            "get_raw_historical_values_asyn",
+            return_value=mock_result,
+        ) as mock_async:
             result = await make_raw_historical_request(self.opc)
-            
+
             mock_async.assert_called_once()
             args, kwargs = mock_async.call_args
-            assert 'start_time' in kwargs
-            assert 'end_time' in kwargs
-            assert kwargs['variable_list'] == list_of_ids
+            assert "start_time" in kwargs
+            assert "end_time" in kwargs
+            assert kwargs["variable_list"] == list_of_ids
             assert result == mock_result
 
     async def test_get_raw_historical_values_exception(self):
-        with patch.object(self.opc, 'get_raw_historical_values_asyn', side_effect=Exception("Test exception")):
+        with patch.object(
+            self.opc,
+            "get_raw_historical_values_asyn",
+            side_effect=Exception("Test exception"),
+        ):
             with pytest.raises(Exception, match="Test exception"):
                 await make_raw_historical_request(self.opc)
 
@@ -1358,7 +1496,7 @@ class TestCaseAsyncOPCUA:
             end_time=datetime(2023, 1, 2),
             pro_interval=3600000,
             agg_name="Average",
-            variable_list=["SOMEID"]
+            variable_list=["SOMEID"],
         )
         assert isinstance(result, pd.DataFrame)
         assert "Value" in result.columns
@@ -1367,9 +1505,15 @@ class TestCaseAsyncOPCUA:
 
     async def test_get_historical_aggregated_values_success(self):
         mock_result = AsyncMock()
-        
-        with patch.object(self.opc, 'get_historical_aggregated_values_asyn', return_value=mock_result):
-            with patch.object(self.opc.helper, 'run_coroutine', return_value=mock_result) as mock_run_coroutine:
+
+        with patch.object(
+            self.opc,
+            "get_historical_aggregated_values_asyn",
+            return_value=mock_result,
+        ):
+            with patch.object(
+                self.opc.helper, "run_coroutine", return_value=mock_result
+            ) as mock_run_coroutine:
                 result = self.opc.get_historical_aggregated_values(
                     start_time=(datetime.now() - timedelta(30)),
                     end_time=(datetime.now() - timedelta(29)),
@@ -1377,14 +1521,18 @@ class TestCaseAsyncOPCUA:
                     agg_name="Average",
                     variable_list=list_of_ids,
                 )
-                
+
                 mock_run_coroutine.assert_called_once()
                 assert result == mock_result
 
     async def test_get_historical_aggregated_values_with_args(self):
         mock_result = AsyncMock()
-        
-        with patch.object(self.opc, 'get_historical_aggregated_values_asyn', return_value=mock_result) as mock_async:
+
+        with patch.object(
+            self.opc,
+            "get_historical_aggregated_values_asyn",
+            return_value=mock_result,
+        ) as mock_async:
             result = await self.opc.get_historical_aggregated_values_asyn(
                 start_time=(datetime.now() - timedelta(30)),
                 end_time=(datetime.now() - timedelta(29)),
@@ -1392,19 +1540,27 @@ class TestCaseAsyncOPCUA:
                 agg_name="Average",
                 variable_list=list_of_ids,
             )
-            
+
             mock_async.assert_called_once()
             args, kwargs = mock_async.call_args
-            assert 'start_time' in kwargs
-            assert 'end_time' in kwargs
-            assert kwargs['pro_interval'] == 3600000
-            assert kwargs['agg_name'] == "Average"
-            assert kwargs['variable_list'] == list_of_ids
+            assert "start_time" in kwargs
+            assert "end_time" in kwargs
+            assert kwargs["pro_interval"] == 3600000
+            assert kwargs["agg_name"] == "Average"
+            assert kwargs["variable_list"] == list_of_ids
             assert result == mock_result
 
     async def test_get_historical_aggregated_values_exception(self):
-        with patch.object(self.opc, 'get_historical_aggregated_values_asyn', side_effect=Exception("Test exception")):
-            with patch.object(self.opc.helper, 'run_coroutine', side_effect=Exception("Test exception")):
+        with patch.object(
+            self.opc,
+            "get_historical_aggregated_values_asyn",
+            side_effect=Exception("Test exception"),
+        ):
+            with patch.object(
+                self.opc.helper,
+                "run_coroutine",
+                side_effect=Exception("Test exception"),
+            ):
                 with pytest.raises(Exception, match="Test exception"):
                     self.opc.get_historical_aggregated_values(
                         start_time=(datetime.now() - timedelta(30)),

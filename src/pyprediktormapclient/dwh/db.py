@@ -102,7 +102,9 @@ class Db:
         data_sets = []
         while True:
             columns = [col[0] for col in self.cursor.description]
-            data_set = [dict(zip(columns, row)) for row in self.cursor.fetchall()]
+            data_set = [
+                dict(zip(columns, row)) for row in self.cursor.fetchall()
+            ]
 
             if to_dataframe:
                 data_sets.append(pd.DataFrame(data_set, columns=columns))
@@ -161,15 +163,17 @@ class Db:
             driver (int): Index of the driver in the list of available drivers. If the index is -1 or
                 in general below 0, pyPrediktorMapClient is going to choose
                 the driver for you.
-        
+
         Raises:
             ValueError: If no valid driver is found.
         """
-        available_drivers = self.__get_list_of_available_and_supported_pyodbc_drivers()
-    
+        available_drivers = (
+            self.__get_list_of_available_and_supported_pyodbc_drivers()
+        )
+
         if not available_drivers:
             raise ValueError("No supported ODBC drivers found.")
-        
+
         if driver_index < 0:
             self.driver = available_drivers[0]
         elif driver_index >= len(available_drivers):
@@ -191,7 +195,7 @@ class Db:
 
     @validate_call
     def __get_list_of_available_and_supported_pyodbc_drivers(
-        self
+        self,
     ) -> List[Any]:
         available_drivers = []
         supported_drivers = self.__get_list_of_supported_pyodbc_drivers()
@@ -209,7 +213,6 @@ class Db:
                 available_drivers.append(driver)
             except pyodbc.Error as err:
                 logger.info(f"Driver {driver} could not connect: {err}")
-                pass
 
         return available_drivers
 
@@ -229,30 +232,44 @@ class Db:
         while attempt < self.connection_attempts:
             try:
                 self.connection = pyodbc.connect(self.connection_string)
-                if self.connection:  # Ensure connection is valid before accessing cursor
+                if self.connection:
                     self.cursor = self.connection.cursor()
-                    logging.info(f"Connected to the database on attempt {attempt + 1}")
+                    logging.info(
+                        f"Connected to the database on attempt {attempt + 1}"
+                    )
                     return
                 else:
-                    logging.info(f"Connection is None on attempt {attempt + 1}")
+                    logging.info(
+                        f"Connection is None on attempt {attempt + 1}"
+                    )
                     raise pyodbc.Error("Failed to connect to the database")
 
             # Exceptions once thrown there is no point attempting
             except pyodbc.ProgrammingError as err:
-                logger.error(f"Programming Error {err.args[0] if err.args else 'No code'}: {err.args[1] if len(err.args) > 1 else 'No message'}")
+                logger.error(
+                    f"Programming Error {err.args[0] if err.args else 'No code'}: {err.args[1] if len(err.args) > 1 else 'No message'}"
+                )
                 logger.warning(
                     "There seems to be a problem with your code. Please "
                     "check your code and try again."
                 )
                 raise
 
-            except (pyodbc.DataError, pyodbc.IntegrityError, pyodbc.NotSupportedError) as err:
-                logger.error(f"{type(err).__name__} {err.args[0] if err.args else 'No code'}: {err.args[1] if len(err.args) > 1 else 'No message'}")
+            except (
+                pyodbc.DataError,
+                pyodbc.IntegrityError,
+                pyodbc.NotSupportedError,
+            ) as err:
+                logger.error(
+                    f"{type(err).__name__} {err.args[0] if err.args else 'No code'}: {err.args[1] if len(err.args) > 1 else 'No message'}"
+                )
                 raise
 
             # Exceptions when thrown we can continue attempting
             except pyodbc.OperationalError as err:
-                logger.error(f"Operational Error: {err.args[0] if err.args else 'No code'}: {err.args[1] if len(err.args) > 1 else 'No message'}")
+                logger.error(
+                    f"Operational Error: {err.args[0] if err.args else 'No code'}: {err.args[1] if len(err.args) > 1 else 'No message'}"
+                )
                 logger.warning(
                     "Pyodbc is having issues with the connection. This "
                     "could be due to the wrong driver being used. Please "
@@ -265,7 +282,9 @@ class Db:
                     break
 
             except (pyodbc.DatabaseError, pyodbc.Error) as err:
-                logger.error(f"{type(err).__name__} {err.args[0] if err.args else 'No code'}: {err.args[1] if len(err.args) > 1 else 'No message'}")
+                logger.error(
+                    f"{type(err).__name__} {err.args[0] if err.args else 'No code'}: {err.args[1] if len(err.args) > 1 else 'No message'}"
+                )
                 attempt += 1
                 if self.__are_connection_attempts_reached(attempt):
                     break
