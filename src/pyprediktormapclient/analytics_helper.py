@@ -1,5 +1,6 @@
 import pandas as pd
 import json
+import re
 import logging
 from typing import List
 from pydantic import validate_call, constr
@@ -41,9 +42,49 @@ class AnalyticsHelper:
     """
 
     @validate_call
-    def __init__(self, input: List):
-        self.dataframe = pd.DataFrame(input)  # Create a DataFrame from the input
+    def __init__(self, input: dict):
+        self.dataframe = pd.DataFrame(
+            [self.extract_reference(ref) for ref in input['BrowseResult']['References']]
+        )
         self.normalize()
+
+    def extract_reference(self, ref: dict) -> dict:
+        """Extract relevant fields from the reference."""
+        reference_data = {
+            'Id': ref['NodeId']['Id'],
+            'Type': ref['TypeDefinition']['Id'],
+            'Name': ref['DisplayName']['Text'],
+        }
+
+        if 'Members' in ref:
+            reference_data['Props'] = self.extract_props(ref.get('Members', []))
+            reference_data['Vars'] = self.extract_vars(ref.get('Members', []))
+        else:
+            reference_data['Props'] = ref.get('Properties', [])
+            reference_data['Vars'] = ref.get('Variables', [])
+
+        return reference_data
+    
+    def extract_props(self, members: list) -> list:
+        """Extract properties from the members, including nested members."""
+        props = []
+        for member in members:
+            if 'Properties' in member and isinstance(member['Properties'], list):
+                props.extend(member['Properties'])
+            
+            if 'Members' in member:
+                props.extend(self.extract_props(member['Members']))
+        return props
+
+    def extract_vars(self, members: list) -> list:
+        """Extract variables from the members, including nested members."""
+        vars = []
+        for member in members:
+            if 'Members' in member and isinstance(member['Members'], list):
+                vars.extend(member['Members'])
+            
+                vars.extend(self.extract_vars(member['Members']))
+        return vars
 
     def normalize(self):
         """Normalize column names in the `dataframe` class attribute. Different
@@ -264,15 +305,20 @@ class AnalyticsHelper:
         # Add new columns
         variables_frame[['VariableId', 'VariableName', 'VariableIdSplit']] =\
             variables_frame['Vars'].apply(lambda x: pd.Series({
-                'VariableId': x['Id'],
-                'VariableName': x['DisplayName'],
-                'VariableIdSplit': self.split_id(x['Id'])
+                'VariableId': x['NodeId']['Id'],  
+                'VariableName': x['DisplayName']['Text'],  
+                'VariableIdSplit': self.split_id(variables_frame['Id'].iloc[0]) if self.is_valid_id(variables_frame['Id'].iloc[0]) else None,  
             }))
 
         # Remove the original Vars column
         variables_frame.drop(columns=["Vars"], inplace=True)
 
         return variables_frame
+    
+    def is_valid_id(self, id: str) -> bool:
+        """Check if the ID matches the expected format."""
+        pattern = r'^\d+:\d+:\S+$'
+        return bool(re.match(pattern, id))
 
     def variables_as_list(self, include_only: List = []) -> List:
         """Extracts variables as a list. If there are names listed in the include_only
