@@ -1,6 +1,5 @@
 import unittest
-from unittest import mock
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 import pytest
 from pydantic import ValidationError, BaseModel, AnyUrl
 from copy import deepcopy
@@ -279,14 +278,13 @@ class MockResponse:
     def __init__(self, json_data, status_code):
         self.json_data = json_data
         self.status_code = status_code
-        self.raise_for_status = mock.Mock(return_value=False)
+        self.raise_for_status = Mock(return_value=False)
         self.headers = {"Content-Type": "application/json"}
 
     def json(self):
         return self.json_data
 
 
-# This method will be used by the mock to replace requests
 def successful_self_service_mocked_requests(*args, **kwargs):
     if args[0] == f"{URL}self-service/login/api":
         return MockResponse(successfull_self_service_login_response, 200)
@@ -354,21 +352,15 @@ class AnyUrlModel(BaseModel):
     url: AnyUrl
 
 
-# Our test case class
-class TestCaseAuthClient(unittest.TestCase):
+class TestCaseAuthClient:
 
-    def test_init(self):
-        auth_client = AUTH_CLIENT(
-            rest_url=URL, username=username, password=password
-        )
-        self.assertEqual(auth_client.username, username)
-        self.assertEqual(auth_client.password, password)
-        self.assertIsNone(auth_client.id)
-        self.assertIsNone(auth_client.token)
-        self.assertEqual(
-            auth_client.headers, {"Content-Type": "application/json"}
-        )
-        self.assertIsInstance(auth_client.session, requests.Session)
+    def test_init(self, auth_client):
+        assert auth_client.username == username
+        assert auth_client.password == password
+        assert auth_client.id is None
+        assert auth_client.token is None
+        assert auth_client.headers == {"Content-Type": "application/json"}
+        assert isinstance(auth_client.session, requests.Session)
 
     def test_init_with_trailing_slash(self):
         url_with_trailing_slash = URL.rstrip("/") + "/"
@@ -392,101 +384,80 @@ class TestCaseAuthClient(unittest.TestCase):
         with pytest.raises(ValidationError):
             AnyUrlModel(rest_url="invalid-url")
 
-    @mock.patch(
+    @patch(
         "requests.get", side_effect=successful_self_service_mocked_requests
     )
-    def test_get_self_service_login_id_successful(self, mock_get):
-        auth_client = AUTH_CLIENT(
-            rest_url=URL, username=username, password=password
-        )
+    def test_get_self_service_login_id_successful(self, mock_get, auth_client):
         auth_client.get_login_id()
         assert auth_client.id == auth_id
 
-    @mock.patch(
+    @patch(
         "requests.get",
         side_effect=unsuccessful_self_service_login_mocked_requests,
     )
-    def test_get_self_service_login_id_unsuccessful(self, mock_get):
-        auth_client = AUTH_CLIENT(
-            rest_url=URL, username=username, password=password
-        )
+    def test_get_self_service_login_id_unsuccessful(
+        self, mock_get, auth_client
+    ):
         with pytest.raises(RuntimeError):
             auth_client.get_login_id()
 
-    @mock.patch("requests.get", side_effect=empty_self_service_mocked_requests)
-    def test_get_self_service_login_id_empty(self, mock_get):
-        auth_client = AUTH_CLIENT(
-            rest_url=URL, username=username, password=password
-        )
+    @patch("requests.get", side_effect=empty_self_service_mocked_requests)
+    def test_get_self_service_login_id_empty(self, mock_get, auth_client):
         with pytest.raises(RuntimeError):
             auth_client.get_login_id()
 
-    @mock.patch(
+    @patch(
         "requests.get", side_effect=wrong_id_self_service_mocked_requests
     )
-    def test_get_self_service_login_id_wrong_id(self, mock_get):
-        auth_client = AUTH_CLIENT(
-            rest_url=URL, username=username, password=password
-        )
+    def test_get_self_service_login_id_wrong_id(self, mock_get, auth_client):
         with pytest.raises(RuntimeError):
             auth_client.get_login_id()
 
     @patch("pyprediktormapclient.auth_client.request_from_api")
-    def test_get_login_id_no_error_message(self, mock_request):
+    def test_get_login_id_no_error_message(self, mock_request, auth_client):
         mock_request.return_value = {"error": "Invalid request"}
-        auth_client = AUTH_CLIENT(
-            rest_url=URL, username=username, password=password
-        )
-        with self.assertRaises(RuntimeError) as context:
+        with pytest.raises(RuntimeError) as context:
             auth_client.get_login_id()
 
-        self.assertEqual(str(context.exception), "Invalid request")
+        assert str(context.value) == "Invalid request"
 
-    @mock.patch(
+    @patch(
         "requests.post",
         side_effect=empty_self_service_login_token_mocked_requests,
     )
-    def test_get_self_service_login_token_empty(self, mock_get):
-        auth_client = AUTH_CLIENT(
-            rest_url=URL, username=username, password=password
-        )
+    def test_get_self_service_login_token_empty(self, mock_get, auth_client):
         auth_client.id = auth_id
         with pytest.raises(RuntimeError):
             auth_client.get_login_token()
 
-    @mock.patch(
+    @patch(
         "requests.post",
         side_effect=successful_self_service_login_token_mocked_requests,
     )
-    def test_get_self_service_login_token_successful(self, mock_get):
-        auth_client = AUTH_CLIENT(
-            rest_url=URL, username=username, password=password
-        )
+    def test_get_self_service_login_token_successful(
+        self, mock_get, auth_client
+    ):
         auth_client.id = auth_id
         auth_client.get_login_token()
 
-        self.assertIsNotNone(auth_client.token)
-        self.assertEqual(auth_client.token.session_token, auth_session_id)
+        assert auth_client.token is not None
+        assert auth_client.token.session_token == auth_session_id
 
         expected_expires_at = Token.remove_nanoseconds(auth_expires_at)
-        self.assertEqual(auth_client.token.expires_at, expected_expires_at)
+        assert auth_client.token.expires_at == expected_expires_at
 
-    @mock.patch(
+    @patch(
         "requests.post",
         side_effect=unsuccessful_self_service_login_token_mocked_requests,
     )
-    def test_get_self_service_login_token_unsuccessful(self, mock_get):
-        auth_client = AUTH_CLIENT(
-            rest_url=URL, username=username, password=password
-        )
+    def test_get_self_service_login_token_unsuccessful(
+        self, mock_get, auth_client
+    ):
         auth_client.id = auth_id
         with pytest.raises(RuntimeError):
             auth_client.get_login_token()
 
-    def test_get_self_service_token_expired(self):
-        auth_client = AUTH_CLIENT(
-            rest_url=URL, username=username, password=password
-        )
+    def test_get_self_service_token_expired(self, auth_client):
         auth_client.token = Token(
             session_token=auth_session_id, expires_at=auth_expires_at_2hrs_ago
         )
@@ -497,41 +468,36 @@ class TestCaseAuthClient(unittest.TestCase):
         assert token_expired
 
     @patch("pyprediktormapclient.auth_client.request_from_api")
-    def test_get_login_token_success_no_expiry(self, mock_request):
+    def test_get_login_token_success_no_expiry(
+        self, mock_request, auth_client
+    ):
         mock_response = {
             "Success": True,
             "session_token": "some_token",
             "session": {},
         }
         mock_request.return_value = mock_response
-        auth_client = AUTH_CLIENT(
-            rest_url=URL, username=username, password=password
-        )
         auth_client.id = "some_id"
         auth_client.get_login_token()
-        self.assertEqual(auth_client.token.session_token, "some_token")
-        self.assertIsNone(auth_client.token.expires_at)
+        assert auth_client.token.session_token == "some_token"
+        assert auth_client.token.expires_at is None
 
     @patch("pyprediktormapclient.auth_client.request_from_api")
-    def test_get_login_token_invalid_expiry_format(self, mock_request):
+    def test_get_login_token_invalid_expiry_format(
+        self, mock_request, auth_client
+    ):
         mock_response = {
             "Success": True,
             "session_token": "some_token",
             "session": {"expires_at": "invalid_date_format"},
         }
         mock_request.return_value = mock_response
-        auth_client = AUTH_CLIENT(
-            rest_url=URL, username=username, password=password
-        )
         auth_client.id = "some_id"
         auth_client.get_login_token()
-        self.assertEqual(auth_client.token.session_token, "some_token")
-        self.assertIsNone(auth_client.token.expires_at)
+        assert auth_client.token.session_token == "some_token"
+        assert auth_client.token.expires_at is None
 
-    def test_get_self_service_token_expired_none(self):
-        auth_client = AUTH_CLIENT(
-            rest_url=URL, username=username, password=password
-        )
+    def test_get_self_service_token_expired_none(self, auth_client):
         auth_client.token = Token(session_token=auth_session_id)
         token_expired = auth_client.check_if_token_has_expired()
         assert token_expired
@@ -539,35 +505,26 @@ class TestCaseAuthClient(unittest.TestCase):
     @patch.object(AUTH_CLIENT, "get_login_id")
     @patch.object(AUTH_CLIENT, "get_login_token")
     def test_request_new_ory_token(
-        self, mock_get_login_token, mock_get_login_id
+        self, mock_get_login_token, mock_get_login_id, auth_client
     ):
-        auth_client = AUTH_CLIENT(
-            rest_url=URL, username=username, password=password
-        )
         auth_client.request_new_ory_token()
         mock_get_login_id.assert_called_once()
         mock_get_login_token.assert_called_once()
 
     def test_remove_nanoseconds_validator(self):
-        self.assertIsNone(Token.remove_nanoseconds(None))
+        assert Token.remove_nanoseconds(None) is None
 
         dt = datetime.now()
-        self.assertEqual(Token.remove_nanoseconds(dt), dt)
+        assert Token.remove_nanoseconds(dt) == dt
 
         expected_dt = datetime(
             2022, 12, 4, 7, 31, 28, 767407, tzinfo=timezone.utc
         )
-        self.assertEqual(
-            Token.remove_nanoseconds(auth_expires_at), expected_dt
-        )
+        assert Token.remove_nanoseconds(auth_expires_at) == expected_dt
         invalid_str = "2023-05-01 12:34:56"
-        self.assertEqual(Token.remove_nanoseconds(invalid_str), invalid_str)
+        assert Token.remove_nanoseconds(invalid_str) == invalid_str
 
-    def test_token_expires_at_handling(self):
-
-        auth_client = AUTH_CLIENT(
-            rest_url=URL, username=username, password=password
-        )
+    def test_token_expires_at_handling(self, auth_client):
         auth_expires_at_datetime = datetime(
             2022, 12, 4, 7, 31, 28, 767407, tzinfo=timezone.utc
         )

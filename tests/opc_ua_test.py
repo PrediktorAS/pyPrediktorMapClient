@@ -1164,15 +1164,6 @@ class TestCaseOPCUA:
             ][0]["StatusCode"]["Symbol"]
         )
 
-    # @patch("requests.post")
-    # def test_write_historical_values_no_history_update_results(self, mock_request):
-    #     converted_data = [
-    #         WriteHistoricalVariables(**item)
-    #         for item in list_of_write_historical_values
-    #     ]
-    #     with pytest.raises(ValueError, match="No status codes returned, might indicate no values written"):
-    #         self.opc.write_historical_values(converted_data)
-
 
 class AsyncMockResponse:
     def __init__(self, json_data, status_code):

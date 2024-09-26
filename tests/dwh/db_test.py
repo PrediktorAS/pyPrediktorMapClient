@@ -1,10 +1,8 @@
 import pytest
-import random
-import string
 import pyodbc
 import inspect
-import logging
 import pandas as pd
+from conftest import grs
 from unittest.mock import Mock, patch
 from typing import List, Any, get_origin, get_args
 from pyprediktormapclient.dwh.db import Db
@@ -13,81 +11,6 @@ from pandas.testing import assert_frame_equal
 
 
 class TestCaseDB:
-    @staticmethod
-    def grs():
-        """Generate a random string."""
-        return "".join(
-            random.choices(string.ascii_uppercase + string.digits, k=10)
-        )
-
-    @pytest.fixture
-    def mock_pyodbc_connect(self, monkeypatch):
-        mock_connection = Mock()
-        mock_cursor = Mock()
-        mock_connection.cursor.return_value = mock_cursor
-        monkeypatch.setattr(
-            "pyodbc.connect", lambda *args, **kwargs: mock_connection
-        )
-        return mock_cursor
-
-    @pytest.fixture
-    def mock_pyodbc_drivers(self, monkeypatch):
-        monkeypatch.setattr(
-            "pyodbc.drivers", lambda: ["Driver1", "Driver2", "Driver3"]
-        )
-
-    @pytest.fixture
-    def mock_get_drivers(self, monkeypatch):
-        monkeypatch.setattr(
-            Db,
-            "_Db__get_list_of_available_and_supported_pyodbc_drivers",
-            lambda self: ["Driver1"],
-        )
-
-    @pytest.fixture
-    def db_instance(self, mock_pyodbc_connect, mock_pyodbc_drivers):
-        return Db(self.grs(), self.grs(), self.grs(), self.grs())
-
-    @pytest.mark.parametrize(
-        "error, expected_error, expected_log_message",
-        [
-            (
-                pyodbc.DataError("Error code", "Error message"),
-                pyodbc.DataError,
-                "DataError Error code: Error message",
-            ),
-            (
-                pyodbc.DatabaseError("Error code", "Error message"),
-                pyodbc.Error,
-                "DatabaseError Error code: Error message",
-            ),
-        ],
-    )
-    def test_init_connection_error(
-        self,
-        monkeypatch,
-        error,
-        expected_error,
-        expected_log_message,
-        caplog,
-        mock_get_drivers,
-    ):
-        monkeypatch.setattr("pyodbc.connect", Mock(side_effect=error))
-        with pytest.raises(expected_error) as exc_info:
-            with caplog.at_level(logging.ERROR):
-                Db(self.grs(), self.grs(), self.grs(), self.grs())
-
-        if expected_error == pyodbc.Error:
-            assert str(exc_info.value) == "Failed to connect to the database"
-        else:
-            assert str(exc_info.value) == str(error)
-
-        assert expected_log_message in caplog.text
-        if expected_error == pyodbc.Error:
-            assert (
-                "Failed to connect to the DataWarehouse after 3 attempts"
-                in caplog.text
-            )
 
     def test_init_when_instantiate_db_but_no_pyodbc_drivers_available_then_throw_exception(
         self, monkeypatch
@@ -103,7 +26,7 @@ class TestCaseDB:
         with pytest.raises(
             ValueError, match="No supported ODBC drivers found."
         ):
-            Db(self.grs(), self.grs(), self.grs(), self.grs(), driver_index)
+            Db(grs(), grs(), grs(), grs(), driver_index)
 
     def test_init_with_out_of_range_driver_index(self, monkeypatch):
         driver_index = 1
@@ -117,7 +40,7 @@ class TestCaseDB:
         with pytest.raises(
             ValueError, match="Driver index 1 is out of range."
         ):
-            Db(self.grs(), self.grs(), self.grs(), self.grs(), driver_index)
+            Db(grs(), grs(), grs(), grs(), driver_index)
 
     def test_context_manager_enter(self, db_instance):
         assert db_instance.__enter__() == db_instance

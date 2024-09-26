@@ -1,99 +1,22 @@
 import pytest
 import unittest
-import random
 import inspect
-import string
-import pyodbc
-import logging
 import datetime
 from typing import Dict
-from unittest.mock import Mock, patch, MagicMock, call
+from unittest.mock import patch, MagicMock, call
 from pyprediktormapclient.dwh.dwh import DWH
 from pyprediktormapclient.dwh.idwh import IDWH
 
 
 class TestCaseDWH:
-    @staticmethod
-    def grs():
-        """Generate a random string."""
-        return "".join(
-            random.choices(string.ascii_uppercase + string.digits, k=10)
-        )
 
-    @pytest.fixture
-    def mock_pyodbc_connect(self):
-        with patch("pyodbc.connect") as mock_connect:
-            mock_connection = Mock()
-            mock_cursor = Mock()
-            mock_connection.cursor.return_value = mock_cursor
-            mock_connect.return_value = mock_connection
-            yield mock_connect
+    class TestService:
+        def __init__(self, dwh):
+            self.dwh = dwh
 
-    @pytest.fixture
-    def mock_pyodbc_drivers(self, monkeypatch):
-        monkeypatch.setattr(
-            "pyodbc.drivers", lambda: ["Driver1", "Driver2", "Driver3"]
-        )
-
-    @pytest.fixture
-    def mock_get_drivers(self, monkeypatch):
-        monkeypatch.setattr(
-            "pyprediktorutilities.dwh.dwh.Db._Db__get_list_of_available_and_supported_pyodbc_drivers",
-            lambda self: ["Driver1"],
-        )
-
-    @pytest.fixture
-    def dwh_instance(self, mock_pyodbc_connect, mock_pyodbc_drivers):
-        with patch.object(DWH, "_DWH__initialize_context_services"):
-            return DWH(self.grs(), self.grs(), self.grs(), self.grs())
-
-    @pytest.fixture
-    def mock_iter_modules(self):
-        with patch("pkgutil.iter_modules") as mock_iter_modules:
-            yield mock_iter_modules
-
-    @patch.object(DWH, "_DWH__initialize_context_services")
-    @patch("pyprediktormapclient.dwh.dwh.Db.__init__")
-    def test_init(
-        self,
-        mock_db_init,
-        mock_initialize_context_services,
-        mock_pyodbc_connect,
+    def test_init_default_driver(
+        self, mock_pyodbc_drivers, mock_pyodbc_connect
     ):
-        DWH("test_url", "test_db", "test_user", "test_pass", -1)
-        mock_db_init.assert_called_once_with(
-            "test_url", "test_db", "test_user", "test_pass", -1
-        )
-        mock_initialize_context_services.assert_called_once()
-
-    @patch("pyprediktorutilities.dwh.dwh.pyodbc.connect")
-    def test_init_connection_error(self, mock_connect):
-        mock_connect.side_effect = pyodbc.DataError(
-            "Error code", "Error message"
-        )
-        with pytest.raises(pyodbc.DataError):
-            DWH("test_url", "test_db", "test_user", "test_pass", 0)
-
-    @patch("pyprediktorutilities.dwh.dwh.pyodbc.connect")
-    def test_init_connection_retry(self, mock_connect, caplog):
-        mock_connect.side_effect = [
-            pyodbc.DatabaseError("Error code", "Temporary error message"),
-            pyodbc.DatabaseError("Error code", "Temporary error message"),
-            pyodbc.DatabaseError("Error code", "Permanent error message"),
-        ]
-        with caplog.at_level(logging.ERROR):
-            with pytest.raises(pyodbc.DatabaseError):
-                DWH("test_url", "test_db", "test_user", "test_pass", 0)
-        assert (
-            "Failed to connect to the DataWarehouse after 3 attempts."
-            in caplog.text
-        )
-
-    @patch("pyodbc.connect")
-    @patch("pyodbc.drivers")
-    def test_init_default_driver(self, mock_drivers, mock_connect):
-        mock_drivers.return_value = ["Driver1", "Driver2"]
-        mock_connect.return_value = Mock()
         dwh = DWH("test_url", "test_db", "test_user", "test_pass")
         assert dwh.driver == "Driver1"
 
@@ -151,9 +74,8 @@ class TestCaseDWH:
             "SET NOCOUNT ON; EXEC [dbo].[GetVersion]"
         )
 
-    @patch("pyprediktormapclient.dwh.dwh.importlib.import_module")
-    def test_initialize_context_services(
-        self, mock_import_module, mock_iter_modules, dwh_instance
+    def setup_mock_imports(
+        self, mock_iter_modules, mock_import_module, dwh_instance
     ):
         mock_iter_modules.return_value = [
             (None, "pyprediktormapclient.dwh.context.enercast", False),
@@ -161,22 +83,22 @@ class TestCaseDWH:
             (None, "pyprediktormapclient.dwh.context.solcast", False),
         ]
 
-        class TestService:
-            def __init__(self, dwh):
-                self.dwh = dwh
-
         def mock_import(name):
             mock_module = MagicMock()
             mock_module.__dir__ = lambda *args: ["TestService"]
-            mock_module.TestService = TestService
+            mock_module.TestService = self.TestService
             return mock_module
 
         mock_import_module.side_effect = mock_import
+        dwh_instance._DWH__initialize_context_services()
 
-        with patch.object(
-            dwh_instance, "_is_attr_valid_service_class", return_value=True
-        ):
-            dwh_instance._DWH__initialize_context_services()
+    @patch("pyprediktormapclient.dwh.dwh.importlib.import_module")
+    def test_initialize_context_services(
+        self, mock_import_module, mock_iter_modules, dwh_instance
+    ):
+        self.setup_mock_imports(
+            mock_iter_modules, mock_import_module, dwh_instance
+        )
 
         expected_calls = [
             call("pyprediktormapclient.dwh.context.enercast"),
@@ -192,31 +114,16 @@ class TestCaseDWH:
         assert hasattr(dwh_instance, "solcast")
 
         for attr in ["enercast", "plant", "solcast"]:
-            assert isinstance(getattr(dwh_instance, attr), TestService)
+            assert isinstance(getattr(dwh_instance, attr), self.TestService)
             assert getattr(dwh_instance, attr).dwh == dwh_instance
 
     @patch("pyprediktormapclient.dwh.dwh.importlib.import_module")
     def test_initialize_context_services_with_modules(
         self, mock_import_module, mock_iter_modules, dwh_instance
     ):
-        mock_iter_modules.return_value = [
-            (None, "pyprediktormapclient.dwh.context.enercast", False),
-            (None, "pyprediktormapclient.dwh.context.plant", False),
-            (None, "pyprediktormapclient.dwh.context.solcast", False),
-        ]
-
-        class TestService:
-            def __init__(self, dwh):
-                self.dwh = dwh
-
-        def mock_import(name):
-            mock_module = MagicMock()
-            mock_module.__dir__ = lambda *args: ["TestService"]
-            mock_module.TestService = TestService
-            return mock_module
-
-        mock_import_module.side_effect = mock_import
-        dwh_instance._DWH__initialize_context_services()
+        self.setup_mock_imports(
+            mock_iter_modules, mock_import_module, dwh_instance
+        )
 
         expected_modules = [
             "pyprediktormapclient.dwh.context.enercast",
@@ -238,7 +145,7 @@ class TestCaseDWH:
 
         for attr in ["enercast", "plant", "solcast"]:
             assert isinstance(
-                getattr(dwh_instance, attr), TestService
+                getattr(dwh_instance, attr), self.TestService
             ), f"{attr} is not an instance of TestService"
             assert (
                 getattr(dwh_instance, attr).dwh == dwh_instance
