@@ -1,6 +1,5 @@
 import unittest
 from unittest.mock import patch, Mock, AsyncMock
-from requests.exceptions import HTTPError
 import pytest
 from datetime import datetime, timedelta, date
 import aiohttp

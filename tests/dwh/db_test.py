@@ -63,7 +63,6 @@ class TestCaseDB:
             ),
         ],
     )
-    
     def test_init_connection_error(
         self,
         monkeypatch,
@@ -155,7 +154,7 @@ class TestCaseDB:
             abstract_return = abstract_sig.return_annotation
 
             impl_origin = get_origin(impl_return) or impl_return
-            abstract_origin = get_origin(abstract_return) or abstract_origin
+            abstract_origin = get_origin(abstract_return) or abstract_return
 
             assert (
                 impl_origin == abstract_origin
