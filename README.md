@@ -40,18 +40,42 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
+## Pre-commit Hooks
+
+To ensure code quality and maintain a consistent coding standard, pre-commit hooks have been added to the repository. All the pre-commit checks must be passed before committing your changes. Follow the instructions below to install and use them.
+
+4. Activate pre-commit hooks
+After installing the requirements, activate the pre-commit hooks by running:
+
+```
+pre-commit install
+```
+
+5. Run pre-commit hooks manually
+It's recommended to run the pre-commit hooks before making a commit to catch issues early. Use the following command to run all the hooks manually:
+
+```
+pre-commit run --all-files
+```
+
+6. Stage your changes
+After making the required changes and ensuring they pass the pre-commit hooks, add the changes to the staging area before creating a commit:
+
+```
+git add .
+```
+
 ## Run and build
 
-4. Run tests
+7. Run tests
 
 ```
 tox
 ```
 
-5. Do your changes
-   Add your changes and create a new PR to be approved.
+8. Make your changes and submit a new PR for approval.
 
-6. Build
+9. Build
 
 ```
 tox -e build
@@ -59,16 +83,16 @@ tox -e build
 
 ## Changes
 
-7. Please apply your changes. If they will facilitate the work of the person using pyPrediktorMapClient, especially the new features you've implemented, ensure that you describe your changes comprehensively and provide guidance in the README.md file under the chapter `Manual - How to Use` (check below).
+10. Please apply your changes. If they will facilitate the work of the person using pyPrediktorMapClient, especially the new features you've implemented, ensure that you describe your changes comprehensively and provide guidance in the README.md file under the chapter `Manual - How to Use` (check below).
 
-8. Commit your changes to a new branch, push and create a new pull request for review.
+11. Commit your changes to a new branch, push and create a new pull request for review.
 
 ## Publish on PyPi
 
-9. Open [https://pypi.org/](https://pypi.org/) and log in.
-10. Open [https://pypi.org/manage/account/](https://pypi.org/manage/account/) and generate a new API token but only if you don't have one already. Keep the API key on your local machine because once generated it will be visible only once. Delete API keys that are no longer used!
-11. In your code editor, open the root directory of the current project and clean the content of folder `dist`.
-12. Create a new tag and push it to the GitHub repository. For instance, if the latest tag is `0.6.7` the new tag should be `0.6.8`. Alternatively, if the changes are major, you can set the new tag to `0.7.0`.
+12. Open [https://pypi.org/](https://pypi.org/) and log in.
+13. Open [https://pypi.org/manage/account/](https://pypi.org/manage/account/) and generate a new API token but only if you don't have one already. Keep the API key on your local machine because once generated it will be visible only once. Delete API keys that are no longer used!
+14. In your code editor, open the root directory of the current project and clean the content of folder `dist`.
+15. Create a new tag and push it to the GitHub repository. For instance, if the latest tag is `0.6.7` the new tag should be `0.6.8`. Alternatively, if the changes are major, you can set the new tag to `0.7.0`.
 
 Use the following commands to create the tag and to publish it.
 
@@ -77,13 +101,13 @@ git tag 0.6.8
 git push origin 0.6.8
 ```
 
-13. Create a new build. Be aware that `tox.ini` file is configured in a way to get latest tag from the repository. That tag is going to be used to label the new build.
+16. Create a new build. Be aware that `tox.ini` file is configured in a way to get latest tag from the repository. That tag is going to be used to label the new build.
 
 ```
 tox -e build
 ```
 
-14. Be sure that twine is installed. If not, run the following command:
+17. Be sure that twine is installed. If not, run the following command:
 
 ```
 python3 -m pip install twine
@@ -95,7 +119,7 @@ or
 python -m pip install twine
 ```
 
-15. Publish the build on PyPi:
+18. Publish the build on PyPi:
 
 ```
 python3 -m twine upload -u __token__ -p API_KEY dist/*
@@ -103,11 +127,11 @@ python3 -m twine upload -u __token__ -p API_KEY dist/*
 
 Replace API_KEY with the API key you generated earlier or a key you already have.
 
-16. Check if the new version has been release - [Release history](https://pypi.org/project/pyPrediktorMapClient/#history).
+19. Check if the new version has been release - [Release history](https://pypi.org/project/pyPrediktorMapClient/#history).
 
 Once that's done, we have to publish a new release in the GitHub repository.
 
-17. Open the list of released published on the [GitHub repository](https://github.com/PrediktorAS/pyPrediktorMapClient/releases). Draft a new release by pressing "Draft a new release".
+20. Open the list of released published on the [GitHub repository](https://github.com/PrediktorAS/pyPrediktorMapClient/releases). Draft a new release by pressing "Draft a new release".
 
 Use the newly created tag which in our example is 0.6.8. Add detailed descrption about the new changes.
 
