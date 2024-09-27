@@ -438,7 +438,6 @@ class TestCaseAuthClient:
         auth_client.id = auth_id
         auth_client.get_login_token()
 
-        # Parse the expected datetime string
         expected_expires_at = parse(auth_expires_at).replace(tzinfo=tzutc())
 
         test_token = Token(
@@ -447,14 +446,16 @@ class TestCaseAuthClient:
 
         assert auth_client.token.session_token == test_token.session_token
 
-        # Compare the datetime objects after ensuring they're both timezone-aware
-        actual_expires_at = auth_client.token.expires_at
-        if actual_expires_at.tzinfo is None:
-            actual_expires_at = actual_expires_at.replace(tzinfo=tzutc())
+        if auth_client.token.expires_at is None:
+            assert False, "Expected expires_at to be set, but it was None"
+        else:
+            actual_expires_at = auth_client.token.expires_at
+            if actual_expires_at.tzinfo is None:
+                actual_expires_at = actual_expires_at.replace(tzinfo=tzutc())
 
-        assert (
-            actual_expires_at == expected_expires_at
-        ), f"Expected {expected_expires_at}, but got {actual_expires_at}"
+            assert (
+                actual_expires_at == expected_expires_at
+            ), f"Expected {expected_expires_at}, but got {actual_expires_at}"
 
     @patch(
         "requests.post",
