@@ -5,8 +5,6 @@ from pydantic import ValidationError, BaseModel, AnyUrl
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 import requests
-from dateutil.parser import parse
-from dateutil.tz import tzutc
 
 from pyprediktormapclient.auth_client import AUTH_CLIENT, Token
 
@@ -438,30 +436,11 @@ class TestCaseAuthClient:
         auth_client.id = auth_id
         auth_client.get_login_token()
 
-        print(f"Auth client token: {auth_client.token}")
-        print(f"Auth client token expires_at: {auth_client.token.expires_at}")
-
-        expected_expires_at = parse(auth_expires_at).replace(tzinfo=tzutc())
-        print(f"Expected expires_at: {expected_expires_at}")
-
         test_token = Token(
-            session_token=auth_session_id, expires_at=expected_expires_at
+            session_token=auth_session_id, expires_at=auth_expires_at
         )
-
-        assert auth_client.token.session_token == test_token.session_token, \
-            f"Expected session_token: {test_token.session_token}, got: {auth_client.token.session_token}"
-
-        if auth_client.token.expires_at is None:
-            print("Mocked response content:")
-            print(successful_self_service_login_token_mocked_response)
-            assert False, "Expected expires_at to be set, but it was None"
-        else:
-            actual_expires_at = auth_client.token.expires_at
-            if actual_expires_at.tzinfo is None:
-                actual_expires_at = actual_expires_at.replace(tzinfo=tzutc())
-            
-            assert actual_expires_at == expected_expires_at, \
-                f"Expected {expected_expires_at}, but got {actual_expires_at}"
+        assert auth_client.token.session_token == test_token.session_token
+        assert auth_client.token.expires_at == test_token.expires_at
 
     @patch(
         "requests.post",

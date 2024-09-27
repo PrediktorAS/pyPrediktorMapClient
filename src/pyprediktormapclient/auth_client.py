@@ -5,6 +5,8 @@ import datetime
 import requests
 import json
 import re
+from dateutil.parser import parse, ParserError
+from dateutil.tz import tzutc
 
 
 class Ory_Login_Structure(BaseModel):
@@ -110,23 +112,19 @@ class AUTH_CLIENT:
         # Return if no content from server
         if not isinstance(content.get("session_token"), str):
             raise RuntimeError(content.get("ErrorMessage"))
-        self.token = Token(session_token=content.get("session_token"))
+
+        session_token = content.get("session_token")
+        expires_at = None
 
         # Check if token has expiry date, save it if it does
         expires_at_str = content.get("session", {}).get("expires_at")
         if isinstance(expires_at_str, str):
             try:
-                expires_at = datetime.datetime.fromisoformat(
-                    expires_at_str.replace("Z", "+00:00")
-                )
-                self.token = Token(
-                    session_token=self.token.session_token,
-                    expires_at=expires_at,
-                )
-            except Exception:
-                # If string returned from Ory cant be parsed, still should be possible to use Ory,
-                #  might be a setting in Ory to not return expiry date
-                self.token = Token(session_token=self.token.session_token)
+                expires_at = parse(expires_at_str).replace(tzinfo=tzutc())
+            except ParserError:
+                expires_at = None
+
+        self.token = Token(session_token=session_token, expires_at=expires_at)
 
     def check_if_token_has_expired(self) -> bool:
         """Check if token has expired."""
