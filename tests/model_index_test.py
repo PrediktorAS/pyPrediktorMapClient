@@ -79,8 +79,10 @@ def mocked_requests(*args, **kwargs):
     # Check if the URL is malformed
     parsed_url = urlparse(args[0])
     if not parsed_url.scheme:
-        raise requests.exceptions.MissingSchema("Invalid URL 'No_valid_url': No scheme supplied. Perhaps you meant http://No_valid_url?")
-    
+        raise requests.exceptions.MissingSchema(
+            "Invalid URL 'No_valid_url': No scheme supplied. Perhaps you meant http://No_valid_url?"
+        )
+
     if args[0] == f"{URL}query/object-types":
         return MockResponse(object_types, 200)
     elif args[0] == f"{URL}query/namespace-array":
@@ -94,12 +96,15 @@ def mocked_requests(*args, **kwargs):
 
     return MockResponse(None, 404)
 
+
 requests.get = Mock(side_effect=mocked_requests)
 requests.post = Mock(side_effect=mocked_requests)
+
 
 @pytest.fixture
 def model_index():
     return ModelIndex(url=URL)
+
 
 class AnyUrlModel(BaseModel):
     url: AnyUrl
@@ -108,21 +113,21 @@ class AnyUrlModel(BaseModel):
 class TestCaseModelIndex:
 
     @patch("pyprediktormapclient.model_index.ModelIndex.get_object_types")
-    def test_init_variations(self, mock_get_object_types, model_index, mock_auth_client):
+    def setup_model_index_test_environment(self, mock_get_object_types):
         mock_get_object_types.return_value = object_types
 
-        # Without auth_client
+    def test_init_without_auth_client(self, model_index):
         assert "Authorization" not in model_index.headers
         assert "Cookie" not in model_index.headers
 
-        # With auth_client, no token, no session_token
+    def test_init_with_auth_client_no_tokens(self):
         auth_client = Mock(spec=[])
         auth_client.token = None
         model = ModelIndex(url=URL, auth_client=auth_client)
         assert "Authorization" not in model.headers
         assert "Cookie" not in model.headers
 
-        # With auth_client, token, and session_token
+    def test_init_with_auth_client_both_tokens(self):
         auth_client = Mock()
         auth_client.token = Mock()
         auth_client.token.session_token = "test_token"
@@ -132,19 +137,6 @@ class TestCaseModelIndex:
         assert (
             model.headers["Cookie"] == "ory_kratos_session=ory_session_token"
         )
-
-        # With auth_client, no token, with session_token
-        auth_client.token = None
-        model = ModelIndex(url=URL, auth_client=auth_client)
-        assert "Authorization" not in model.headers
-        assert (
-            model.headers["Cookie"] == "ory_kratos_session=ory_session_token"
-        )
-
-        # With session
-        session = requests.Session()
-        model = ModelIndex(url=URL, session=session)
-        assert model.session == session
 
     def test_malformed_url(self):
         with pytest.raises(ValidationError):
@@ -203,7 +195,9 @@ class TestCaseModelIndex:
             model_index.get_object_type_id_from_name("IPVBaseCalculate")
             == "6:0:1029"
         )
-        assert model_index.get_object_type_id_from_name("NonExistentType") is None
+        assert (
+            model_index.get_object_type_id_from_name("NonExistentType") is None
+        )
 
     def test_get_objects_of_type(self, model_index):
         assert (

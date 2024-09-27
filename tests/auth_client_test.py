@@ -384,9 +384,7 @@ class TestCaseAuthClient:
         with pytest.raises(ValidationError):
             AnyUrlModel(rest_url="invalid-url")
 
-    @patch(
-        "requests.get", side_effect=successful_self_service_mocked_requests
-    )
+    @patch("requests.get", side_effect=successful_self_service_mocked_requests)
     def test_get_self_service_login_id_successful(self, mock_get, auth_client):
         auth_client.get_login_id()
         assert auth_client.id == auth_id
@@ -406,9 +404,7 @@ class TestCaseAuthClient:
         with pytest.raises(RuntimeError):
             auth_client.get_login_id()
 
-    @patch(
-        "requests.get", side_effect=wrong_id_self_service_mocked_requests
-    )
+    @patch("requests.get", side_effect=wrong_id_self_service_mocked_requests)
     def test_get_self_service_login_id_wrong_id(self, mock_get, auth_client):
         with pytest.raises(RuntimeError):
             auth_client.get_login_id()

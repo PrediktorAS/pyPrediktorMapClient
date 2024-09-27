@@ -7,7 +7,6 @@ from pyprediktormapclient.opc_ua import OPC_UA
 from pyprediktormapclient.dwh.dwh import DWH
 from pyprediktormapclient.dwh.db import Db
 from pyprediktormapclient.auth_client import AUTH_CLIENT
-from pyprediktormapclient.model_index import ModelIndex
 
 URL = "http://someserver.somedomain.com/v1/"
 username = "some@user.com"
