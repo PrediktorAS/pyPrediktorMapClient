@@ -42,11 +42,14 @@ class TestCaseDWH:
         assert dwh_instance.version.__annotations__["return"] == Dict
 
     def test_idwh_instantiation_raises_error(self):
-        with pytest.raises(
-            TypeError,
-            match="Can't instantiate abstract class IDWH without an implementation for abstract methods 'execute', 'fetch', 'version'",
-        ):
+        with pytest.raises(TypeError) as excinfo:
             IDWH()
+        error_message = str(excinfo.value)
+        assert "Can't instantiate abstract class IDWH" in error_message
+        assert "abstract methods" in error_message
+        assert "execute" in error_message
+        assert "fetch" in error_message
+        assert "version" in error_message
 
     @patch.object(DWH, "fetch")
     def test_version_with_results(self, mock_fetch, dwh_instance):

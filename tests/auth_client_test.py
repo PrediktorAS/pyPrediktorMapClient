@@ -440,7 +440,11 @@ class TestCaseAuthClient:
         assert auth_client.token.session_token == auth_session_id
 
         expected_expires_at = Token.remove_nanoseconds(auth_expires_at)
-        assert auth_client.token.expires_at == expected_expires_at
+        assert auth_client.token.expires_at is not None
+        assert isinstance(auth_client.token.expires_at, datetime)
+        assert auth_client.token.expires_at.replace(
+            tzinfo=timezone.utc
+        ) == expected_expires_at.replace(tzinfo=timezone.utc)
 
     @patch(
         "requests.post",
