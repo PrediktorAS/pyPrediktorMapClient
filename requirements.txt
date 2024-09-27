@@ -3,6 +3,7 @@ ipykernel
 nest_asyncio
 pre-commit
 pytest-asyncio
+python-dateutil
 python-dotenv
 sphinx_rtd_theme
 tenacity
