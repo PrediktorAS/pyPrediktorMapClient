@@ -1208,7 +1208,7 @@ async def make_historical_request(opc):
 
 
 async def make_raw_historical_request(opc):
-    return await opc.get_raw_historical_values_asyn(
+    return await opc.get_historical_raw_values_asyn(
         start_time=(datetime.now() - timedelta(30)),
         end_time=(datetime.now() - timedelta(29)),
         variable_list=list_of_ids,
@@ -1414,12 +1414,12 @@ class TestCaseAsyncOPCUA:
         assert result.empty
 
     @patch("aiohttp.ClientSession.post")
-    async def test_get_raw_historical_values_asyn(self, mock_post):
+    async def test_get_historical_raw_values_asyn(self, mock_post):
         mock_post.return_value = AsyncMockResponse(
             json_data=successful_raw_historical_result, status_code=200
         )
         opc = OPC_UA(rest_url=URL, opcua_url=OPC_URL)
-        result = await opc.get_raw_historical_values_asyn(
+        result = await opc.get_historical_raw_values_asyn(
             start_time=datetime(2023, 1, 1),
             end_time=datetime(2023, 1, 2),
             variable_list=["SOMEID"],
@@ -1435,13 +1435,13 @@ class TestCaseAsyncOPCUA:
 
         with patch.object(
             self.opc,
-            "get_raw_historical_values_asyn",
+            "get_historical_raw_values_asyn",
             return_value=mock_result,
         ):
             with patch.object(
                 self.opc.helper, "run_coroutine", return_value=mock_result
             ) as mock_run_coroutine:
-                result = self.opc.get_raw_historical_values(
+                result = self.opc.get_historical_raw_values(
                     start_time=(datetime.now() - timedelta(30)),
                     end_time=(datetime.now() - timedelta(29)),
                     variable_list=list_of_ids,
@@ -1455,7 +1455,7 @@ class TestCaseAsyncOPCUA:
 
         with patch.object(
             self.opc,
-            "get_raw_historical_values_asyn",
+            "get_historical_raw_values_asyn",
             return_value=mock_result,
         ) as mock_async:
             result = await make_raw_historical_request(self.opc)
@@ -1470,7 +1470,7 @@ class TestCaseAsyncOPCUA:
     async def test_get_raw_historical_values_exception(self):
         with patch.object(
             self.opc,
-            "get_raw_historical_values_asyn",
+            "get_historical_raw_values_asyn",
             side_effect=Exception("Test exception"),
         ):
             with pytest.raises(Exception, match="Test exception"):
