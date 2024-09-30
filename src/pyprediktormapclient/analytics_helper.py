@@ -40,6 +40,8 @@ class AnalyticsHelper:
         * Input checks for nodeIds in variables that requires format int:int:string
     """
 
+    ID_PATTERN = r"^\d+:\d+:\S+$"
+
     @validate_call
     def __init__(self, input: List):
         self.dataframe = pd.DataFrame(
@@ -124,8 +126,7 @@ class AnalyticsHelper:
     @validate_call
     def split_id(self, id: Any) -> dict:
 
-        pattern = r"^\d+:\d+:\S+$"
-        if not re.match(pattern, id):
+        if not re.match(self.ID_PATTERN, id):
             raise ValueError("Invalid id format")
 
         id_split = id.split(":")

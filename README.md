@@ -76,6 +76,13 @@ Run `isort` manually to sort the imports in the project using the command:
 ```
 isort .
 ```
+
+However, applying these changes could lead to conflicts. To verify the import order without making any modifications, use the following command:
+
+```
+isort . --check-only
+```
+
 The `isort` configuration is managed in the `pyproject.toml` file to ensure it integrates well with black and other tools.
 
 
