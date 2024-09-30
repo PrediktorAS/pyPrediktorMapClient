@@ -1,6 +1,7 @@
 import json
+from typing import Dict, List
+
 from pydantic import validate_call
-from typing import List, Dict
 
 from ..idwh import IDWH
 
@@ -13,7 +14,7 @@ class Plant:
     def get_optimal_tracker_angles(self, facility_name: str) -> List:
         query = (
             f"SET NOCOUNT ON; EXEC dwetl.GetOptimalTrackerAngleParameters "
-            + f"@FacilityName = N'{facility_name}'"
+            f"@FacilityName = N'{facility_name}'"
         )
         return self.dwh.fetch(query)
 

@@ -1,7 +1,8 @@
 import json
 from unittest.mock import Mock
-from pyprediktormapclient.dwh.idwh import IDWH
+
 from pyprediktormapclient.dwh.context.enercast import Enercast
+from pyprediktormapclient.dwh.idwh import IDWH
 
 """
 __init__
@@ -92,16 +93,30 @@ def test_upsert_forecast_data(monkeypatch):
             "facilityName": "SomePlant",
             "powerUnit": "W",
             "values": [
-                {"timestamp": "2023-11-20T17:30:00Z", "normed": 0, "absolute": 0},
-                {"timestamp": "2023-11-20T17:45:00Z", "normed": 0, "absolute": 0},
-                {"timestamp": "2023-11-20T18:00:00Z", "normed": 0, "absolute": 0},
+                {
+                    "timestamp": "2023-11-20T17:30:00Z",
+                    "normed": 0,
+                    "absolute": 0,
+                },
+                {
+                    "timestamp": "2023-11-20T17:45:00Z",
+                    "normed": 0,
+                    "absolute": 0,
+                },
+                {
+                    "timestamp": "2023-11-20T18:00:00Z",
+                    "normed": 0,
+                    "absolute": 0,
+                },
             ],
         }
     }
     forecast_type_key = 1
 
-    enercast_forecast_data_json = json.dumps({"results": enercast_forecast_data})
-    expected_query = f"EXEC dwetl.UpsertEnercastForecastData ?, ?"
+    enercast_forecast_data_json = json.dumps(
+        {"results": enercast_forecast_data}
+    )
+    expected_query = "EXEC dwetl.UpsertEnercastForecastData ?, ?"
     expected_result = []
 
     mock_dwh = Mock(spec=IDWH)

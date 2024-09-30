@@ -1,9 +1,12 @@
-nest_asyncio
-sphinx_rtd_theme
-tox
-ipykernel
-tqdm
-tenacity
-pytest-asyncio
-python-dotenv
 -e .
+ipykernel
+isort
+nest_asyncio
+pre-commit
+pytest-asyncio
+python-dateutil
+python-dotenv
+sphinx_rtd_theme
+tenacity
+tox
+tqdm

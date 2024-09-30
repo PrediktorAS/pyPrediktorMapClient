@@ -1,7 +1,8 @@
 import json
 from unittest.mock import Mock
-from pyprediktormapclient.dwh.idwh import IDWH
+
 from pyprediktormapclient.dwh.context.solcast import Solcast
+from pyprediktormapclient.dwh.idwh import IDWH
 
 """
 __init__
@@ -80,7 +81,7 @@ def test_upsert_forecast_data(monkeypatch):
             }
         }
     )
-    expected_query = f"EXEC dwetl.UpsertSolcastForecastData ?, ?"
+    expected_query = "EXEC dwetl.UpsertSolcastForecastData ?, ?"
     expected_result = {
         "data": [
             {

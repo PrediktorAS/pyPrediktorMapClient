@@ -12,3 +12,9 @@ version_scheme = "no-guess-dev"
 pythonpath = [
   "src"
 ]
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.isort]
+profile = "black"
+line_length = 79
+known_first_party = ["src"]

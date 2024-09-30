@@ -1,0 +1,50 @@
+default_language_version:
+    python: python3.12
+
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: check-yaml
+    -   id: check-added-large-files
+    -   id: requirements-txt-fixer
+    -   id: debug-statements
+    -   id: name-tests-test
+
+-   repo: https://github.com/PyCQA/docformatter
+    rev: v1.7.5
+    hooks:
+    -   id: docformatter
+        args: ["--in-place"]
+
+-   repo: https://github.com/PyCQA/autoflake
+    rev: v2.3.1
+    hooks:
+    -   id: autoflake
+        args: ["--remove-all-unused-imports", "--in-place"]
+
+-   repo: https://github.com/psf/black
+    rev: 24.4.2
+    hooks:
+      - id: black
+        args: ["--line-length", "79"]
+
+-   repo: https://github.com/PyCQA/flake8
+    rev: 6.1.0
+    hooks:
+    -   id: flake8
+        args: ["--ignore=E501,W503"]
+
+-   repo: https://github.com/PyCQA/bandit
+    rev: 1.7.5
+    hooks:
+    -   id: bandit
+        args: ["-x", "tests/*"]
+
+-   repo: https://github.com/pre-commit/mirrors-isort
+    rev: v5.9.0
+    hooks:
+    -   id: isort
+        args: ["--profile", "black", "--line-length", "79"]

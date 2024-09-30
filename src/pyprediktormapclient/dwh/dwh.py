@@ -1,7 +1,8 @@
-import pkgutil
-import logging
 import importlib
+import logging
+import pkgutil
 from typing import Dict
+
 from pydantic import validate_call
 from pyprediktorutilities.dwh.dwh import Dwh as Db
 
@@ -13,10 +14,10 @@ logger.addHandler(logging.NullHandler())
 
 
 class DWH(Db, IDWH):
-    """Helper functions to access a PowerView Data Warehouse or other
-    SQL databases. This class is a wrapper around pyodbc and you can use
-    all pyodbc methods as well as the provided methods. Look at the pyodbc
-    documentation and use the cursor attribute to access the pyodbc cursor.
+    """Helper functions to access a PowerView Data Warehouse or other SQL
+    databases. This class is a wrapper around pyodbc and you can use all pyodbc
+    methods as well as the provided methods. Look at the pyodbc documentation
+    and use the cursor attribute to access the pyodbc cursor.
 
     Args:
         url (str): The URL of the sql server
@@ -65,8 +66,7 @@ class DWH(Db, IDWH):
 
     @validate_call
     def version(self) -> Dict:
-        """
-        Get the DWH version.
+        """Get the DWH version.
 
         Returns:
             Dict: A dictionary with the following keys (or similar): DWHVersion, UpdateDate, ImplementedDate, Comment, MajorVersionNo, MinorVersionNo, InterimVersionNo
@@ -80,15 +80,17 @@ class DWH(Db, IDWH):
     """
 
     def __initialize_context_services(self) -> None:
-        """
-        Initialise all services defined in `context` folder. These are methods
-        used to directly call certain stored procedures. For instance, class
-        Enercast contains calls to stored procedures directly related to
-        Enercast.
+        """Initialise all services defined in `context` folder.
+
+        These are methods used to directly call certain stored
+        procedures. For instance, class Enercast contains calls to
+        stored procedures directly related to Enercast.
         """
         package = context
         prefix = package.__name__ + "."
-        for _, modname, ispkg in pkgutil.iter_modules(package.__path__, prefix):
+        for _, modname, ispkg in pkgutil.iter_modules(
+            package.__path__, prefix
+        ):
             if not ispkg:
                 module = importlib.import_module(modname)
 

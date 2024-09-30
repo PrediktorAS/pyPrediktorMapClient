@@ -1,19 +1,19 @@
-import pandas as pd
-import json
 import logging
-from typing import List
-from pydantic import validate_call, constr
+import re
+from typing import Any, List
 
+import pandas as pd
+from pydantic import validate_call
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
 class AnalyticsHelper:
-    """Your data as a Pandas DataFrame, but with a specific formatting
-    and some nifty functions. Put the data from ModelIndex in here
-    and move further on by adding data and from other ModelIndex calls
-    or live or historical data from OPC UA.
+    """Your data as a Pandas DataFrame, but with a specific formatting and some
+    nifty functions. Put the data from ModelIndex in here and move further on
+    by adding data and from other ModelIndex calls or live or historical data
+    from OPC UA.
 
     Columns in the normalizes dataframe are:
 
@@ -29,10 +29,10 @@ class AnalyticsHelper:
 
     Args:
         input (List): The return from a ModelIndex call function
-    
+
     Attributes:
         dataframe (pandas.DataFrame): The normalized dataframe
-    
+
     Returns:
         An instance of the class with some resources and attributes
 
@@ -40,9 +40,13 @@ class AnalyticsHelper:
         * Input checks for nodeIds in variables that requires format int:int:string
     """
 
+    ID_PATTERN = r"^\d+:\d+:\S+$"
+
     @validate_call
     def __init__(self, input: List):
-        self.dataframe = pd.DataFrame(input)  # Create a DataFrame from the input
+        self.dataframe = pd.DataFrame(
+            input
+        )  # Create a DataFrame from the input
         self.normalize()
 
     def normalize(self):
@@ -68,7 +72,9 @@ class AnalyticsHelper:
 
         # Check if the content is from get_objects_of_type
         if "DisplayName" in self.dataframe.columns:
-            self.dataframe.rename(columns={"DisplayName": "Name"}, inplace=True)
+            self.dataframe.rename(
+                columns={"DisplayName": "Name"}, inplace=True
+            )
 
         # Check if the content is from object-descendants
         if "DescendantId" in self.dataframe.columns:
@@ -94,14 +100,15 @@ class AnalyticsHelper:
 
         # Now check to see if all needed columns are there, else set to None
         for required_key in ["Id", "Name", "Vars", "Props"]:
-            if not required_key in self.dataframe:
+            if required_key not in self.dataframe:
                 self.dataframe = None
                 return
 
     @validate_call
     def namespaces_as_list(self, list_of_dicts: List) -> List:
-        """Takes the output of a get_namespace_array() request from ModelIndex and
-        generates a list of strings that can be used for the OPC UA Values API
+        """Takes the output of a get_namespace_array() request from ModelIndex
+        and generates a list of strings that can be used for the OPC UA Values
+        API.
 
         Args:
             list_of_dicts (List): A list in of dicts like [{'Idx': 0, 'Uri': 'http://opcfoundation.org/UA/'}, etc]
@@ -117,7 +124,11 @@ class AnalyticsHelper:
         return new_list
 
     @validate_call
-    def split_id(self, id: constr(pattern=r"^\d+:\d+:\S+$")):
+    def split_id(self, id: Any) -> dict:
+
+        if not re.match(self.ID_PATTERN, id):
+            raise ValueError("Invalid id format")
+
         id_split = id.split(":")
         return {
             "Id": id_split[2],
@@ -126,7 +137,7 @@ class AnalyticsHelper:
         }
 
     def list_of_ids(self) -> list:
-        """Extracts the values in the column "Id" to a list of unique IDs
+        """Extracts the values in the column "Id" to a list of unique IDs.
 
         Returns:
             list: Unique IDs
@@ -141,7 +152,7 @@ class AnalyticsHelper:
         return list(set(self.dataframe["Id"].to_list()))
 
     def list_of_names(self) -> list:
-        """Extracts the values in the column "Name" to a list of unique names
+        """Extracts the values in the column "Name" to a list of unique names.
 
         Returns:
             list: Unique names
@@ -156,7 +167,7 @@ class AnalyticsHelper:
         return list(set(self.dataframe["Name"].to_list()))
 
     def list_of_types(self) -> list:
-        """Extracts the values in the column "Type" to a list of unique types
+        """Extracts the values in the column "Type" to a list of unique types.
 
         Returns:
             list: Unique types
@@ -172,7 +183,7 @@ class AnalyticsHelper:
 
     def list_of_variable_names(self) -> list:
         """Explodes the content of the column "Vars" and extracts the values
-        from DisplayName into a list of unique values
+        from DisplayName into a list of unique values.
 
         Returns:
             list: Unique variable names
@@ -183,7 +194,7 @@ class AnalyticsHelper:
             return []
 
         # Check that the Vars column contains pd.Series content
-        if not type(self.dataframe["Vars"][0]) == list:
+        if not isinstance(self.dataframe["Vars"][0], list):
             return []
 
         vars_set = set([])
@@ -195,7 +206,8 @@ class AnalyticsHelper:
         return list(vars_set)
 
     def properties_as_dataframe(self) -> pd.DataFrame:
-        """Explodes the column "Props" into a new dataframe. Column names will be
+        """Explodes the column "Props" into a new dataframe. Column names will
+        be.
 
         - Id (same as from the original dataframe)
         - Name (same as from the original dataframe)
@@ -212,7 +224,7 @@ class AnalyticsHelper:
             return None
 
         # Check if the Props column contains pd.Series data
-        if not type(self.dataframe["Props"][0]) == list:
+        if not isinstance(self.dataframe["Props"][0], list):
             return None
 
         # Explode will add a row for every series in the Prop column
@@ -224,11 +236,11 @@ class AnalyticsHelper:
         propery_frame["Value"] = ""
 
         # Add new columns
-        propery_frame[['Property', 'Value']] =\
-            propery_frame['Props'].apply(lambda x: pd.Series({
-                'Property': x['DisplayName'],
-                'Value': x['DisplayName']
-            }))
+        propery_frame[["Property", "Value"]] = propery_frame["Props"].apply(
+            lambda x: pd.Series(
+                {"Property": x["DisplayName"], "Value": x["DisplayName"]}
+            )
+        )
 
         # Remove original Props column
         propery_frame.drop(columns=["Props"], inplace=True)
@@ -236,7 +248,8 @@ class AnalyticsHelper:
         return propery_frame
 
     def variables_as_dataframe(self) -> pd.DataFrame:
-        """Explodes the column "Vars" into a new dataframe. Column names will be
+        """Explodes the column "Vars" into a new dataframe. Column names will
+        be.
 
         - Id (same as from the original dataframe)
         - Name (same as from the original dataframe)
@@ -253,7 +266,7 @@ class AnalyticsHelper:
             return None
 
         # Check if the Vars column contains list content
-        if not type(self.dataframe["Vars"][0]) == list:
+        if not isinstance(self.dataframe["Vars"][0], list):
             return None
 
         # Explode will add a row for every series in the Prop column
@@ -262,12 +275,17 @@ class AnalyticsHelper:
         variables_frame.drop(columns=["Props"], inplace=True)
 
         # Add new columns
-        variables_frame[['VariableId', 'VariableName', 'VariableIdSplit']] =\
-            variables_frame['Vars'].apply(lambda x: pd.Series({
-                'VariableId': x['Id'],
-                'VariableName': x['DisplayName'],
-                'VariableIdSplit': self.split_id(x['Id'])
-            }))
+        variables_frame[
+            ["VariableId", "VariableName", "VariableIdSplit"]
+        ] = variables_frame["Vars"].apply(
+            lambda x: pd.Series(
+                {
+                    "VariableId": x["Id"],
+                    "VariableName": x["DisplayName"],
+                    "VariableIdSplit": self.split_id(x["Id"]),
+                }
+            )
+        )
 
         # Remove the original Vars column
         variables_frame.drop(columns=["Vars"], inplace=True)
@@ -275,8 +293,9 @@ class AnalyticsHelper:
         return variables_frame
 
     def variables_as_list(self, include_only: List = []) -> List:
-        """Extracts variables as a list. If there are names listed in the include_only
-        argument, only variables matching that name will be encluded.
+        """Extracts variables as a list. If there are names listed in the
+        include_only argument, only variables matching that name will be
+        encluded.
 
         Args:
             include_only (list): A list of variable names (str) that should be included

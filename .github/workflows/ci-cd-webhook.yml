@@ -1,0 +1,87 @@
+name: CI/CD and Webhook
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.12
+
+    - name: Create virtual environment
+      run: python -m venv .venv
+
+    - name: Activate virtual environment
+      run: source .venv/bin/activate
+
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+
+    - name: Run pre-commit checks
+      run: pre-commit run --all-files
+
+  webhook:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Google Cloud CLI
+        run: |
+          echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+          sudo apt-get install apt-transport-https ca-certificates gnupg
+          curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+          sudo apt-get update && sudo apt-get install google-cloud-cli
+
+      - name: Authenticate with Google Cloud
+        run: |
+          echo '${{ secrets.GCP_SA_KEY }}' > sa-key.json
+          gcloud auth activate-service-account sa-git-data-sources@tgs-prediktor-dev-598e.iam.gserviceaccount.com --key-file=sa-key.json
+          rm sa-key.json
+
+      - name: Generate and send identity token
+        run: |
+          IDENTITY_TOKEN=$(gcloud auth print-identity-token --audiences="https://us-central1-tgs-prediktor-dev-598e.cloudfunctions.net/git_webhook_to_bigquery")
+          WEBHOOK_URL="https://us-central1-tgs-prediktor-dev-598e.cloudfunctions.net/git_webhook_to_bigquery"
+
+          prepare_payload() {
+            local event_type="$1"
+            jq -n \
+              --arg event "$event_type" \
+              --arg repository "${{ github.repository }}" \
+              --arg url "https://github.com/${{ github.repository }}" \
+              --arg actor "${{ github.actor }}" \
+              --arg ref "${{ github.ref }}" \
+              --argjson payload "$2" \
+              '{
+                event: $event,
+                repository: { name: $repository, url: $url },
+                actor: $actor,
+                ref: $ref,
+                payload: $payload
+              }'
+          }
+
+          case "${{ github.event_name }}" in
+            push)
+              PAYLOAD=$(prepare_payload "push" "$(echo '${{ toJson(github.event) }}' | jq '{commits: .commits, before: .before, after: .after, pusher: .pusher}')")
+              ;;
+            pull_request)
+              PAYLOAD=$(prepare_payload "pull_request" "$(echo '${{ toJson(github.event.pull_request) }}' | jq '{number: .number, title: .title, state: .state, body: .body}')")
+              ;;
+            *)
+              PAYLOAD=$(prepare_payload "${{ github.event_name }}" "{}")
+              ;;
+          esac
+
+          curl -H "Authorization: Bearer $IDENTITY_TOKEN" \
+               -H "Content-Type: application/json" \
+               -d "$PAYLOAD" \
+               $WEBHOOK_URL

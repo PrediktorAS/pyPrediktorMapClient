@@ -1,31 +1,46 @@
-from pydantic import BaseModel, AnyUrl, validate_call, AwareDatetime, field_validator
-from pyprediktormapclient.shared import request_from_api
 import datetime
-import requests
 import json
 import re
+from typing import Optional
+
+import requests
+from dateutil.parser import ParserError, parse
+from dateutil.tz import tzutc
+from pydantic import AnyUrl, BaseModel, ConfigDict, field_validator
+
+from pyprediktormapclient.shared import request_from_api
+
 
 class Ory_Login_Structure(BaseModel):
     method: str
     identifier: str
     password: str
 
+
 class Token(BaseModel):
     session_token: str
-    expires_at: AwareDatetime = None
-    
-    @field_validator('expires_at', mode='before')
+    expires_at: Optional[datetime.datetime] = None
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    @field_validator("expires_at", mode="before")
     def remove_nanoseconds(cls, v):
         if v is None:
             return v
-        match = re.match(r"(\d\d\d\d)-(\d\d)-(\d\d)T(\d\d):(\d\d):(\d\d).\d+(\S+)", v)
+        if isinstance(v, datetime.datetime):
+            return v
+        match = re.match(
+            r"(\d\d\d\d)-(\d\d)-(\d\d)T(\d\d):(\d\d):(\d\d).\d+(\S+)", v
+        )
         if match:
-            return datetime.datetime.strptime(match.group(0)[:-4] + match.group(7), "%Y-%m-%dT%H:%M:%S.%f%z")
+            return datetime.datetime.strptime(
+                match.group(0)[:-4] + match.group(7), "%Y-%m-%dT%H:%M:%S.%f%z"
+            )
         return v
-    
+
 
 class AUTH_CLIENT:
-    """Helper functions to authenticate with Ory
+    """Helper functions to authenticate with Ory.
 
     Args:
         rest_url (str): The complete url of the OPC UA Values REST API. E.g. "http://127.0.0.1:13371/"
@@ -34,11 +49,10 @@ class AUTH_CLIENT:
 
     Returns:
         Object
-
     """
-    
+
     def __init__(self, rest_url: AnyUrl, username: str, password: str):
-        """Class initializer
+        """Class initializer.
 
         Args:
             rest_url (str): The complete url of the Ory server. E.g. "http://127.0.0.1:9099/"
@@ -55,10 +69,8 @@ class AUTH_CLIENT:
         self.headers = {"Content-Type": "application/json"}
         self.session = requests.Session()
 
-    
     def get_login_id(self) -> None:
-        """Request login token from Ory
-        """
+        """Request login token from Ory."""
         content = request_from_api(
             rest_url=self.rest_url,
             method="GET",
@@ -70,18 +82,22 @@ class AUTH_CLIENT:
             # Handle the error appropriately
             raise RuntimeError(content["error"])
 
-        if content.get("Success") is False or not isinstance(content.get("id"), str):
-            error_message = content.get("ErrorMessage", "Unknown error occurred during login.")
+        if content.get("Success") is False or not isinstance(
+            content.get("id"), str
+        ):
+            error_message = content.get(
+                "ErrorMessage", "Unknown error occurred during login."
+            )
             raise RuntimeError(error_message)
 
         self.id = content.get("id")
 
-    
     def get_login_token(self) -> None:
-        """Request login token from Ory
-        """
+        """Request login token from Ory."""
         params = {"flow": self.id}
-        body = (Ory_Login_Structure(method="password", identifier=self.username, password=self.password).model_dump())
+        body = Ory_Login_Structure(
+            method="password", identifier=self.username, password=self.password
+        ).model_dump()
         content = request_from_api(
             rest_url=self.rest_url,
             method="POST",
@@ -94,34 +110,35 @@ class AUTH_CLIENT:
 
         if content.get("Success") is False:
             raise RuntimeError(content.get("ErrorMessage"))
-        
+
         # Return if no content from server
         if not isinstance(content.get("session_token"), str):
             raise RuntimeError(content.get("ErrorMessage"))
-        self.token = Token(session_token=content.get("session_token"))
+
+        session_token = content.get("session_token")
+        expires_at = None
 
         # Check if token has expiry date, save it if it does
-        if isinstance(content.get("session").get("expires_at"), str):
-            # String returned from ory has to many chars in microsec. Remove them
-            #from_string = content.get("session").get("expires_at")
-            #date_object = datetime.datetime.strptime(f"{from_string[:-11]}.+00:00", "%Y-%m-%dT%H:%M:%S.%z")
+        expires_at_str = content.get("session", {}).get("expires_at")
+        if isinstance(expires_at_str, str):
             try:
-                self.token = Token(session_token=self.token.session_token, expires_at=content.get("session").get("expires_at"))
-            except Exception:
-                # If string returned from Ory cant be parsed, still should be possible to use Ory,
-                #  might be a setting in Ory to not return expiry date
-                self.token = Token(session_token=self.token.session_token)
+                expires_at = parse(expires_at_str).replace(tzinfo=tzutc())
+            except ParserError:
+                expires_at = None
+
+        self.token = Token(session_token=session_token, expires_at=expires_at)
 
     def check_if_token_has_expired(self) -> bool:
-        """Check if token has expired
-        """
+        """Check if token has expired."""
         if self.token is None or self.token.expires_at is None:
             return True
 
-        return datetime.datetime.now(datetime.timezone.utc) > self.token.expires_at
+        return (
+            datetime.datetime.now(datetime.timezone.utc)
+            > self.token.expires_at
+        )
 
     def request_new_ory_token(self) -> None:
-        """Request Ory token
-        """
+        """Request Ory token."""
         self.get_login_id()
         self.get_login_token()

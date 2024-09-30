@@ -1,11 +1,12 @@
-import asyncio
-import aiohttp
+from typing import Literal
+
 import requests
 from pydantic import AnyUrl, ValidationError
-from typing import Literal, Dict, Any
+
 
 class Config:
-        arbitrary_types_allowed = True
+    arbitrary_types_allowed = True
+
 
 def request_from_api(
     rest_url: AnyUrl,
@@ -17,7 +18,7 @@ def request_from_api(
     extended_timeout: bool = False,
     session: requests.Session = None,
 ) -> str:
-    """Function to perform the request to the ModelIndex server
+    """Function to perform the request to the ModelIndex server.
 
     Args:
         rest_url (str): The URL with trailing shash
@@ -35,19 +36,28 @@ def request_from_api(
     request_method = session if session else requests
 
     if method == "GET":
-        result = request_method.get(combined_url, timeout=request_timeout, params=params, headers=headers)
+        result = request_method.get(
+            combined_url,
+            timeout=request_timeout,
+            params=params,
+            headers=headers,
+        )
 
     if method == "POST":
         result = request_method.post(
-            combined_url, data=data, headers=headers, timeout=request_timeout, params=params
+            combined_url,
+            data=data,
+            headers=headers,
+            timeout=request_timeout,
+            params=params,
         )
-    
+
     if method not in ["GET", "POST"]:
         raise ValidationError("Unsupported method")
-    
+
     result.raise_for_status()
 
-    if 'application/json' in result.headers.get('Content-Type', ''):
+    if "application/json" in result.headers.get("Content-Type", ""):
         return result.json()
 
     else:
