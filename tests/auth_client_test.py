@@ -1,10 +1,11 @@
 import unittest
-from unittest.mock import patch, Mock
-import pytest
-from pydantic import ValidationError, BaseModel, AnyUrl
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
+from unittest.mock import Mock, patch
+
+import pytest
 import requests
+from pydantic import AnyUrl, BaseModel, ValidationError
 
 from pyprediktormapclient.auth_client import AUTH_CLIENT, Token
 

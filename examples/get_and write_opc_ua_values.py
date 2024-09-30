@@ -1,10 +1,10 @@
 # Import OPC UA functions
 from pyprediktormapclient.opc_ua import (
     OPC_UA,
+    SubValue,
+    Value,
     Variables,
     WriteVariables,
-    Value,
-    SubValue,
 )
 
 

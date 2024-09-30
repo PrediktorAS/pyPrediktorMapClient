@@ -1,7 +1,8 @@
-import pkgutil
-import logging
 import importlib
+import logging
+import pkgutil
 from typing import Dict
+
 from pydantic import validate_call
 from pyprediktorutilities.dwh.dwh import Dwh as Db
 

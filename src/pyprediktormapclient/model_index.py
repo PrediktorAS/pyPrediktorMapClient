@@ -1,10 +1,12 @@
 import json
 import logging
-from typing import List
-import requests
 from datetime import date, datetime
+from typing import List
+
+import requests
 from pydantic import AnyUrl
 from pydantic_core import Url
+
 from pyprediktormapclient.shared import request_from_api
 
 logger = logging.getLogger(__name__)

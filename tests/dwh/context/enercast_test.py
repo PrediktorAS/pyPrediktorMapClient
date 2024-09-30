@@ -1,7 +1,8 @@
 import json
 from unittest.mock import Mock
-from pyprediktormapclient.dwh.idwh import IDWH
+
 from pyprediktormapclient.dwh.context.enercast import Enercast
+from pyprediktormapclient.dwh.idwh import IDWH
 
 """
 __init__

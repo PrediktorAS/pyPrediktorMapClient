@@ -1,12 +1,14 @@
-import pytest
 import unittest
+from datetime import date, datetime
 from unittest.mock import Mock, patch
-from pydantic import ValidationError, BaseModel, AnyUrl
-from pyprediktormapclient.model_index import ModelIndex
-from datetime import datetime, date
-from pydantic_core import Url
-import requests
 from urllib.parse import urlparse
+
+import pytest
+import requests
+from pydantic import AnyUrl, BaseModel, ValidationError
+from pydantic_core import Url
+
+from pyprediktormapclient.model_index import ModelIndex
 
 URL = "http://someserver.somedomain.com/v1/"
 object_types = [

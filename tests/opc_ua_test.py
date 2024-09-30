@@ -1,23 +1,24 @@
-import unittest
-from unittest.mock import patch, Mock, AsyncMock
-import pytest
-from datetime import datetime, timedelta, date
-import aiohttp
-import pandas.api.types as ptypes
-from pydantic import ValidationError, AnyUrl, BaseModel
-from requests.exceptions import HTTPError
-from typing import List
-from copy import deepcopy
-from pydantic_core import Url
 import asyncio
-import requests
 import json
+import unittest
+from copy import deepcopy
+from datetime import date, datetime, timedelta
+from typing import List
+from unittest.mock import AsyncMock, Mock, patch
+
+import aiohttp
 import pandas as pd
+import pandas.api.types as ptypes
+import pytest
+import requests
 from aiohttp.client_exceptions import ClientResponseError
+from pydantic import AnyUrl, BaseModel, ValidationError
+from pydantic_core import Url
+from requests.exceptions import HTTPError
 from yarl import URL as YarlURL
 
-from pyprediktormapclient.opc_ua import OPC_UA, TYPE_LIST
 from pyprediktormapclient.auth_client import AUTH_CLIENT, Token
+from pyprediktormapclient.opc_ua import OPC_UA, TYPE_LIST
 
 URL = "http://someserver.somedomain.com/v1/"
 OPC_URL = "opc.tcp://nosuchserver.nosuchdomain.com"

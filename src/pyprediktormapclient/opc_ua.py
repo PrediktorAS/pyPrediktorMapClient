@@ -1,19 +1,21 @@
+import asyncio
+import copy
 import json
 import logging
-import copy
+from asyncio import Semaphore
+from datetime import date, datetime, timedelta
+from typing import Any, Callable, Dict, List, Optional, Union
+
+import aiohttp
+import nest_asyncio
 import pandas as pd
 import requests
-from datetime import date, datetime, timedelta
-from typing import Dict, List, Any, Union, Optional, Callable
-from pydantic import BaseModel, AnyUrl
-from pydantic_core import Url
-from pyprediktormapclient.shared import request_from_api
-from requests import HTTPError
-import asyncio
-import aiohttp
 from aiohttp import ClientSession
-from asyncio import Semaphore
-import nest_asyncio
+from pydantic import AnyUrl, BaseModel
+from pydantic_core import Url
+from requests import HTTPError
+
+from pyprediktormapclient.shared import request_from_api
 
 nest_asyncio.apply()
 

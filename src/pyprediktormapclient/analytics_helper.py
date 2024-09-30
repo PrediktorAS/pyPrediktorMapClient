@@ -1,9 +1,9 @@
-import pandas as pd
 import logging
 import re
-from typing import List, Any
-from pydantic import validate_call
+from typing import Any, List
 
+import pandas as pd
+from pydantic import validate_call
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())

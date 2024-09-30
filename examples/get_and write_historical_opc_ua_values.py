@@ -4,10 +4,10 @@ import datetime
 # Import OPC UA functions
 from pyprediktormapclient.opc_ua import (
     OPC_UA,
+    SubValue,
+    Value,
     Variables,
     WriteHistoricalVariables,
-    Value,
-    SubValue,
 )
 
 

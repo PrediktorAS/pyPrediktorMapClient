@@ -1,6 +1,7 @@
+from typing import Literal
+
 import requests
 from pydantic import AnyUrl, ValidationError
-from typing import Literal
 
 
 class Config:

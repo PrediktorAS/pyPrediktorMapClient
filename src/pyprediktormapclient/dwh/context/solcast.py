@@ -1,6 +1,7 @@
 import json
+from typing import Dict, List, Union
+
 from pydantic import validate_call
-from typing import List, Dict, Union
 
 from ..idwh import IDWH
 

@@ -1,7 +1,8 @@
-import pyodbc
 import logging
+from typing import Any, List
+
 import pandas as pd
-from typing import List, Any
+import pyodbc
 from pydantic import validate_call
 
 logger = logging.getLogger(__name__)

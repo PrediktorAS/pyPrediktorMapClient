@@ -1,12 +1,14 @@
-import pytest
 import random
 import string
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 from aiohttp import ClientResponseError
-from pyprediktormapclient.opc_ua import OPC_UA
-from pyprediktormapclient.dwh.dwh import DWH
-from pyprediktormapclient.dwh.db import Db
+
 from pyprediktormapclient.auth_client import AUTH_CLIENT
+from pyprediktormapclient.dwh.db import Db
+from pyprediktormapclient.dwh.dwh import DWH
+from pyprediktormapclient.opc_ua import OPC_UA
 
 URL = "http://someserver.somedomain.com/v1/"
 username = "some@user.com"

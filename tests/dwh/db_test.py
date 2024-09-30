@@ -1,13 +1,15 @@
-import pytest
-import pyodbc
 import inspect
-import pandas as pd
-from conftest import grs
+from typing import Any, List, get_args, get_origin
 from unittest.mock import Mock, patch
-from typing import List, Any, get_origin, get_args
+
+import pandas as pd
+import pyodbc
+import pytest
+from conftest import grs
+from pandas.testing import assert_frame_equal
+
 from pyprediktormapclient.dwh.db import Db
 from pyprediktormapclient.dwh.idwh import IDWH
-from pandas.testing import assert_frame_equal
 
 
 class TestCaseDB:

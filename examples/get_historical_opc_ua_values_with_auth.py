@@ -2,9 +2,10 @@
 import datetime
 import json
 
+from pyprediktormapclient.auth_client import AUTH_CLIENT
+
 # Import OPC UA functions
 from pyprediktormapclient.opc_ua import OPC_UA, Variables
-from pyprediktormapclient.auth_client import AUTH_CLIENT
 
 
 def main():

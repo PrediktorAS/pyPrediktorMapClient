@@ -1,12 +1,14 @@
-from pydantic import BaseModel, AnyUrl, field_validator, ConfigDict
-from typing import Optional
-from pyprediktormapclient.shared import request_from_api
 import datetime
-import requests
 import json
 import re
-from dateutil.parser import parse, ParserError
+from typing import Optional
+
+import requests
+from dateutil.parser import ParserError, parse
 from dateutil.tz import tzutc
+from pydantic import AnyUrl, BaseModel, ConfigDict, field_validator
+
+from pyprediktormapclient.shared import request_from_api
 
 
 class Ory_Login_Structure(BaseModel):

@@ -1,9 +1,11 @@
-import pytest
-import unittest
-import inspect
 import datetime
+import inspect
+import unittest
 from typing import Dict
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import MagicMock, call, patch
+
+import pytest
+
 from pyprediktormapclient.dwh.dwh import DWH
 from pyprediktormapclient.dwh.idwh import IDWH
 

@@ -65,17 +65,31 @@ After making the required changes and ensuring they pass the pre-commit hooks, a
 git add .
 ```
 
+## isort for Import Sorting
+
+To maintain a clean and organized codebase, we use isort to automatically sort Python import statements according to PEP 8 standards.
+
+7. Run isort
+
+Run `isort` manually to sort the imports in the project using the command:
+
+```
+isort .
+```
+The `isort` configuration is managed in the `pyproject.toml` file to ensure it integrates well with black and other tools.
+
+
 ## Run and build
 
-7. Run tests
+8. Run tests
 
 ```
 tox
 ```
 
-8. Make your changes and submit a new PR for approval.
+9. Make your changes and submit a new PR for approval.
 
-9. Build
+10. Build
 
 ```
 tox -e build
@@ -83,16 +97,16 @@ tox -e build
 
 ## Changes
 
-10. Please apply your changes. If they will facilitate the work of the person using pyPrediktorMapClient, especially the new features you've implemented, ensure that you describe your changes comprehensively and provide guidance in the README.md file under the chapter `Manual - How to Use` (check below).
+11. Please apply your changes. If they will facilitate the work of the person using pyPrediktorMapClient, especially the new features you've implemented, ensure that you describe your changes comprehensively and provide guidance in the README.md file under the chapter `Manual - How to Use` (check below).
 
-11. Commit your changes to a new branch, push and create a new pull request for review.
+12. Commit your changes to a new branch, push and create a new pull request for review.
 
 ## Publish on PyPi
 
-12. Open [https://pypi.org/](https://pypi.org/) and log in.
-13. Open [https://pypi.org/manage/account/](https://pypi.org/manage/account/) and generate a new API token but only if you don't have one already. Keep the API key on your local machine because once generated it will be visible only once. Delete API keys that are no longer used!
-14. In your code editor, open the root directory of the current project and clean the content of folder `dist`.
-15. Create a new tag and push it to the GitHub repository. For instance, if the latest tag is `0.6.7` the new tag should be `0.6.8`. Alternatively, if the changes are major, you can set the new tag to `0.7.0`.
+13. Open [https://pypi.org/](https://pypi.org/) and log in.
+14. Open [https://pypi.org/manage/account/](https://pypi.org/manage/account/) and generate a new API token but only if you don't have one already. Keep the API key on your local machine because once generated it will be visible only once. Delete API keys that are no longer used!
+15. In your code editor, open the root directory of the current project and clean the content of folder `dist`.
+16. Create a new tag and push it to the GitHub repository. For instance, if the latest tag is `0.6.7` the new tag should be `0.6.8`. Alternatively, if the changes are major, you can set the new tag to `0.7.0`.
 
 Use the following commands to create the tag and to publish it.
 
@@ -101,13 +115,13 @@ git tag 0.6.8
 git push origin 0.6.8
 ```
 
-16. Create a new build. Be aware that `tox.ini` file is configured in a way to get latest tag from the repository. That tag is going to be used to label the new build.
+17. Create a new build. Be aware that `tox.ini` file is configured in a way to get latest tag from the repository. That tag is going to be used to label the new build.
 
 ```
 tox -e build
 ```
 
-17. Be sure that twine is installed. If not, run the following command:
+18. Be sure that twine is installed. If not, run the following command:
 
 ```
 python3 -m pip install twine
@@ -119,7 +133,7 @@ or
 python -m pip install twine
 ```
 
-18. Publish the build on PyPi:
+19. Publish the build on PyPi:
 
 ```
 python3 -m twine upload -u __token__ -p API_KEY dist/*
@@ -127,11 +141,11 @@ python3 -m twine upload -u __token__ -p API_KEY dist/*
 
 Replace API_KEY with the API key you generated earlier or a key you already have.
 
-19. Check if the new version has been release - [Release history](https://pypi.org/project/pyPrediktorMapClient/#history).
+20. Check if the new version has been release - [Release history](https://pypi.org/project/pyPrediktorMapClient/#history).
 
 Once that's done, we have to publish a new release in the GitHub repository.
 
-20. Open the list of released published on the [GitHub repository](https://github.com/PrediktorAS/pyPrediktorMapClient/releases). Draft a new release by pressing "Draft a new release".
+21. Open the list of released published on the [GitHub repository](https://github.com/PrediktorAS/pyPrediktorMapClient/releases). Draft a new release by pressing "Draft a new release".
 
 Use the newly created tag which in our example is 0.6.8. Add detailed descrption about the new changes.
 

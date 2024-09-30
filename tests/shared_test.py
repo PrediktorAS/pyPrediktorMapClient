@@ -1,8 +1,10 @@
 import unittest
 from unittest import mock
-import requests
+
 import pytest
+import requests
 from requests.exceptions import RequestException
+
 from pyprediktormapclient.shared import request_from_api
 
 URL = "http://someserver.somedomain.com/v1/"
