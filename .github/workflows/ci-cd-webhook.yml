@@ -13,7 +13,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: 3.12
+        python-version: 3.11
 
     - name: Create virtual environment
       run: python -m venv .venv
@@ -23,16 +23,6 @@ jobs:
 
     - name: Install dependencies
       run: pip install -r requirements.txt
-
-    - name: Update pre-commit hooks
-      run: |
-        source .venv/bin/activate
-        pre-commit autoupdate
-        git config --global user.name 'github-actions'
-        git config --global user.email 'github-actions@github.com'
-        git add .pre-commit-config.yaml
-        git commit -m "Update pre-commit hooks" || echo "No changes to commit"
-        git push origin HEAD || echo "No changes to push"
 
     - name: Run pre-commit checks
       run: pre-commit run --all-files
