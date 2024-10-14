@@ -77,4 +77,21 @@ jobs:
 
     - name: Test with tox
       run: |
-        tox
+        tox>>summary.txt
+        cat summary.txt
+        echo ${{ github.ref }}
+
+    - name: 'Log coverage to Slack'
+      if: ${{ github.ref == 'refs/heads/main' && matrix.python-version == '3.9' }}
+      run: |
+        summary_file=summary.txt
+        coverage_line=$(grep 'TOTAL' $summary_file)
+        line_coverage=$(echo $coverage_line | awk '{print $2}')
+        missing_line_coverage=$(echo $coverage_line | awk '{print $3}')
+        line_percentage=$(printf "%.2f%%" $( echo "($line_coverage - $missing_line_coverage) / $line_coverage * 100" | bc -l))
+        echo "Line coverage: $line_percentage"
+        branch_coverage=$(echo $coverage_line | awk '{print $4}')
+        pr_branch_coverage=$(echo $coverage_line | awk '{print $5}')
+        branch_percentage=$(printf "%.2f%%" $( echo "($branch_coverage - $pr_branch_coverage) / $branch_coverage * 100" | bc -l))
+        echo "Branch coverage: $branch_percentage"
+        curl -X POST -H 'Content-type: application/json' --data "{\"appName\":\"pyPredictorMapClient\", \"linePercentage\":\"$line_percentage\", \"branchPercentage\":\"$branch_percentage\", \"methodPercentage\":\"unavailable\"}" ${{ secrets.SLACK_COVERAGE_REPORTER_WORKFLOW_URL }}
