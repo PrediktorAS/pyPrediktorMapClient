@@ -92,4 +92,4 @@ jobs:
         pr_branch_coverage=$(echo $coverage_line | awk '{print $5}')
         branch_percentage=$(printf "%.2f%%" $( echo "($branch_coverage - $pr_branch_coverage) / $branch_coverage * 100" | bc -l))
         echo "Branch coverage: $branch_percentage"
-        curl -X POST -H 'Content-type: application/json' --data "{\"appName\":\"pyPredictorMapClient\", \"linePercentage\":\"$line_percentage\", \"branchPercentage\":\"$branch_percentage\", \"methodPercentage\":\"unavailable\"}" ${{ process.env.SLACK_COVERAGE_REPORTER_WORKFLOW_URL }}
+        curl -X POST -H 'Content-type: application/json' --data "{\"appName\":\"pyPredictorMapClient\", \"linePercentage\":\"$line_percentage\", \"branchPercentage\":\"$branch_percentage\", \"methodPercentage\":\"unavailable\"}" ${{ env.SLACK_COVERAGE_REPORTER_WORKFLOW_URL }}
