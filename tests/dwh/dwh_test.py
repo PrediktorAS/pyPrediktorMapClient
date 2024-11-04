@@ -12,7 +12,7 @@ from pyprediktormapclient.dwh.idwh import IDWH
 
 class TestCaseDWH:
 
-    class TestService:
+    class InternalTestService:
         def __init__(self, dwh):
             self.dwh = dwh
 
@@ -90,8 +90,8 @@ class TestCaseDWH:
 
         def mock_import(name):
             mock_module = MagicMock()
-            mock_module.__dir__ = lambda *args: ["TestService"]
-            mock_module.TestService = self.TestService
+            mock_module.__dir__ = lambda *args: ["InternalTestService"]
+            mock_module.InternalTestService = self.InternalTestService
             return mock_module
 
         mock_import_module.side_effect = mock_import
@@ -119,7 +119,9 @@ class TestCaseDWH:
         assert hasattr(dwh_instance, "solcast")
 
         for attr in ["enercast", "plant", "solcast"]:
-            assert isinstance(getattr(dwh_instance, attr), self.TestService)
+            assert isinstance(
+                getattr(dwh_instance, attr), self.InternalTestService
+            )
             assert getattr(dwh_instance, attr).dwh == dwh_instance
 
     @patch("pyprediktormapclient.dwh.dwh.importlib.import_module")
@@ -150,8 +152,8 @@ class TestCaseDWH:
 
         for attr in ["enercast", "plant", "solcast"]:
             assert isinstance(
-                getattr(dwh_instance, attr), self.TestService
-            ), f"{attr} is not an instance of TestService"
+                getattr(dwh_instance, attr), self.InternalTestService
+            ), f"{attr} is not an instance of InternalTestService"
             assert (
                 getattr(dwh_instance, attr).dwh == dwh_instance
             ), f"{attr}'s dwh is not the dwh_instance"
