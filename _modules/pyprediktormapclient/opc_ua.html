@@ -1,22 +1,20 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="../../">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pyprediktormapclient.opc_ua &mdash; pyPrediktorMapClient 0.7.1 documentation</title>
+  <title>pyprediktormapclient.opc_ua &mdash; pyPrediktorMapClient 0.7.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
-      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
 
   
-  <!--[if lt IE 9]>
-    <script src="../../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="../../_static/jquery.js?v=5d32c60e"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="../../_static/documentation_options.js?v=5a057da9"></script>
-        <script src="../../_static/doctools.js?v=9a2dae69"></script>
-        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=6dfdf7c3"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
@@ -33,9 +31,6 @@
           <a href="../../index.html" class="icon icon-home">
             pyPrediktorMapClient
           </a>
-              <div class="version">
-                0.7.1
-              </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -78,22 +73,24 @@
            <div itemprop="articleBody">
              
   <h1>Source code for pyprediktormapclient.opc_ua</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">json</span>
-<span class="kn">import</span> <span class="nn">logging</span>
+<span></span><span class="kn">import</span> <span class="nn">asyncio</span>
 <span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">asyncio</span> <span class="kn">import</span> <span class="n">Semaphore</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">date</span><span class="p">,</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">aiohttp</span>
+<span class="kn">import</span> <span class="nn">nest_asyncio</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">requests</span>
-<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">date</span><span class="p">,</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Callable</span>
-<span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">AnyUrl</span>
-<span class="kn">from</span> <span class="nn">pydantic_core</span> <span class="kn">import</span> <span class="n">Url</span>
-<span class="kn">from</span> <span class="nn">pyprediktormapclient.shared</span> <span class="kn">import</span> <span class="n">request_from_api</span>
-<span class="kn">from</span> <span class="nn">requests</span> <span class="kn">import</span> <span class="n">HTTPError</span>
-<span class="kn">import</span> <span class="nn">asyncio</span>
-<span class="kn">import</span> <span class="nn">aiohttp</span>
 <span class="kn">from</span> <span class="nn">aiohttp</span> <span class="kn">import</span> <span class="n">ClientSession</span>
-<span class="kn">from</span> <span class="nn">asyncio</span> <span class="kn">import</span> <span class="n">Semaphore</span>
-<span class="kn">import</span> <span class="nn">nest_asyncio</span>
+<span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">AnyUrl</span><span class="p">,</span> <span class="n">BaseModel</span>
+<span class="kn">from</span> <span class="nn">pydantic_core</span> <span class="kn">import</span> <span class="n">Url</span>
+<span class="kn">from</span> <span class="nn">requests</span> <span class="kn">import</span> <span class="n">HTTPError</span>
+
+<span class="kn">from</span> <span class="nn">pyprediktormapclient.shared</span> <span class="kn">import</span> <span class="n">request_from_api</span>
 
 <span class="n">nest_asyncio</span><span class="o">.</span><span class="n">apply</span><span class="p">()</span>
 
@@ -113,9 +110,11 @@
 <span class="sd">            Namespace: int - Namespace on the signal, e.g. 2.</span>
 <span class="sd">            IdType: int - IdTypes described in https://reference.opcfoundation.org/v104/Core/docs/Part3/8.2.3/.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">Id</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">Namespace</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">IdType</span><span class="p">:</span> <span class="nb">int</span></div>
+
 
 
 <div class="viewcode-block" id="SubValue">
@@ -123,12 +122,14 @@
 <span class="k">class</span> <span class="nc">SubValue</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper class to parse all values api&#39;s.</span>
 
-<span class="sd">        Variables:</span>
-<span class="sd">            Type: int - Type of variable, e.g. 12. string, 11. float, etc. list of types described in https://reference.opcfoundation.org/Core/Part6/v104/5.1.2/ </span>
-<span class="sd">            Body: Union[str, float, int, bool] - The value of the varible, should match type.</span>
+<span class="sd">    Variables:</span>
+<span class="sd">        Type: int - Type of variable, e.g. 12. string, 11. float, etc. list of types described in https://reference.opcfoundation.org/Core/Part6/v104/5.1.2/</span>
+<span class="sd">        Body: Union[str, float, int, bool] - The value of the varible, should match type.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">Type</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">Body</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]</span></div>
+
 
 
 <div class="viewcode-block" id="HistoryValue">
@@ -136,10 +137,12 @@
 <span class="k">class</span> <span class="nc">HistoryValue</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper class to parse all values api&#39;s.</span>
 
-<span class="sd">        Variables:</span>
-<span class="sd">            Value: SubValue - Containing Type and Body (value) of the variable. Described in SubValue class.</span>
+<span class="sd">    Variables:</span>
+<span class="sd">        Value: SubValue - Containing Type and Body (value) of the variable. Described in SubValue class.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">Value</span><span class="p">:</span> <span class="n">SubValue</span></div>
+
 
 
 <div class="viewcode-block" id="StatsCode">
@@ -147,12 +150,14 @@
 <span class="k">class</span> <span class="nc">StatsCode</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper class to parse all values api&#39;s.</span>
 
-<span class="sd">        Variables:</span>
-<span class="sd">            Code: Optional[int] - Status code, described in https://reference.opcfoundation.org/v104/Core/docs/Part8/A.4.3/</span>
-<span class="sd">            Symbol: Optional[str] - String value for status code, described in https://reference.opcfoundation.org/v104/Core/docs/Part8/A.4.3/</span>
+<span class="sd">    Variables:</span>
+<span class="sd">        Code: Optional[int] - Status code, described in https://reference.opcfoundation.org/v104/Core/docs/Part8/A.4.3/</span>
+<span class="sd">        Symbol: Optional[str] - String value for status code, described in https://reference.opcfoundation.org/v104/Core/docs/Part8/A.4.3/</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">Code</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">Symbol</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
 
 
 <div class="viewcode-block" id="Value">
@@ -160,14 +165,15 @@
 <span class="k">class</span> <span class="nc">Value</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper class to parse all values api&#39;s.</span>
 
-<span class="sd">        Variables:</span>
-<span class="sd">            Value: SubValue - Containing Type and Body (value) of the variable. Described in SubValue class.</span>
-<span class="sd">            SourceTimestamp: str - Timestamp of the source, e.g. when coming from an API the timestamp returned from the API for the varaible is the sourcetimestamp.</span>
-<span class="sd">            SourcePicoseconds: Optional[int] - Picoseconds for the timestamp of the source if there is a need for a finer granularity, e.g. if samples are sampled in picosecond level or more precision is needed.</span>
-<span class="sd">            ServerTimestamp: Optional[str] - Timestamp for the server, normally this is assigned by the server.</span>
-<span class="sd">            ServerPicoseconds: Optional[int] - Picoseconds for the timestamp on the server, normally this is assigned by the server.</span>
-<span class="sd">            StatusCode: StatusCode - Status code, described in https://reference.opcfoundation.org/v104/Core/docs/Part8/A.4.3/</span>
+<span class="sd">    Variables:</span>
+<span class="sd">        Value: SubValue - Containing Type and Body (value) of the variable. Described in SubValue class.</span>
+<span class="sd">        SourceTimestamp: str - Timestamp of the source, e.g. when coming from an API the timestamp returned from the API for the varaible is the sourcetimestamp.</span>
+<span class="sd">        SourcePicoseconds: Optional[int] - Picoseconds for the timestamp of the source if there is a need for a finer granularity, e.g. if samples are sampled in picosecond level or more precision is needed.</span>
+<span class="sd">        ServerTimestamp: Optional[str] - Timestamp for the server, normally this is assigned by the server.</span>
+<span class="sd">        ServerPicoseconds: Optional[int] - Picoseconds for the timestamp on the server, normally this is assigned by the server.</span>
+<span class="sd">        StatusCode: StatusCode - Status code, described in https://reference.opcfoundation.org/v104/Core/docs/Part8/A.4.3/</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">Value</span><span class="p">:</span> <span class="n">SubValue</span>
     <span class="n">SourceTimestamp</span><span class="p">:</span> <span class="n">datetime</span>
     <span class="n">SourcePicoseconds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -176,17 +182,20 @@
     <span class="n">StatusCode</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">StatsCode</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
+
 <div class="viewcode-block" id="WriteVariables">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.WriteVariables">[docs]</a>
 <span class="k">class</span> <span class="nc">WriteVariables</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper class for write values api.</span>
 
-<span class="sd">        Variables:</span>
-<span class="sd">                NodeId: Variables - The complete node&#39;id for the variable</span>
-<span class="sd">                Value: Value - The value to update for the node&#39;id.</span>
+<span class="sd">    Variables:</span>
+<span class="sd">            NodeId: Variables - The complete node&#39;id for the variable</span>
+<span class="sd">            Value: Value - The value to update for the node&#39;id.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">NodeId</span><span class="p">:</span> <span class="n">Variables</span>
     <span class="n">Value</span><span class="p">:</span> <span class="n">Value</span></div>
+
 
 
 <div class="viewcode-block" id="WriteHistoricalVariables">
@@ -194,14 +203,16 @@
 <span class="k">class</span> <span class="nc">WriteHistoricalVariables</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper class for write historical values api.</span>
 
-<span class="sd">        Variables:</span>
-<span class="sd">            NodeId (str): The complete node&#39;id for the variable</span>
-<span class="sd">            PerformInsertReplace (int): Historical insertion method 1. Insert, 2. Replace 3. Update, 4. Remove</span>
-<span class="sd">            UpdateValues (list): List of values to update for the node&#39;id. Time must be in descending order.</span>
+<span class="sd">    Variables:</span>
+<span class="sd">        NodeId (str): The complete node&#39;id for the variable</span>
+<span class="sd">        PerformInsertReplace (int): Historical insertion method 1. Insert, 2. Replace 3. Update, 4. Remove</span>
+<span class="sd">        UpdateValues (list): List of values to update for the node&#39;id. Time must be in descending order.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">NodeId</span><span class="p">:</span> <span class="n">Variables</span>
     <span class="n">PerformInsertReplace</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">UpdateValues</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Value</span><span class="p">]</span></div>
+
 
 
 <div class="viewcode-block" id="WriteVariablesResponse">
@@ -209,23 +220,27 @@
 <span class="k">class</span> <span class="nc">WriteVariablesResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper class for write historical values api.</span>
 
-<span class="sd">        Variables:</span>
-<span class="sd">            SymbolCodes: List[StatusCode] - A list of class StatusCode, described in StatusCode class.</span>
+<span class="sd">    Variables:</span>
+<span class="sd">        SymbolCodes: List[StatusCode] - A list of class StatusCode, described in StatusCode class.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">SymbolCodes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">StatsCode</span><span class="p">]</span></div>
+
 
 
 <div class="viewcode-block" id="WriteReturn">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.WriteReturn">[docs]</a>
 <span class="k">class</span> <span class="nc">WriteReturn</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper class to collect API output with API input to see successfull writes for nodes.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper class to collect API output with API input to see successfull</span>
+<span class="sd">    writes for nodes.</span>
 
-<span class="sd">        Variables:</span>
-<span class="sd">            Id: str - The Id of the signal</span>
-<span class="sd">            Value: str - The written value of the signal</span>
-<span class="sd">            TimeStamp: str - THe SourceTimestamp of the written signal</span>
-<span class="sd">            Success: bool - Success flag for the write operation</span>
+<span class="sd">    Variables:</span>
+<span class="sd">        Id: str - The Id of the signal</span>
+<span class="sd">        Value: str - The written value of the signal</span>
+<span class="sd">        TimeStamp: str - THe SourceTimestamp of the written signal</span>
+<span class="sd">        Success: bool - Success flag for the write operation</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">Id</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">Value</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">TimeStamp</span><span class="p">:</span> <span class="nb">str</span>
@@ -245,16 +260,18 @@
 </div>
 
 
+
 <div class="viewcode-block" id="Config">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.Config">[docs]</a>
 <span class="k">class</span> <span class="nc">Config</span><span class="p">:</span>
-        <span class="n">arbitrary_types_allowed</span> <span class="o">=</span> <span class="kc">True</span></div>
+    <span class="n">arbitrary_types_allowed</span> <span class="o">=</span> <span class="kc">True</span></div>
+
 
 
 <div class="viewcode-block" id="OPC_UA">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA">[docs]</a>
 <span class="k">class</span> <span class="nc">OPC_UA</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper functions to access the OPC UA REST Values API server</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper functions to access the OPC UA REST Values API server.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        rest_url (str): The complete url of the OPC UA Values REST API. E.g. &quot;http://127.0.0.1:13371/&quot;</span>
@@ -269,15 +286,22 @@
 <span class="sd">        * Better session handling with aiohttp</span>
 <span class="sd">        * Make sure that time convertions are with timezone</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
 <div class="viewcode-block" id="OPC_UA.Config">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.Config">[docs]</a>
     <span class="k">class</span> <span class="nc">Config</span><span class="p">:</span>
         <span class="n">arbitrary_types_allowed</span> <span class="o">=</span> <span class="kc">True</span></div>
 
 
-    
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rest_url</span><span class="p">:</span> <span class="n">AnyUrl</span><span class="p">,</span> <span class="n">opcua_url</span><span class="p">:</span> <span class="n">AnyUrl</span><span class="p">,</span> <span class="n">namespaces</span><span class="p">:</span> <span class="n">List</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">auth_client</span><span class="p">:</span> <span class="nb">object</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">session</span><span class="p">:</span> <span class="n">requests</span><span class="o">.</span><span class="n">Session</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Class initializer</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">rest_url</span><span class="p">:</span> <span class="n">AnyUrl</span><span class="p">,</span>
+        <span class="n">opcua_url</span><span class="p">:</span> <span class="n">AnyUrl</span><span class="p">,</span>
+        <span class="n">namespaces</span><span class="p">:</span> <span class="n">List</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">auth_client</span><span class="p">:</span> <span class="nb">object</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">session</span><span class="p">:</span> <span class="n">requests</span><span class="o">.</span><span class="n">Session</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Class initializer.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            rest_url (str): The complete url of the OPC UA Values REST API. E.g. &quot;http://127.0.0.1:13371/&quot;</span>
@@ -291,42 +315,51 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">opcua_url</span> <span class="o">=</span> <span class="n">opcua_url</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">headers</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;Content-Type&quot;</span><span class="p">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;Accept&quot;</span><span class="p">:</span> <span class="s2">&quot;text/plain&quot;</span>
+            <span class="s2">&quot;Accept&quot;</span><span class="p">:</span> <span class="s2">&quot;text/plain&quot;</span><span class="p">,</span>
         <span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">auth_client</span> <span class="o">=</span> <span class="n">auth_client</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">session</span> <span class="o">=</span> <span class="n">session</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">helper</span> <span class="o">=</span> <span class="n">AsyncIONotebookHelper</span><span class="p">()</span>
-        
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opcua_url</span><span class="p">)</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;opc.tcp://&quot;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid OPC UA URL&quot;</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_client</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_client</span><span class="o">.</span><span class="n">token</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;Authorization&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Bearer </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">auth_client</span><span class="o">.</span><span class="n">token</span><span class="o">.</span><span class="n">session_token</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Connection&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;Url&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">opcua_url</span><span class="p">,</span> <span class="s2">&quot;AuthenticationType&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}}</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;Authorization&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Bearer </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">auth_client</span><span class="o">.</span><span class="n">token</span><span class="o">.</span><span class="n">session_token</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;Connection&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;Url&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">opcua_url</span><span class="p">,</span> <span class="s2">&quot;AuthenticationType&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+        <span class="p">}</span>
         <span class="k">if</span> <span class="n">namespaces</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="p">[</span><span class="s2">&quot;ClientNamespaces&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">namespaces</span>
 
 <div class="viewcode-block" id="OPC_UA.json_serial">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.json_serial">[docs]</a>
     <span class="k">def</span> <span class="nf">json_serial</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;JSON serializer for objects not serializable by default json code&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;JSON serializer for objects not serializable by default json</span>
+<span class="sd">        code.&quot;&quot;&quot;</span>
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="p">(</span><span class="n">datetime</span><span class="p">,</span> <span class="n">date</span><span class="p">)):</span>
             <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">Url</span><span class="p">):</span>
             <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="si">}</span><span class="s2"> not serializable&quot;</span><span class="p">)</span></div>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="si">}</span><span class="s2"> not serializable&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="OPC_UA.check_auth_client">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.check_auth_client">[docs]</a>
     <span class="k">def</span> <span class="nf">check_auth_client</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content</span><span class="p">):</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">content</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;error&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;code&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">404</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">content</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;code&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">404</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">auth_client</span><span class="o">.</span><span class="n">request_new_ory_token</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;Authorization&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Bearer </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">auth_client</span><span class="o">.</span><span class="n">token</span><span class="o">.</span><span class="n">session_token</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;Authorization&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Bearer </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">auth_client</span><span class="o">.</span><span class="n">token</span><span class="o">.</span><span class="n">session_token</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">content</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ErrorMessage&quot;</span><span class="p">))</span></div>
 
 
-    
     <span class="k">def</span> <span class="nf">_get_value_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Internal function to get the type of a value from the OPC UA return,as documentet at</span>
 <span class="sd">        https://docs.prediktor.com/docs/opcuavaluesrestapi/datatypes.html#variant</span>
@@ -343,7 +376,7 @@
 
     <span class="k">def</span> <span class="nf">_get_variable_list_as_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Internal function to convert a list of pydantic Variable models to a</span>
-<span class="sd">        list of dicts</span>
+<span class="sd">        list of dicts.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            variable_list (List): List of pydantic models</span>
@@ -353,7 +386,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">new_vars</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">variable_list</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="s1">&#39;model_dump&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="s2">&quot;model_dump&quot;</span><span class="p">):</span>
                 <span class="c1"># Convert pydantic model to dict</span>
                 <span class="n">new_vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span>
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
@@ -364,11 +397,10 @@
 
         <span class="k">return</span> <span class="n">new_vars</span>
 
-    
 <div class="viewcode-block" id="OPC_UA.get_values">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.get_values">[docs]</a>
     <span class="k">def</span> <span class="nf">get_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Variables</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Request realtime values from the OPC UA server</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Request realtime values from the OPC UA server.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            variable_list (list): A list of variables you want, containing keys &quot;Id&quot;, &quot;Namespace&quot; and &quot;IdType&quot;</span>
@@ -389,20 +421,20 @@
                 <span class="n">extended_timeout</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">except</span> <span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="c1"># print(.get(&#39;error&#39;).get(&#39;code&#39;))</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_client</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">check_auth_client</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">))</span>
+                <span class="n">content</span> <span class="o">=</span> <span class="n">request_from_api</span><span class="p">(</span>
+                    <span class="n">rest_url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rest_url</span><span class="p">,</span>
+                    <span class="n">method</span><span class="o">=</span><span class="s2">&quot;POST&quot;</span><span class="p">,</span>
+                    <span class="n">endpoint</span><span class="o">=</span><span class="s2">&quot;values/get&quot;</span><span class="p">,</span>
+                    <span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span><span class="n">body</span><span class="p">],</span> <span class="n">default</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">json_serial</span><span class="p">),</span>
+                    <span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">,</span>
+                    <span class="n">extended_timeout</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Error message </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-        <span class="k">finally</span><span class="p">:</span>
-            <span class="n">content</span> <span class="o">=</span> <span class="n">request_from_api</span><span class="p">(</span>
-                <span class="n">rest_url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rest_url</span><span class="p">,</span>
-                <span class="n">method</span><span class="o">=</span><span class="s2">&quot;POST&quot;</span><span class="p">,</span>
-                <span class="n">endpoint</span><span class="o">=</span><span class="s2">&quot;values/get&quot;</span><span class="p">,</span>
-                <span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span><span class="n">body</span><span class="p">],</span> <span class="n">default</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">json_serial</span><span class="p">),</span>
-                <span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">,</span>
-                <span class="n">extended_timeout</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error in get_values: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error in get_values: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
 
         <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="nb">vars</span><span class="p">:</span>
             <span class="c1"># Add default None values</span>
@@ -438,12 +470,13 @@
             <span class="c1"># StatusCode is not always present in the answer</span>
             <span class="k">if</span> <span class="s2">&quot;StatusCode&quot;</span> <span class="ow">in</span> <span class="n">contline</span><span class="p">:</span>
                 <span class="nb">vars</span><span class="p">[</span><span class="n">num</span><span class="p">][</span><span class="s2">&quot;StatusCode&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">contline</span><span class="p">[</span><span class="s2">&quot;StatusCode&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Code&quot;</span><span class="p">)</span>
-                <span class="nb">vars</span><span class="p">[</span><span class="n">num</span><span class="p">][</span><span class="s2">&quot;StatusSymbol&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">contline</span><span class="p">[</span><span class="s2">&quot;StatusCode&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Symbol&quot;</span><span class="p">)</span>
+                <span class="nb">vars</span><span class="p">[</span><span class="n">num</span><span class="p">][</span><span class="s2">&quot;StatusSymbol&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">contline</span><span class="p">[</span><span class="s2">&quot;StatusCode&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                    <span class="s2">&quot;Symbol&quot;</span>
+                <span class="p">)</span>
 
         <span class="k">return</span> <span class="nb">vars</span></div>
 
 
-    
     <span class="k">def</span> <span class="nf">_check_content</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Check the content returned from the server.</span>
 
@@ -458,25 +491,26 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="n">content</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Success&quot;</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">content</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ErrorMessage&quot;</span><span class="p">))</span>
         <span class="k">if</span> <span class="s2">&quot;HistoryReadResults&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">content</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">content</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ErrorMessage&quot;</span><span class="p">))</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;No history read results returned from the server&quot;</span>
+            <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_process_df</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df_result</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">columns</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Process the DataFrame returned from the server.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">_process_df</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">df_result</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">columns</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Process the DataFrame returned from the server.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="s2">&quot;Value.Type&quot;</span> <span class="ow">in</span> <span class="n">df_result</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-            <span class="n">df_result</span><span class="p">[</span><span class="s2">&quot;Value.Type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_result</span><span class="p">[</span><span class="s2">&quot;Value.Type&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">TYPE_DICT</span><span class="p">)</span>
+            <span class="n">df_result</span><span class="p">[</span><span class="s2">&quot;Value.Type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_result</span><span class="p">[</span><span class="s2">&quot;Value.Type&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">TYPE_DICT</span>
+            <span class="p">)</span>
 
-        <span class="n">df_result</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
-            <span class="n">columns</span><span class="o">=</span><span class="n">columns</span><span class="p">,</span> 
-            <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;raise&quot;</span><span class="p">,</span> 
-            <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span>
-        <span class="p">)</span>
+        <span class="n">df_result</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">columns</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;raise&quot;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">df_result</span>
-    
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_make_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">body</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">max_retries</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">retry_delay</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">_make_request</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">body</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">max_retries</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">retry_delay</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">):</span>
         <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_retries</span><span class="p">):</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Attempt </span><span class="si">{</span><span class="n">attempt</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="n">max_retries</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -485,35 +519,42 @@
                     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Making POST request to </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
                     <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Request body: </span><span class="si">{</span><span class="n">body</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
                     <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Request headers: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-                    
-                    <span class="k">async</span> <span class="k">with</span> <span class="n">session</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">body</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">)</span> <span class="k">as</span> <span class="n">response</span><span class="p">:</span>
-                        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Response received: Status </span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-                        
+
+                    <span class="k">async</span> <span class="k">with</span> <span class="n">session</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+                        <span class="n">url</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">body</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span>
+                    <span class="p">)</span> <span class="k">as</span> <span class="n">response</span><span class="p">:</span>
+                        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;Response received: Status </span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2">&quot;</span>
+                        <span class="p">)</span>
+
                         <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">&gt;=</span> <span class="mi">400</span><span class="p">:</span>
                             <span class="n">error_text</span> <span class="o">=</span> <span class="k">await</span> <span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="p">()</span>
-                            <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;HTTP error </span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">error_text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-                            <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>  
-                        
+                            <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                                <span class="sa">f</span><span class="s2">&quot;HTTP error </span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">error_text</span><span class="si">}</span><span class="s2">&quot;</span>
+                            <span class="p">)</span>
+                            <span class="k">await</span> <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+
                         <span class="k">return</span> <span class="k">await</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
 
             <span class="k">except</span> <span class="n">aiohttp</span><span class="o">.</span><span class="n">ClientResponseError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">500</span><span class="p">:</span>
-                    <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Server Error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-                    <span class="k">raise</span>  <span class="c1"># For 500 errors, we might want to fail fast</span>
                 <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ClientResponseError: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">attempt</span> <span class="o">==</span> <span class="n">max_retries</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Max retries reached&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
             <span class="k">except</span> <span class="n">aiohttp</span><span class="o">.</span><span class="n">ClientError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ClientError in POST request: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unexpected error in _make_request: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">attempt</span> <span class="o">&lt;</span> <span class="n">max_retries</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="n">wait_time</span> <span class="o">=</span> <span class="n">retry_delay</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="n">attempt</span><span class="p">)</span>
-                <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Request failed. Retrying in </span><span class="si">{</span><span class="n">wait_time</span><span class="si">}</span><span class="s2"> seconds...&quot;</span><span class="p">)</span>
+                <span class="n">wait_time</span> <span class="o">=</span> <span class="n">retry_delay</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="n">attempt</span><span class="p">)</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Request failed. Retrying in </span><span class="si">{</span><span class="n">wait_time</span><span class="si">}</span><span class="s2"> seconds...&quot;</span>
+                <span class="p">)</span>
                 <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">wait_time</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Max retries reached.&quot;</span><span class="p">)</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Max retries reached&#39;</span><span class="p">)</span>
-                
+
+        <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Max retries reached.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Max retries reached&quot;</span><span class="p">)</span>
+
     <span class="k">def</span> <span class="nf">_process_content</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_content</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
         <span class="n">df_list</span> <span class="o">=</span> <span class="p">[]</span>
@@ -522,12 +563,12 @@
             <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">item</span><span class="p">[</span><span class="s2">&quot;NodeId&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                 <span class="n">df</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;HistoryReadResults.NodeId.</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
             <span class="n">df_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
-        
+
         <span class="k">if</span> <span class="n">df_list</span><span class="p">:</span>
             <span class="n">df_result</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">df_list</span><span class="p">)</span>
             <span class="n">df_result</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">df_result</span>
-    
+
 <div class="viewcode-block" id="OPC_UA.get_historical_values">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.get_historical_values">[docs]</a>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">get_historical_values</span><span class="p">(</span>
@@ -541,26 +582,36 @@
         <span class="n">max_data_points</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">,</span>
         <span class="n">max_retries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
         <span class="n">retry_delay</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
-        <span class="n">max_concurrent_requests</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span>
+        <span class="n">max_concurrent_requests</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generic method to request historical values from the OPC UA server with batching&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generic method to request historical values from the OPC UA server</span>
+<span class="sd">        with batching.&quot;&quot;&quot;</span>
         <span class="n">total_time_range_ms</span> <span class="o">=</span> <span class="p">(</span><span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">)</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">*</span> <span class="mi">1000</span>
         <span class="n">estimated_intervals</span> <span class="o">=</span> <span class="n">total_time_range_ms</span> <span class="o">/</span> <span class="n">max_data_points</span>
 
-        <span class="n">max_variables_per_batch</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">max_data_points</span> <span class="o">/</span> <span class="n">estimated_intervals</span><span class="p">))</span>
+        <span class="n">max_variables_per_batch</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+            <span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">max_data_points</span> <span class="o">/</span> <span class="n">estimated_intervals</span><span class="p">)</span>
+        <span class="p">)</span>
         <span class="n">max_time_batches</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">estimated_intervals</span> <span class="o">/</span> <span class="n">max_data_points</span><span class="p">))</span>
         <span class="n">time_batch_size_ms</span> <span class="o">=</span> <span class="n">total_time_range_ms</span> <span class="o">/</span> <span class="n">max_time_batches</span>
 
         <span class="n">extended_variables</span> <span class="o">=</span> <span class="n">prepare_variables</span><span class="p">(</span><span class="n">variable_list</span><span class="p">)</span>
-        <span class="n">variable_batches</span> <span class="o">=</span> <span class="p">[</span><span class="n">extended_variables</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span> <span class="o">+</span> <span class="n">max_variables_per_batch</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">extended_variables</span><span class="p">),</span> <span class="n">max_variables_per_batch</span><span class="p">)]</span>
+        <span class="n">variable_batches</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">extended_variables</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">max_variables_per_batch</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">extended_variables</span><span class="p">),</span> <span class="n">max_variables_per_batch</span><span class="p">)</span>
+        <span class="p">]</span>
 
         <span class="n">semaphore</span> <span class="o">=</span> <span class="n">Semaphore</span><span class="p">(</span><span class="n">max_concurrent_requests</span><span class="p">)</span>
 
         <span class="k">async</span> <span class="k">def</span> <span class="nf">process_batch</span><span class="p">(</span><span class="n">variables</span><span class="p">,</span> <span class="n">time_batch</span><span class="p">):</span>
             <span class="k">async</span> <span class="k">with</span> <span class="n">semaphore</span><span class="p">:</span>
                 <span class="n">batch_start_ms</span> <span class="o">=</span> <span class="n">time_batch</span> <span class="o">*</span> <span class="n">time_batch_size_ms</span>
-                <span class="n">batch_end_ms</span> <span class="o">=</span> <span class="nb">min</span><span class="p">((</span><span class="n">time_batch</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">time_batch_size_ms</span><span class="p">,</span> <span class="n">total_time_range_ms</span><span class="p">)</span>
-                <span class="n">batch_start</span> <span class="o">=</span> <span class="n">start_time</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">milliseconds</span><span class="o">=</span><span class="n">batch_start_ms</span><span class="p">)</span>
+                <span class="n">batch_end_ms</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                    <span class="p">(</span><span class="n">time_batch</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">time_batch_size_ms</span><span class="p">,</span> <span class="n">total_time_range_ms</span>
+                <span class="p">)</span>
+                <span class="n">batch_start</span> <span class="o">=</span> <span class="n">start_time</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span>
+                    <span class="n">milliseconds</span><span class="o">=</span><span class="n">batch_start_ms</span>
+                <span class="p">)</span>
                 <span class="n">batch_end</span> <span class="o">=</span> <span class="n">start_time</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">milliseconds</span><span class="o">=</span><span class="n">batch_end_ms</span><span class="p">)</span>
 
                 <span class="n">body</span> <span class="o">=</span> <span class="p">{</span>
@@ -568,10 +619,12 @@
                     <span class="s2">&quot;StartTime&quot;</span><span class="p">:</span> <span class="n">batch_start</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;Z&quot;</span><span class="p">,</span>
                     <span class="s2">&quot;EndTime&quot;</span><span class="p">:</span> <span class="n">batch_end</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;Z&quot;</span><span class="p">,</span>
                     <span class="s2">&quot;ReadValueIds&quot;</span><span class="p">:</span> <span class="n">variables</span><span class="p">,</span>
-                    <span class="o">**</span><span class="p">(</span><span class="n">additional_params</span> <span class="ow">or</span> <span class="p">{})</span>
+                    <span class="o">**</span><span class="p">(</span><span class="n">additional_params</span> <span class="ow">or</span> <span class="p">{}),</span>
                 <span class="p">}</span>
 
-                <span class="n">content</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_request</span><span class="p">(</span><span class="n">endpoint</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="n">max_retries</span><span class="p">,</span> <span class="n">retry_delay</span><span class="p">)</span>
+                <span class="n">content</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_request</span><span class="p">(</span>
+                    <span class="n">endpoint</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="n">max_retries</span><span class="p">,</span> <span class="n">retry_delay</span>
+                <span class="p">)</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_content</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
 
         <span class="n">tasks</span> <span class="o">=</span> <span class="p">[</span>
@@ -581,9 +634,13 @@
         <span class="p">]</span>
 
         <span class="n">results</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="o">*</span><span class="n">tasks</span><span class="p">)</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="p">[</span><span class="n">df</span> <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">results</span> <span class="k">if</span> <span class="n">df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">results</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+
         <span class="n">combined_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">combined_df</span></div>
-
 
 
 <div class="viewcode-block" id="OPC_UA.get_historical_raw_values_asyn">
@@ -595,13 +652,16 @@
         <span class="n">variable_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
         <span class="n">limit_start_index</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">limit_num_records</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Request raw historical values from the OPC UA server&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Request raw historical values from the OPC UA server.&quot;&quot;&quot;</span>
 
         <span class="n">additional_params</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="n">limit_start_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">limit_num_records</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">additional_params</span><span class="p">[</span><span class="s2">&quot;Limit&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;StartIndex&quot;</span><span class="p">:</span> <span class="n">limit_start_index</span><span class="p">,</span> <span class="s2">&quot;NumRecords&quot;</span><span class="p">:</span> <span class="n">limit_num_records</span><span class="p">}</span>
+            <span class="n">additional_params</span><span class="p">[</span><span class="s2">&quot;Limit&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;StartIndex&quot;</span><span class="p">:</span> <span class="n">limit_start_index</span><span class="p">,</span>
+                <span class="s2">&quot;NumRecords&quot;</span><span class="p">:</span> <span class="n">limit_num_records</span><span class="p">,</span>
+            <span class="p">}</span>
 
         <span class="n">combined_df</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_historical_values</span><span class="p">(</span>
             <span class="n">start_time</span><span class="p">,</span>
@@ -610,7 +670,7 @@
             <span class="s2">&quot;values/historical&quot;</span><span class="p">,</span>
             <span class="k">lambda</span> <span class="nb">vars</span><span class="p">:</span> <span class="p">[{</span><span class="s2">&quot;NodeId&quot;</span><span class="p">:</span> <span class="n">var</span><span class="p">}</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="nb">vars</span><span class="p">],</span>
             <span class="n">additional_params</span><span class="p">,</span>
-            <span class="o">**</span><span class="n">kwargs</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">columns</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;Value.Type&quot;</span><span class="p">:</span> <span class="s2">&quot;ValueType&quot;</span><span class="p">,</span>
@@ -618,18 +678,19 @@
             <span class="s2">&quot;SourceTimestamp&quot;</span><span class="p">:</span> <span class="s2">&quot;Timestamp&quot;</span><span class="p">,</span>
             <span class="s2">&quot;HistoryReadResults.NodeId.IdType&quot;</span><span class="p">:</span> <span class="s2">&quot;IdType&quot;</span><span class="p">,</span>
             <span class="s2">&quot;HistoryReadResults.NodeId.Id&quot;</span><span class="p">:</span> <span class="s2">&quot;Id&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;HistoryReadResults.NodeId.Namespace&quot;</span><span class="p">:</span> <span class="s2">&quot;Namespace&quot;</span>
+            <span class="s2">&quot;HistoryReadResults.NodeId.Namespace&quot;</span><span class="p">:</span> <span class="s2">&quot;Namespace&quot;</span><span class="p">,</span>
         <span class="p">}</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_df</span><span class="p">(</span><span class="n">combined_df</span><span class="p">,</span> <span class="n">columns</span><span class="p">)</span></div>
 
-    
+
 <div class="viewcode-block" id="OPC_UA.get_historical_raw_values">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.get_historical_raw_values">[docs]</a>
     <span class="k">def</span> <span class="nf">get_historical_raw_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">helper</span><span class="o">.</span><span class="n">run_coroutine</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_historical_raw_values_asyn</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
-            <span class="k">return</span> <span class="n">result</span></div>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">helper</span><span class="o">.</span><span class="n">run_coroutine</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_historical_raw_values_asyn</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span></div>
 
-           
 
 <div class="viewcode-block" id="OPC_UA.get_historical_aggregated_values_asyn">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.get_historical_aggregated_values_asyn">[docs]</a>
@@ -640,13 +701,13 @@
         <span class="n">pro_interval</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">agg_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">variable_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-        <span class="o">**</span><span class="n">kwargs</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Request historical aggregated values from the OPC UA server&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Request historical aggregated values from the OPC UA server.&quot;&quot;&quot;</span>
 
         <span class="n">additional_params</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;ProcessingInterval&quot;</span><span class="p">:</span> <span class="n">pro_interval</span><span class="p">,</span>
-            <span class="s2">&quot;AggregateName&quot;</span><span class="p">:</span> <span class="n">agg_name</span>
+            <span class="s2">&quot;AggregateName&quot;</span><span class="p">:</span> <span class="n">agg_name</span><span class="p">,</span>
         <span class="p">}</span>
 
         <span class="n">combined_df</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_historical_values</span><span class="p">(</span>
@@ -654,9 +715,11 @@
             <span class="n">end_time</span><span class="p">,</span>
             <span class="n">variable_list</span><span class="p">,</span>
             <span class="s2">&quot;values/historicalaggregated&quot;</span><span class="p">,</span>
-            <span class="k">lambda</span> <span class="nb">vars</span><span class="p">:</span> <span class="p">[{</span><span class="s2">&quot;NodeId&quot;</span><span class="p">:</span> <span class="n">var</span><span class="p">,</span> <span class="s2">&quot;AggregateName&quot;</span><span class="p">:</span> <span class="n">agg_name</span><span class="p">}</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="nb">vars</span><span class="p">],</span>
+            <span class="k">lambda</span> <span class="nb">vars</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span><span class="s2">&quot;NodeId&quot;</span><span class="p">:</span> <span class="n">var</span><span class="p">,</span> <span class="s2">&quot;AggregateName&quot;</span><span class="p">:</span> <span class="n">agg_name</span><span class="p">}</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="nb">vars</span>
+            <span class="p">],</span>
             <span class="n">additional_params</span><span class="p">,</span>
-            <span class="o">**</span><span class="n">kwargs</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">columns</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;Value.Type&quot;</span><span class="p">:</span> <span class="s2">&quot;ValueType&quot;</span><span class="p">,</span>
@@ -666,23 +729,24 @@
             <span class="s2">&quot;SourceTimestamp&quot;</span><span class="p">:</span> <span class="s2">&quot;Timestamp&quot;</span><span class="p">,</span>
             <span class="s2">&quot;HistoryReadResults.NodeId.IdType&quot;</span><span class="p">:</span> <span class="s2">&quot;IdType&quot;</span><span class="p">,</span>
             <span class="s2">&quot;HistoryReadResults.NodeId.Id&quot;</span><span class="p">:</span> <span class="s2">&quot;Id&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;HistoryReadResults.NodeId.Namespace&quot;</span><span class="p">:</span> <span class="s2">&quot;Namespace&quot;</span>
+            <span class="s2">&quot;HistoryReadResults.NodeId.Namespace&quot;</span><span class="p">:</span> <span class="s2">&quot;Namespace&quot;</span><span class="p">,</span>
         <span class="p">}</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_df</span><span class="p">(</span><span class="n">combined_df</span><span class="p">,</span> <span class="n">columns</span><span class="p">)</span></div>
 
-                
+
 <div class="viewcode-block" id="OPC_UA.get_historical_aggregated_values">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.get_historical_aggregated_values">[docs]</a>
     <span class="k">def</span> <span class="nf">get_historical_aggregated_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">helper</span><span class="o">.</span><span class="n">run_coroutine</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_historical_aggregated_values_asyn</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">helper</span><span class="o">.</span><span class="n">run_coroutine</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_historical_aggregated_values_asyn</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="p">)</span>
         <span class="k">return</span> <span class="n">result</span></div>
 
-    
-    
+
 <div class="viewcode-block" id="OPC_UA.write_values">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.write_values">[docs]</a>
     <span class="k">def</span> <span class="nf">write_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">WriteVariables</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Request to write realtime values to the OPC UA server</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Request to write realtime values to the OPC UA server.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            variable_list (list): A list of variables you want to write to with the value, timestamp and quality, containing keys &quot;Id&quot;, &quot;Namespace&quot;, &quot;Values&quot; and &quot;IdType&quot;.</span>
@@ -705,37 +769,44 @@
         <span class="k">except</span> <span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_client</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">check_auth_client</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">))</span>
+                <span class="n">content</span> <span class="o">=</span> <span class="n">request_from_api</span><span class="p">(</span>
+                    <span class="n">rest_url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rest_url</span><span class="p">,</span>
+                    <span class="n">method</span><span class="o">=</span><span class="s2">&quot;POST&quot;</span><span class="p">,</span>
+                    <span class="n">endpoint</span><span class="o">=</span><span class="s2">&quot;values/set&quot;</span><span class="p">,</span>
+                    <span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span><span class="n">body</span><span class="p">],</span> <span class="n">default</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">json_serial</span><span class="p">),</span>
+                    <span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">,</span>
+                    <span class="n">extended_timeout</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Error message </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-        <span class="k">finally</span><span class="p">:</span>
-            <span class="n">content</span> <span class="o">=</span> <span class="n">request_from_api</span><span class="p">(</span>
-                <span class="n">rest_url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rest_url</span><span class="p">,</span>
-                <span class="n">method</span><span class="o">=</span><span class="s2">&quot;POST&quot;</span><span class="p">,</span>
-                <span class="n">endpoint</span><span class="o">=</span><span class="s2">&quot;values/set&quot;</span><span class="p">,</span>
-                <span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span><span class="n">body</span><span class="p">],</span> <span class="n">default</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">json_serial</span><span class="p">),</span>
-                <span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">,</span>
-                <span class="n">extended_timeout</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error in write_values: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error in write_values: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
         <span class="c1"># Return if no content from server</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">content</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Success&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">content</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ErrorMessage&quot;</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">content</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;StatusCodes&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;No status codes returned, might indicate no values written&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;No status codes returned, might indicate no values written&quot;</span>
+            <span class="p">)</span>
 
         <span class="c1"># Use to place successfull write next to each written values as API only returns list. Assumes same index in response as in request.</span>
         <span class="k">for</span> <span class="n">num</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">vars</span><span class="p">):</span>
-            <span class="nb">vars</span><span class="p">[</span><span class="n">num</span><span class="p">][</span><span class="s2">&quot;WriteSuccess&quot;</span><span class="p">]</span><span class="o">=</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span> <span class="p">:</span> <span class="kc">True</span> <span class="k">if</span><span class="p">(</span><span class="n">x</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="k">else</span> <span class="kc">False</span><span class="p">)(</span><span class="n">content</span><span class="p">[</span><span class="s1">&#39;StatusCodes&#39;</span><span class="p">][</span><span class="n">num</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Code&quot;</span><span class="p">))</span>
+            <span class="nb">vars</span><span class="p">[</span><span class="n">num</span><span class="p">][</span><span class="s2">&quot;WriteSuccess&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="kc">True</span> <span class="k">if</span> <span class="p">(</span><span class="n">x</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="k">else</span> <span class="kc">False</span>
+            <span class="p">)(</span><span class="n">content</span><span class="p">[</span><span class="s2">&quot;StatusCodes&quot;</span><span class="p">][</span><span class="n">num</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Code&quot;</span><span class="p">))</span>
 
         <span class="k">return</span> <span class="nb">vars</span></div>
 
 
-
 <div class="viewcode-block" id="OPC_UA.write_historical_values">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.write_historical_values">[docs]</a>
-    <span class="k">def</span> <span class="nf">write_historical_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">WriteHistoricalVariables</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Request to write realtime values to the OPC UA server</span>
+    <span class="k">def</span> <span class="nf">write_historical_values</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">variable_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">WriteHistoricalVariables</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Request to write realtime values to the OPC UA server.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            variable_list (list): A list of variables you want, containing keys &quot;Id&quot;, &quot;Namespace&quot;, &quot;Values&quot; and &quot;IdType&quot;. Values must be in descending order of the timestamps.</span>
@@ -744,10 +815,21 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Check if data is in correct order, if wrong fail.</span>
         <span class="k">for</span> <span class="n">variable</span> <span class="ow">in</span> <span class="n">variable_list</span><span class="p">:</span>
-            <span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">variable</span><span class="o">.</span><span class="n">UpdateValues</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">1</span><span class="p">):</span>
-                <span class="k">for</span> <span class="n">num_variable</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">variable</span><span class="o">.</span><span class="n">UpdateValues</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
-                    <span class="k">if</span> <span class="ow">not</span><span class="p">((</span><span class="n">variable</span><span class="o">.</span><span class="n">UpdateValues</span><span class="p">[</span><span class="n">num_variable</span><span class="p">]</span><span class="o">.</span><span class="n">SourceTimestamp</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">variable</span><span class="o">.</span><span class="n">UpdateValues</span><span class="p">[</span><span class="n">num_variable</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">SourceTimestamp</span><span class="p">):</span>
-                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Time for variables not in correct order.&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">variable</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;UpdateValues&quot;</span><span class="p">,</span> <span class="p">[]))</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">num_variable</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">variable</span><span class="p">[</span><span class="s2">&quot;UpdateValues&quot;</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+                        <span class="p">(</span>
+                            <span class="n">variable</span><span class="p">[</span><span class="s2">&quot;UpdateValues&quot;</span><span class="p">][</span><span class="n">num_variable</span><span class="p">][</span>
+                                <span class="s2">&quot;SourceTimestamp&quot;</span>
+                            <span class="p">]</span>
+                        <span class="p">)</span>
+                        <span class="o">&lt;</span> <span class="n">variable</span><span class="p">[</span><span class="s2">&quot;UpdateValues&quot;</span><span class="p">][</span><span class="n">num_variable</span> <span class="o">+</span> <span class="mi">1</span><span class="p">][</span>
+                            <span class="s2">&quot;SourceTimestamp&quot;</span>
+                        <span class="p">]</span>
+                    <span class="p">):</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                            <span class="s2">&quot;Time for variables not in correct order.&quot;</span>
+                        <span class="p">)</span>
         <span class="c1"># Create a new variable list to remove pydantic models</span>
         <span class="nb">vars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_variable_list_as_list</span><span class="p">(</span><span class="n">variable_list</span><span class="p">)</span>
         <span class="n">body</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
@@ -764,17 +846,21 @@
         <span class="k">except</span> <span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_client</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">check_auth_client</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">))</span>
+                <span class="c1"># Retry the request after checking auth</span>
+                <span class="n">content</span> <span class="o">=</span> <span class="n">request_from_api</span><span class="p">(</span>
+                    <span class="n">rest_url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rest_url</span><span class="p">,</span>
+                    <span class="n">method</span><span class="o">=</span><span class="s2">&quot;POST&quot;</span><span class="p">,</span>
+                    <span class="n">endpoint</span><span class="o">=</span><span class="s2">&quot;values/historicalwrite&quot;</span><span class="p">,</span>
+                    <span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">json_serial</span><span class="p">),</span>
+                    <span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">,</span>
+                    <span class="n">extended_timeout</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Error message </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-        <span class="k">finally</span><span class="p">:</span>
-            <span class="n">content</span> <span class="o">=</span> <span class="n">request_from_api</span><span class="p">(</span>
-                <span class="n">rest_url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rest_url</span><span class="p">,</span>
-                <span class="n">method</span><span class="o">=</span><span class="s2">&quot;POST&quot;</span><span class="p">,</span>
-                <span class="n">endpoint</span><span class="o">=</span><span class="s2">&quot;values/historicalwrite&quot;</span><span class="p">,</span>
-                <span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">json_serial</span><span class="p">),</span>
-                <span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">,</span>
-                <span class="n">extended_timeout</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Error in write_historical_values: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error in write_historical_values: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="c1"># Return if no content from server</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">None</span>
@@ -783,7 +869,9 @@
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">content</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ErrorMessage&quot;</span><span class="p">))</span>
         <span class="c1"># Crash if history report is missing</span>
         <span class="k">if</span> <span class="n">content</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;HistoryUpdateResults&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;No status codes returned, might indicate no values written&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;No status codes returned, might indicate no values written&quot;</span>
+            <span class="p">)</span>
 
         <span class="c1"># Check if there are per history update error codes returned</span>
         <span class="k">for</span> <span class="n">num_var</span><span class="p">,</span> <span class="n">variable_row</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">vars</span><span class="p">):</span>
@@ -792,7 +880,9 @@
                 <span class="nb">vars</span><span class="p">[</span><span class="n">num_var</span><span class="p">][</span><span class="s2">&quot;WriteSuccess&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="nb">vars</span><span class="p">[</span><span class="n">num_var</span><span class="p">][</span><span class="s2">&quot;WriteSuccess&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
-                <span class="nb">vars</span><span class="p">[</span><span class="n">num_var</span><span class="p">][</span><span class="s2">&quot;WriteError&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">content</span><span class="p">[</span><span class="s2">&quot;HistoryUpdateResults&quot;</span><span class="p">][</span><span class="n">num_var</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;StatusCode&quot;</span><span class="p">)</span>
+                <span class="nb">vars</span><span class="p">[</span><span class="n">num_var</span><span class="p">][</span><span class="s2">&quot;WriteError&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">content</span><span class="p">[</span><span class="s2">&quot;HistoryUpdateResults&quot;</span><span class="p">][</span>
+                    <span class="n">num_var</span>
+                <span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;StatusCode&quot;</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="nb">vars</span></div>
 
@@ -800,9 +890,7 @@
 <div class="viewcode-block" id="OPC_UA.check_if_ory_session_token_is_valid_refresh">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.opc_ua.OPC_UA.check_if_ory_session_token_is_valid_refresh">[docs]</a>
     <span class="k">def</span> <span class="nf">check_if_ory_session_token_is_valid_refresh</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if the session token is still valid</span>
-
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if the session token is still valid.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_client</span><span class="o">.</span><span class="n">check_if_token_has_expired</span><span class="p">():</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">auth_client</span><span class="o">.</span><span class="n">refresh_token</span><span class="p">()</span></div>
 </div>
@@ -810,20 +898,40 @@
 
 
 <span class="n">TYPE_LIST</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Null&quot;</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;An invalid or unspecified value&quot;</span><span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Null&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;An invalid or unspecified value&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
     <span class="p">{</span>
         <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
         <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Boolean&quot;</span><span class="p">,</span>
         <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;A boolean logic value (true or false)&quot;</span><span class="p">,</span>
     <span class="p">},</span>
     <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;SByte&quot;</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;An 8 bit signed integer value&quot;</span><span class="p">},</span>
-    <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Byte&quot;</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;An 8 bit unsigned integer value&quot;</span><span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Byte&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;An 8 bit unsigned integer value&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
     <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Int16&quot;</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;A 16 bit signed integer value&quot;</span><span class="p">},</span>
-    <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;UInt16&quot;</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;A 16 bit unsigned integer value&quot;</span><span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;UInt16&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;A 16 bit unsigned integer value&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
     <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">6</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Int32&quot;</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;A 32 bit signed integer value&quot;</span><span class="p">},</span>
-    <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;UInt32&quot;</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;A 32 bit unsigned integer value&quot;</span><span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;UInt32&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;A 32 bit unsigned integer value&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
     <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Int64&quot;</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;A 64 bit signed integer value&quot;</span><span class="p">},</span>
-    <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">9</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;UInt64&quot;</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;A 64 bit unsigned integer value&quot;</span><span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">9</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;UInt64&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;A 64 bit unsigned integer value&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
     <span class="p">{</span>
         <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
         <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Float&quot;</span><span class="p">,</span>
@@ -834,9 +942,17 @@
         <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Double&quot;</span><span class="p">,</span>
         <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;An IEEE double precision (64 bit) floating point value&quot;</span><span class="p">,</span>
     <span class="p">},</span>
-    <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;String&quot;</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;A sequence of Unicode characters&quot;</span><span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;String&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;A sequence of Unicode characters&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
     <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">13</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;DateTime&quot;</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;An instance in time&quot;</span><span class="p">},</span>
-    <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">14</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Guid&quot;</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;A 128-bit globally unique identifier&quot;</span><span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">14</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Guid&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;A 128-bit globally unique identifier&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
     <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">15</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;ByteString&quot;</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;A sequence of bytes&quot;</span><span class="p">},</span>
     <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;XmlElement&quot;</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;An XML element&quot;</span><span class="p">},</span>
     <span class="p">{</span>
@@ -849,7 +965,11 @@
         <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;ExpandedNodeId&quot;</span><span class="p">,</span>
         <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;A node id that stores the namespace URI instead of the namespace index&quot;</span><span class="p">,</span>
     <span class="p">},</span>
-    <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">19</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;StatusCode&quot;</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;A structured result code&quot;</span><span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">19</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;StatusCode&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;A structured result code&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
     <span class="p">{</span>
         <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span>
         <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;QualifiedName&quot;</span><span class="p">,</span>
@@ -870,7 +990,11 @@
         <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;DataValue&quot;</span><span class="p">,</span>
         <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;A data value with an associated quality and timestamp&quot;</span><span class="p">,</span>
     <span class="p">},</span>
-    <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">24</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Variant&quot;</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Any of the other built-in types&quot;</span><span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">24</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Variant&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Any of the other built-in types&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
     <span class="p">{</span>
         <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">25</span><span class="p">,</span>
         <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;DiagnosticInfo&quot;</span><span class="p">,</span>
