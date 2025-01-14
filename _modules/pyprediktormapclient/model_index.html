@@ -5,14 +5,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pyprediktormapclient.model_index &mdash; pyPrediktorMapClient 0.7.3 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+  <title>pyprediktormapclient.model_index &mdash; pyPrediktorMapClient 0.7.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
 
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=c98573da"></script>
+      <script src="../../_static/documentation_options.js?v=020ce317"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -73,16 +73,16 @@
            <div itemprop="articleBody">
              
   <h1>Source code for pyprediktormapclient.model_index</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">json</span>
-<span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">date</span><span class="p">,</span> <span class="n">datetime</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">date</span><span class="p">,</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span>
 
-<span class="kn">import</span> <span class="nn">requests</span>
-<span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">AnyUrl</span>
-<span class="kn">from</span> <span class="nn">pydantic_core</span> <span class="kn">import</span> <span class="n">Url</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnyUrl</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Url</span>
 
-<span class="kn">from</span> <span class="nn">pyprediktormapclient.shared</span> <span class="kn">import</span> <span class="n">request_from_api</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyprediktormapclient.shared</span><span class="w"> </span><span class="kn">import</span> <span class="n">request_from_api</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 <span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">NullHandler</span><span class="p">())</span>
@@ -90,7 +90,7 @@
 
 <div class="viewcode-block" id="ModelIndex">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.model_index.ModelIndex">[docs]</a>
-<span class="k">class</span> <span class="nc">ModelIndex</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ModelIndex</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper functions to access the ModelIndex API server.</span>
 
 <span class="sd">    Args:</span>
@@ -102,11 +102,11 @@
 
 <div class="viewcode-block" id="ModelIndex.Config">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.model_index.ModelIndex.Config">[docs]</a>
-    <span class="k">class</span> <span class="nc">Config</span><span class="p">:</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Config</span><span class="p">:</span>
         <span class="n">arbitrary_types_allowed</span> <span class="o">=</span> <span class="kc">True</span></div>
 
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">url</span><span class="p">:</span> <span class="n">AnyUrl</span><span class="p">,</span>
         <span class="n">auth_client</span><span class="p">:</span> <span class="nb">object</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -135,7 +135,7 @@
 
 <div class="viewcode-block" id="ModelIndex.json_serial">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.model_index.ModelIndex.json_serial">[docs]</a>
-    <span class="k">def</span> <span class="nf">json_serial</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">json_serial</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;JSON serializer for objects not serializable by default json</span>
 <span class="sd">        code.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="p">(</span><span class="n">datetime</span><span class="p">,</span> <span class="n">date</span><span class="p">)):</span>
@@ -147,7 +147,7 @@
 
 <div class="viewcode-block" id="ModelIndex.check_auth_client">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.model_index.ModelIndex.check_auth_client">[docs]</a>
-    <span class="k">def</span> <span class="nf">check_auth_client</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_auth_client</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">content</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;code&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">404</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">auth_client</span><span class="o">.</span><span class="n">request_new_ory_token</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;Authorization&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
@@ -159,7 +159,7 @@
 
 <div class="viewcode-block" id="ModelIndex.get_namespace_array">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.model_index.ModelIndex.get_namespace_array">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_namespace_array</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_namespace_array</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the namespace array.</span>
 
 <span class="sd">        Returns:</span>
@@ -177,7 +177,7 @@
 
 <div class="viewcode-block" id="ModelIndex.get_object_types">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.model_index.ModelIndex.get_object_types">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_object_types</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_object_types</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="n">content</span> <span class="o">=</span> <span class="n">request_from_api</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">,</span>
             <span class="s2">&quot;GET&quot;</span><span class="p">,</span>
@@ -190,7 +190,7 @@
 
 <div class="viewcode-block" id="ModelIndex.get_object_type_id_from_name">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.model_index.ModelIndex.get_object_type_id_from_name">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_object_type_id_from_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">type_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_object_type_id_from_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">type_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get object type id from type name.</span>
 
 <span class="sd">        Args:</span>
@@ -213,7 +213,7 @@
 
 <div class="viewcode-block" id="ModelIndex.get_objects_of_type">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.model_index.ModelIndex.get_objects_of_type">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_objects_of_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">type_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_objects_of_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">type_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Function to get all the types of an object.</span>
 
 <span class="sd">        Args:</span>
@@ -240,7 +240,7 @@
 
 <div class="viewcode-block" id="ModelIndex.get_object_descendants">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.model_index.ModelIndex.get_object_descendants">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_object_descendants</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_object_descendants</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">type_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">ids</span><span class="p">:</span> <span class="n">List</span><span class="p">,</span>
@@ -280,7 +280,7 @@
 
 <div class="viewcode-block" id="ModelIndex.get_object_ancestors">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.model_index.ModelIndex.get_object_ancestors">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_object_ancestors</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_object_ancestors</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">type_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">ids</span><span class="p">:</span> <span class="n">List</span><span class="p">,</span>

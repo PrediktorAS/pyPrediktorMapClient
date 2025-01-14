@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Working with the Data Warehouse &mdash; pyPrediktorMapClient 0.7.3 documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+  <title>Working with the Data Warehouse &mdash; pyPrediktorMapClient 0.7.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=c98573da"></script>
+      <script src="_static/documentation_options.js?v=020ce317"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -104,7 +104,7 @@ available on your system, but only after you have initiated the <cite>DWH</cite>
 the database, as well as your username and password.  These are all provided
 to you by the PowerView team.  Once you have this information, you can connect
 by initating the <cite>DWH</cite> class like this:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyprediktormapclient.dwh</span> <span class="kn">import</span> <span class="n">DWH</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyprediktormapclient.dwh</span><span class="w"> </span><span class="kn">import</span> <span class="n">DWH</span>
 <span class="n">dwh</span> <span class="o">=</span> <span class="n">DWH</span><span class="p">(</span><span class="n">server</span><span class="o">=</span><span class="s1">&#39;server_name&#39;</span><span class="p">,</span> <span class="n">database</span><span class="o">=</span><span class="s1">&#39;database_name&#39;</span><span class="p">,</span>
           <span class="n">username</span><span class="o">=</span><span class="s1">&#39;username&#39;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s1">&#39;password&#39;</span><span class="p">)</span>
 </pre></div>

@@ -5,14 +5,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pyprediktormapclient.analytics_helper &mdash; pyPrediktorMapClient 0.7.3 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+  <title>pyprediktormapclient.analytics_helper &mdash; pyPrediktorMapClient 0.7.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
 
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=c98573da"></script>
+      <script src="../../_static/documentation_options.js?v=020ce317"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -73,12 +73,12 @@
            <div itemprop="articleBody">
              
   <h1>Source code for pyprediktormapclient.analytics_helper</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">import</span> <span class="nn">re</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span>
 
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">validate_call</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_call</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 <span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">NullHandler</span><span class="p">())</span>
@@ -86,7 +86,7 @@
 
 <div class="viewcode-block" id="AnalyticsHelper">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper">[docs]</a>
-<span class="k">class</span> <span class="nc">AnalyticsHelper</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AnalyticsHelper</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Your data as a Pandas DataFrame, but with a specific formatting and some</span>
 <span class="sd">    nifty functions. Put the data from ModelIndex in here and move further on</span>
 <span class="sd">    by adding data and from other ModelIndex calls or live or historical data</span>
@@ -120,7 +120,7 @@
     <span class="n">ID_PATTERN</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;^\d+:\d+:\S+$&quot;</span>
 
     <span class="nd">@validate_call</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">List</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">List</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dataframe</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
             <span class="nb">input</span>
         <span class="p">)</span>  <span class="c1"># Create a DataFrame from the input</span>
@@ -128,7 +128,7 @@
 
 <div class="viewcode-block" id="AnalyticsHelper.normalize">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.normalize">[docs]</a>
-    <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">normalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Normalize column names in the `dataframe` class attribute. Different</span>
 <span class="sd">        ModelIndex calls has different column names but this will be normalized</span>
 <span class="sd">        with this function according to the class docs.</span>
@@ -187,7 +187,7 @@
 <div class="viewcode-block" id="AnalyticsHelper.namespaces_as_list">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.namespaces_as_list">[docs]</a>
     <span class="nd">@validate_call</span>
-    <span class="k">def</span> <span class="nf">namespaces_as_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">list_of_dicts</span><span class="p">:</span> <span class="n">List</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">namespaces_as_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">list_of_dicts</span><span class="p">:</span> <span class="n">List</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Takes the output of a get_namespace_array() request from ModelIndex</span>
 <span class="sd">        and generates a list of strings that can be used for the OPC UA Values</span>
 <span class="sd">        API.</span>
@@ -209,7 +209,7 @@
 <div class="viewcode-block" id="AnalyticsHelper.split_id">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.split_id">[docs]</a>
     <span class="nd">@validate_call</span>
-    <span class="k">def</span> <span class="nf">split_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">split_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ID_PATTERN</span><span class="p">,</span> <span class="nb">id</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid id format&quot;</span><span class="p">)</span>
@@ -224,7 +224,7 @@
 
 <div class="viewcode-block" id="AnalyticsHelper.list_of_ids">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.list_of_ids">[docs]</a>
-    <span class="k">def</span> <span class="nf">list_of_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">list_of_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Extracts the values in the column &quot;Id&quot; to a list of unique IDs.</span>
 
 <span class="sd">        Returns:</span>
@@ -242,7 +242,7 @@
 
 <div class="viewcode-block" id="AnalyticsHelper.list_of_names">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.list_of_names">[docs]</a>
-    <span class="k">def</span> <span class="nf">list_of_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">list_of_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Extracts the values in the column &quot;Name&quot; to a list of unique names.</span>
 
 <span class="sd">        Returns:</span>
@@ -260,7 +260,7 @@
 
 <div class="viewcode-block" id="AnalyticsHelper.list_of_types">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.list_of_types">[docs]</a>
-    <span class="k">def</span> <span class="nf">list_of_types</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">list_of_types</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Extracts the values in the column &quot;Type&quot; to a list of unique types.</span>
 
 <span class="sd">        Returns:</span>
@@ -278,7 +278,7 @@
 
 <div class="viewcode-block" id="AnalyticsHelper.list_of_variable_names">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.list_of_variable_names">[docs]</a>
-    <span class="k">def</span> <span class="nf">list_of_variable_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">list_of_variable_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Explodes the content of the column &quot;Vars&quot; and extracts the values</span>
 <span class="sd">        from DisplayName into a list of unique values.</span>
 
@@ -305,7 +305,7 @@
 
 <div class="viewcode-block" id="AnalyticsHelper.properties_as_dataframe">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.properties_as_dataframe">[docs]</a>
-    <span class="k">def</span> <span class="nf">properties_as_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">properties_as_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Explodes the column &quot;Props&quot; into a new dataframe. Column names will</span>
 <span class="sd">        be.</span>
 
@@ -350,7 +350,7 @@
 
 <div class="viewcode-block" id="AnalyticsHelper.variables_as_dataframe">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.variables_as_dataframe">[docs]</a>
-    <span class="k">def</span> <span class="nf">variables_as_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">variables_as_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Explodes the column &quot;Vars&quot; into a new dataframe. Column names will</span>
 <span class="sd">        be.</span>
 
@@ -398,7 +398,7 @@
 
 <div class="viewcode-block" id="AnalyticsHelper.variables_as_list">
 <a class="viewcode-back" href="../../api/pyprediktormapclient.html#pyprediktormapclient.analytics_helper.AnalyticsHelper.variables_as_list">[docs]</a>
-    <span class="k">def</span> <span class="nf">variables_as_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">include_only</span><span class="p">:</span> <span class="n">List</span> <span class="o">=</span> <span class="p">[])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">variables_as_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">include_only</span><span class="p">:</span> <span class="n">List</span> <span class="o">=</span> <span class="p">[])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Extracts variables as a list. If there are names listed in the</span>
 <span class="sd">        include_only argument, only variables matching that name will be</span>
 <span class="sd">        encluded.</span>
