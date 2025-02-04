@@ -21,14 +21,14 @@ jobs:
           echo '${{ secrets.GCP_SA_KEY }}' > sa-key.json
           PROJECT_ID=$(jq -r '.project_id' sa-key.json)
           SERVICE_ACCOUNT=$(jq -r '.client_email' sa-key.json)
-          
+
           echo "SERVICE_ACCOUNT=$SERVICE_ACCOUNT" >> $GITHUB_ENV
           gcloud config set project $PROJECT_ID
           gcloud auth activate-service-account "$SERVICE_ACCOUNT" --key-file=sa-key.json
 
           FUNCTION_URL="${{ secrets.CLOUD_FUNCTION_URL }}"
           echo "FUNCTION_URL=$FUNCTION_URL" >> $GITHUB_ENV
-          
+
           rm sa-key.json
 
       - name: Generate and send identity token
@@ -42,7 +42,7 @@ jobs:
           prepare_payload() {
             local event_type="$1"
             local event_data="$2"
-            
+
             jq -n \
               --arg event "$event_type" \
               --arg repository "${{ github.repository }}" \
